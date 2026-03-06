@@ -1,0 +1,18 @@
+{
+    "name": "ojo-en-la-via/app",
+    "description": "Aplicación Ojo en la Vía",
+    "type": "project",
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "ext-pgsql": "*",
+        "ext-redis": "*",
+        "ext-curl": "*",
+        "ext-mbstring": "*"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}
