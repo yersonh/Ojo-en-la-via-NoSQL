@@ -1,0 +1,776 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Contenedor principal */
+.app-container {
+    display: flex;
+    height: 100vh;
+    position: relative;
+}
+
+/* Mapa */
+#map {
+    flex: 1;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Panel de formulario */
+#panel {
+    width: 400px;
+    background: white;
+    padding: 20px;
+    overflow-y: auto;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    z-index: 2;
+}
+
+#panel h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 22px;
+}
+
+/* Formulario */
+#formReporte {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+label {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    display: block;
+}
+
+select, textarea, input[type="text"], input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.coordenadas {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+.preview {
+    margin-top: 10px;
+    text-align: center;
+}
+
+#previewImg {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+/* Alertas */
+.alert {
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    display: none;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Loading */
+.loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Botones */
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Sección de comentarios */
+.comentarios-section {
+    margin-top: 25px;
+    border-top: 2px solid #eee;
+    padding-top: 20px;
+}
+
+.comentarios-section h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.comentarios-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.form-comentario {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ========== BOTÓN MÓVIL TOGGLE - ACTIVADO ========== */
+.mobile-toggle {
+    display: none;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+/* ========== MEDIA QUERIES CORREGIDAS ========== */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+
+    #map {
+        height: 100vh;
+        width: 100%;
+    }
+
+    #panel {
+        width: 100%;
+        height: 70vh;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+        box-shadow: 0 -2px 20px rgba(0,0,0,0.2);
+        z-index: 1000;
+    }
+
+    #panel.active {
+        transform: translateY(0);
+    }
+
+    /* BOTÓN TOGGLE VISIBLE EN MÓVIL */
+    .mobile-toggle {
+        display: block;
+    }
+
+    #panel h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    select, textarea, input[type="text"], input[type="file"] {
+        padding: 14px;
+        font-size: 16px;
+    }
+
+    button {
+        padding: 16px;
+    }
+
+    .comentarios-section {
+        margin-top: 20px;
+        padding-top: 15px;
+    }
+
+    .comentarios-list {
+        max-height: 150px;
+    }
+}
+
+/* Asegurar que el botón de geolocalización esté accesible */
+@media (max-width: 768px) {
+    .leaflet-top.leaflet-left {
+        top: 60px !important; /* Espacio para el botón toggle */
+    }
+
+    .leaflet-control-locate {
+        margin-top: 50px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #panel {
+        height: 80vh;
+    }
+
+    #panel.active {
+        height: 80vh;
+    }
+
+    #panel h2 {
+        font-size: 18px;
+    }
+
+    .coordenadas {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .comentarios-list {
+        max-height: 120px;
+    }
+}
+
+@media (max-width: 360px) {
+    #panel {
+        padding: 12px;
+        height: 85vh;
+    }
+
+    #panel h2 {
+        font-size: 16px;
+    }
+
+    select, textarea, input[type="text"], input[type="file"] {
+        padding: 12px;
+    }
+
+    button {
+        padding: 14px;
+        font-size: 14px;
+    }
+}
+
+/* Estilos para la funcionalidad de cámara */
+.campo-imagen {
+    margin-bottom: 15px;
+}
+
+.opciones-imagen {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-camara, .btn-archivo {
+    flex: 1;
+    padding: 12px;
+    border: 2px dashed #007bff;
+    background: #f8f9fa;
+    color: #007bff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    min-width: 120px;
+}
+
+.btn-camara:hover, .btn-archivo:hover {
+    background: #007bff;
+    color: white;
+}
+
+.separador {
+    color: #666;
+    font-size: 14px;
+}
+
+.controles-camara {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-capturar {
+    background: #28a745;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    flex: 1;
+}
+
+.btn-cancelar {
+    background: #dc3545;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    flex: 1;
+}
+
+.btn-capturar:hover {
+    background: #218838;
+}
+
+.btn-cancelar:hover {
+    background: #c82333;
+}
+
+.sin-imagen {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #ddd;
+    margin-top: 10px;
+}
+
+.preview {
+    position: relative;
+    margin-top: 10px;
+}
+
+#videoCamara {
+    background: #000;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+/* Mejoras responsive para móviles */
+@media (max-width: 768px) {
+    .opciones-imagen {
+        flex-direction: column;
+    }
+
+    .separador {
+        display: none;
+    }
+
+    .btn-camara, .btn-archivo {
+        width: 100%;
+    }
+
+    .controles-camara {
+        flex-direction: column;
+    }
+
+    .btn-capturar, .btn-cancelar {
+        padding: 14px;
+        font-size: 16px;
+    }
+}
+
+/* ESTILOS MEJORADOS PARA EL MAPA */
+#map {
+    flex: 1;
+    height: 100%;
+    z-index: 1;
+    border-radius: 0;
+}
+
+/* Controles del mapa mejorados */
+.leaflet-control-zoom a {
+    background: white !important;
+    color: #333 !important;
+    border: none !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15) !important;
+    border-radius: 6px !important;
+    margin: 4px !important;
+    font-weight: bold;
+    transition: all 0.3s ease !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: #f8f9fa !important;
+    transform: scale(1.05);
+}
+
+.leaflet-control-scale-line {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    color: #333 !important;
+    font-size: 11px !important;
+    font-weight: bold;
+    padding: 4px 8px !important;
+}
+
+/* Popups mejorados */
+.leaflet-popup-content-wrapper {
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
+    border: none !important;
+    overflow: hidden;
+}
+
+.leaflet-popup-tip {
+    background: white !important;
+    box-shadow: none !important;
+}
+
+.leaflet-popup-close-button {
+    background: rgba(0,0,0,0.1) !important;
+    border-radius: 50% !important;
+    width: 24px !important;
+    height: 24px !important;
+    line-height: 22px !important;
+    font-size: 16px !important;
+    color: #666 !important;
+    transition: all 0.3s ease !important;
+}
+
+.leaflet-popup-close-button:hover {
+    background: rgba(0,0,0,0.2) !important;
+    color: #333 !important;
+}
+
+/* Clusters de marcadores mejorados */
+.marker-cluster-small {
+    background-color: rgba(181, 226, 140, 0.9) !important;
+    color: #333 !important;
+    font-weight: bold;
+}
+
+.marker-cluster-medium {
+    background-color: rgba(241, 211, 87, 0.9) !important;
+    color: #333 !important;
+    font-weight: bold;
+}
+
+.marker-cluster-large {
+    background-color: rgba(253, 156, 115, 0.9) !important;
+    color: #333 !important;
+    font-weight: bold;
+}
+
+/* Animación para el marcador seleccionado */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(231, 76, 60, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+    }
+}
+
+/* Efectos hover para marcadores */
+.custom-marker:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+    z-index: 1000 !important;
+}
+
+/* Control de geolocalización mejorado */
+.leaflet-control-locate a {
+    background: white !important;
+    color: #333 !important;
+    border: none !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15) !important;
+    border-radius: 6px !important;
+}
+
+.leaflet-control-locate a:hover {
+    background: #f8f9fa !important;
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+    #map {
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .leaflet-control-zoom {
+        margin-bottom: 50px !important;
+    }
+
+    .leaflet-popup-content {
+        margin: 10px !important;
+    }
+}
+
+/* ESTILOS PARA EL BUSCADOR DE DIRECCIONES */
+.search-container {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+    font-family: Arial, sans-serif;
+}
+
+#searchInput:focus {
+    outline: none;
+    border-color: #4264fb;
+}
+
+.btn-buscar {
+    background: #4264fb;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.btn-buscar:hover {
+    background: #3151e0;
+    transform: translateY(-1px);
+}
+
+.btn-buscar:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.search-results {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+    border: 1px solid #eee;
+    position: absolute;
+    width: 100%;
+    top: 100%;
+    left: 0;
+    margin-top: 5px;
+}
+
+.search-result-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-result-item:hover {
+    background: #f5f7ff;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.result-name {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.result-address {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.relevance-badge {
+    float: right;
+    background: #4264fb;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.no-results {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    background: #f8f9fa;
+}
+
+/* Marcador de búsqueda especial */
+.search-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Loading para búsqueda */
+.search-loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #4264fb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Animaciones para el buscador */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-results.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+/* RESPONSIVE PARA EL BUSCADOR */
+@media (max-width: 768px) {
+    .search-box {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-buscar {
+        padding: 14px;
+        font-size: 16px;
+    }
+
+    .search-results {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-height: 50vh;
+        border-radius: 15px 15px 0 0;
+        z-index: 3000;
+    }
+}
+
+@media (max-width: 480px) {
+    .search-container {
+        margin-bottom: 15px;
+    }
+
+    #searchInput {
+        padding: 14px;
+        font-size: 16px;
+    }
+
+    .search-result-item {
+        padding: 15px;
+    }
+
+    .result-name {
+        font-size: 15px;
+    }
+
+    .result-address {
+        font-size: 13px;
+    }
+}
+/* === AJUSTE RESPONSIVO PARA EL BOTÓN DE GEOLOCALIZACIÓN EN MÓVILES === */
+@media (max-width: 768px) {
+    .leaflet-control-geolocation,
+    .leaflet-control-locate,
+    .leaflet-bottom.leaflet-right .leaflet-control {
+        margin-bottom: 90px !important; /* Sube el botón unos 90px */
+        margin-right: 10px !important;
+        transition: margin-bottom 0.3s ease;
+    }
+}
+
+/* Si más adelante tienes una barra inferior dinámica */
+body.barra-oculta .leaflet-control-geolocation,
+body.barra-oculta .leaflet-control-locate,
+body.barra-oculta .leaflet-bottom.leaflet-right .leaflet-control {
+    margin-bottom: 40px !important; /* Vuelve a bajarlo cuando la barra esté oculta */
+}
+/* === AJUSTE DEFINITIVO SOLO PARA CELULARES === */
+@media (max-width: 768px) {
+    .leaflet-control-geolocation,
+    .leaflet-control-locate,
+    .leaflet-bottom.leaflet-right .leaflet-control {
+        margin-bottom: 30px !important; /* súbelo más arriba */
+        margin-right: 25px !important;   /* muévelo un poco a la izquierda */
+        transition: all 0.3s ease;
+    }
+}

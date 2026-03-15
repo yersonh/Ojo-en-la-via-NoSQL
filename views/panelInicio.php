@@ -1,4 +1,25 @@
 <?php
+// Iniciar sesión para acceder a datos del usuario
+session_start();
+
+// Variables de usuario desde la sesión
+$usuario_id = $_SESSION['usuario_id'] ?? null;
+$usuario_nombres = $_SESSION['usuario_nombres'] ?? 'Usuario';
+$usuario_apellidos = $_SESSION['usuario_apellidos'] ?? '';
+$usuario_correo = $_SESSION['usuario_correo'] ?? '';
+$usuario_telefono = $_SESSION['usuario_telefono'] ?? '';
+$foto_perfil = $_SESSION['foto_perfil'] ?? '';
+
+// Determinar URL base
+$baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . 
+           "://$_SERVER[HTTP_HOST]";
+
+// URL del mapa (ajusta según tu estructura)
+$mapUrl = $baseUrl . '/mapa.php';
+
+// Detectar si es producción
+$esProduccion = strpos($_SERVER['HTTP_HOST'], 'railway.app') !== false || 
+                strpos($_SERVER['HTTP_HOST'], 'ojo-en-la-via') !== false;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -12,13 +33,25 @@
 
     <!-- Pasar variables de sesión a JavaScript -->
     <script>
-        // Variables globales con datos del usuario desde PHP
-        window.usuarioId = <?php /* echo json_encode($usuario_id); */?>;
-        window.usuarioNombres = <?php /*echo json_encode($usuario_nombres); */?>;
-        window.usuarioApellidos = <?php /*echo json_encode($usuario_apellidos ?? ''); */?>;
-        window.usuarioCorreo = <?php/* echo json_encode($usuario_correo);*/ ?>;
-        window.usuarioTelefono = <?php /*echo json_encode($usuario_telefono ?? '');*/ ?>;
-        window.usuarioFotoPerfil = <?php /*echo json_encode($foto_perfil ?? '');*/ ?>;
+        // Configuración global
+        window.__CONFIG__ = {
+            usuarioId: <?php echo json_encode($usuario_id); ?>,
+            usuarioNombres: <?php echo json_encode($usuario_nombres); ?>,
+            usuarioApellidos: <?php echo json_encode($usuario_apellidos); ?>,
+            usuarioCorreo: <?php echo json_encode($usuario_correo); ?>,
+            usuarioTelefono: <?php echo json_encode($usuario_telefono); ?>,
+            usuarioFotoPerfil: <?php echo json_encode($foto_perfil); ?>,
+            baseUrl: <?php echo json_encode($baseUrl); ?>,
+            esProduccion: <?php echo $esProduccion ? 'true' : 'false'; ?>
+        };
+
+        // Asignar a variables globales para compatibilidad
+        window.usuarioId = window.__CONFIG__.usuarioId;
+        window.usuarioNombres = window.__CONFIG__.usuarioNombres;
+        window.usuarioApellidos = window.__CONFIG__.usuarioApellidos;
+        window.usuarioCorreo = window.__CONFIG__.usuarioCorreo;
+        window.usuarioTelefono = window.__CONFIG__.usuarioTelefono;
+        window.usuarioFotoPerfil = window.__CONFIG__.usuarioFotoPerfil;
 
         console.log('Usuario cargado:', {
             id: window.usuarioId,
@@ -30,18 +63,40 @@
         });
     </script>
 
-    <?php /*if ($_SERVER['HTTP_HOST'] !== 'localhost:8080'):*/ ?>
-    <!--
+    <?php if ($esProduccion): ?>
     <script>
         if (location.protocol !== 'https:') {
             location.replace(`https:${location.href.substring(location.protocol.length)}`);
         }
     </script>
--->
-    <?php /*endif; */?>
+    <?php endif; ?>
 
     <style>
     /* Estilos para el modal de comentarios - Modo Claro/Oscuro */
+    :root {
+        --modal-bg: white;
+        --modal-text: #2c3e50;
+        --modal-heading: #2c3e50;
+        --modal-border: #e9ecef;
+        --modal-close: #6c757d;
+        --modal-close-hover-bg: #f8f9fa;
+        --modal-close-hover: #e74c3c;
+        --modal-list-bg: transparent;
+        --modal-item-border: #f1f3f4;
+        --modal-user: #2c3e50;
+        --modal-date: #6c757d;
+        --modal-input-bg: white;
+        --modal-input-text: #495057;
+        --modal-input-border: #ddd;
+        --modal-input-focus: #3498db;
+        --modal-input-focus-shadow: rgba(52, 152, 219, 0.2);
+        --modal-counter: #6c757d;
+        --modal-button-bg: #3498db;
+        --modal-button-text: white;
+        --modal-button-hover: #2980b9;
+        --modal-button-disabled: #bdc3c7;
+    }
+
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -53,10 +108,18 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
     }
 
-    .comentarios-modal {
-        background: var(--modal-bg, white);
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background: var(--modal-bg);
         border-radius: 12px;
         width: 90%;
         max-width: 500px;
@@ -64,12 +127,18 @@
         display: flex;
         flex-direction: column;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        color: var(--modal-text, #2c3e50);
+        color: var(--modal-text);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-content {
+        transform: translateY(0);
     }
 
     .modal-header {
         padding: 20px;
-        border-bottom: 1px solid var(--modal-border, #e9ecef);
+        border-bottom: 1px solid var(--modal-border);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -77,7 +146,7 @@
 
     .modal-header h3 {
         margin: 0;
-        color: var(--modal-heading, #2c3e50);
+        color: var(--modal-heading);
         font-size: 1.25rem;
     }
 
@@ -85,7 +154,7 @@
         background: none;
         border: none;
         font-size: 1.5rem;
-        color: var(--modal-close, #6c757d);
+        color: var(--modal-close);
         cursor: pointer;
         padding: 5px;
         border-radius: 50%;
@@ -93,8 +162,8 @@
     }
 
     .modal-close:hover {
-        background: var(--modal-close-hover-bg, #f8f9fa);
-        color: var(--modal-close-hover, #e74c3c);
+        background: var(--modal-close-hover-bg);
+        color: var(--modal-close-hover);
     }
 
     .modal-body {
@@ -106,20 +175,19 @@
         gap: 20px;
     }
 
-    /* Lista de comentarios */
     .comentarios-list {
         flex: 1;
         max-height: 300px;
         overflow-y: auto;
-        border: 1px solid var(--modal-border, #e9ecef);
+        border: 1px solid var(--modal-border);
         border-radius: 8px;
         padding: 15px;
-        background: var(--modal-list-bg, transparent);
+        background: var(--modal-list-bg);
     }
 
     .comentario-item {
         padding: 12px;
-        border-bottom: 1px solid var(--modal-item-border, #f1f3f4);
+        border-bottom: 1px solid var(--modal-item-border);
         margin-bottom: 10px;
     }
 
@@ -137,24 +205,23 @@
 
     .comentario-usuario {
         font-weight: 600;
-        color: var(--modal-user, #2c3e50);
+        color: var(--modal-user);
         font-size: 0.9rem;
     }
 
     .comentario-fecha {
         font-size: 0.8rem;
-        color: var(--modal-date, #6c757d);
+        color: var(--modal-date);
     }
 
     .comentario-texto {
-        color: var(--modal-text, #495057);
+        color: var(--modal-text);
         line-height: 1.4;
         font-size: 0.9rem;
     }
 
-    /* Formulario de comentarios */
     .comentario-form {
-        border-top: 1px solid var(--modal-border, #e9ecef);
+        border-top: 1px solid var(--modal-border);
         padding-top: 20px;
     }
 
@@ -162,33 +229,32 @@
         width: 100%;
         min-height: 100px;
         padding: 12px;
-        border: 1px solid var(--modal-input-border, #ddd);
+        border: 1px solid var(--modal-input-border);
         border-radius: 8px;
         resize: vertical;
         font-family: inherit;
         font-size: 0.9rem;
         transition: border-color 0.3s ease;
-        background: var(--modal-input-bg, white);
-        color: var(--modal-input-text, #495057);
+        background: var(--modal-input-bg);
+        color: var(--modal-input-text);
     }
 
     .comentario-input:focus {
         outline: none;
-        border-color: var(--modal-input-focus, #3498db);
-        box-shadow: 0 0 0 2px var(--modal-input-focus-shadow, rgba(52, 152, 219, 0.2));
+        border-color: var(--modal-input-focus);
+        box-shadow: 0 0 0 2px var(--modal-input-focus-shadow);
     }
 
     .comentario-counter {
         text-align: right;
         font-size: 0.8rem;
-        color: var(--modal-counter, #6c757d);
+        color: var(--modal-counter);
         margin-top: 5px;
     }
 
-    /* Botón del formulario */
     #btnComentario {
-        background: var(--modal-button-bg, #3498db);
-        color: var(--modal-button-text, white);
+        background: var(--modal-button-bg);
+        color: var(--modal-button-text);
         border: none;
         padding: 10px 20px;
         border-radius: 8px;
@@ -198,15 +264,14 @@
     }
 
     #btnComentario:hover:not(:disabled) {
-        background: var(--modal-button-hover, #2980b9);
+        background: var(--modal-button-hover);
     }
 
     #btnComentario:disabled {
-        background: var(--modal-button-disabled, #bdc3c7);
+        background: var(--modal-button-disabled);
         cursor: not-allowed;
     }
 
-    /* Estilos para notificaciones del perfil */
     .profile-notification {
         position: fixed;
         top: 80px;
@@ -359,7 +424,6 @@
         transform: translateY(-1px);
     }
 
-    /* Indicador sutil de foto pendiente */
     .photo-pending-badge {
         position: absolute;
         top: -5px;
@@ -374,6 +438,7 @@
         justify-content: center;
         font-size: 0.7rem;
         animation: pulse 2s infinite;
+        z-index: 10;
     }
 
     @keyframes pulse {
@@ -382,9 +447,8 @@
         100% { transform: scale(1); }
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
-        .comentarios-modal {
+        .modal-content {
             width: 95%;
             margin: 10px;
         }
@@ -417,7 +481,7 @@
             height: 120px;
         }
     }
-</style>
+    </style>
 </head>
 <body>
     <div class="app">
@@ -428,6 +492,7 @@
                 <span>Ojo en la Vía</span>
             </div>
             <div class="user-menu">
+                <!-- Aquí iría el menú de usuario -->
             </div>
         </header>
 
@@ -439,7 +504,7 @@
                 <p>Cargando...</p>
             </div>
 
-            <!-- FEED DE INICIO - ESTRUCTURA ACTUALIZADA -->
+            <!-- FEED DE INICIO -->
             <div id="feedView">
                 <div class="feed-container">
                     <div class="posts-grid" id="postsContainer">
@@ -470,21 +535,16 @@
 
             <!-- Mapa -->
             <div id="mapView" style="display:none;">
-                <!--
-                <!-- BACKEND: $mapUrl es la URL del mapa generada por PHP -->
                 <iframe
-                    src="<?php /*echo $mapUrl; */?>"
+                    src="<?php echo htmlspecialchars($mapUrl); ?>"
                     title="Mapa de reportes de Ojo en la Vía"
+                    style="width: 100%; height: 100%; border: none;"
                 ></iframe>
-                -->
-                <!-- Botón DENTRO del mapa -->
-                 <!--
-                <!-- BACKEND: $mapUrl es la URL del mapa generada por PHP -->
+                
                 <button class="map-floating-button"
-                        onclick="window.open('<?php /*echo $mapUrl; */?>', '_blank')">
+                        onclick="window.open('<?php echo htmlspecialchars($mapUrl); ?>', '_blank')">
                     <i class="fas fa-expand"></i>
                 </button>
-                -->
             </div>
 
             <!-- Perfil -->
@@ -494,22 +554,21 @@
                     <div class="profile-hero">
                         <div class="profile-hero-content">
                             <div class="profile-avatar-container">
-                                <!-- BACKEND: $foto_perfil, $usuario_nombres y $usuario_apellidos vienen de la sesión PHP -->
-                                <?php /*if (!empty($foto_perfil)):*/ ?>
+                                <?php if (!empty($foto_perfil)): ?>
                                     <img id="profileAvatar" class="profile-main-avatar"
                                         src="<?php echo htmlspecialchars($foto_perfil); ?>"
                                         alt="Avatar del usuario"
                                         onerror="this.style.display='none'; document.getElementById('defaultProfileAvatar').style.display='flex';">
                                     <div id="defaultProfileAvatar" class="profile-default-avatar" style="display: none;">
-                                        <?php echo strtoupper(substr($usuario_nombres, 0, 1) . substr($usuario_apellidos ?? '', 0, 1)); ?>
+                                        <?php echo strtoupper(substr($usuario_nombres, 0, 1) . substr($usuario_apellidos, 0, 1)); ?>
                                     </div>
                                 <?php else: ?>
                                     <div id="defaultProfileAvatar" class="profile-default-avatar">
-                                        <?php echo strtoupper(substr($usuario_nombres, 0, 1) . substr($usuario_apellidos ?? '', 0, 1)); ?>
+                                        <?php echo strtoupper(substr($usuario_nombres, 0, 1) . substr($usuario_apellidos, 0, 1)); ?>
                                     </div>
                                     <img id="profileAvatar" class="profile-main-avatar" style="display: none;"
                                         src="" alt="Avatar del usuario">
-                                <?php /*endif; */?>
+                                <?php endif; ?>
                                 <div class="avatar-edit-btn" id="editAvatarBtn" title="Cambiar foto de perfil">
                                     <i class="fas fa-camera"></i>
                                 </div>
@@ -519,18 +578,15 @@
                                 </div>
                             </div>
                             <div class="profile-hero-info">
-                               <!-- BACKEND: $usuario_nombres y $usuario_apellidos vienen de la sesión PHP -->
-                               <!-- <h1 id="profileName"><?php /* echo htmlspecialchars($usuario_nombres . ' ' . ($usuario_apellidos ?? ''));*/ ?></h1> -->
+                                <h1 id="profileName"><?php echo htmlspecialchars($usuario_nombres . ' ' . $usuario_apellidos); ?></h1>
                                 <div class="profile-hero-stats">
                                     <div class="hero-stat">
                                         <i class="fas fa-envelope"></i>
-                                        <!-- BACKEND: $usuario_correo viene de la sesión PHP -->
-                                       <!--  <span id="profileEmail"><?php /*echo htmlspecialchars($usuario_correo); */?></span>   -->
+                                        <span id="profileEmail"><?php echo htmlspecialchars($usuario_correo); ?></span>
                                     </div>
                                     <div class="hero-stat">
                                         <i class="fas fa-phone"></i>
-                                        <!-- BACKEND: $usuario_telefono viene de la sesión PHP -->
-                                       <!--  <span id="profilePhone"><?php /*echo htmlspecialchars($usuario_telefono ?? 'No especificado');*/ ?></span>   -->
+                                        <span id="profilePhone"><?php echo htmlspecialchars($usuario_telefono ?: 'No especificado'); ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -552,7 +608,6 @@
                                         </div>
                                         <div class="contact-details">
                                             <div class="contact-label">Nombres</div>
-                                            <!-- BACKEND: $usuario_nombres viene de la sesión PHP -->
                                             <div class="contact-value" id="profileNames"><?php echo htmlspecialchars($usuario_nombres); ?></div>
                                         </div>
                                     </div>
@@ -562,8 +617,7 @@
                                         </div>
                                         <div class="contact-details">
                                             <div class="contact-label">Apellidos</div>
-                                            <!-- BACKEND: $usuario_apellidos viene de la sesión PHP -->
-                                            <div class="contact-value" id="profileLastnames"><?php echo htmlspecialchars($usuario_apellidos ?? 'No especificado'); ?></div>
+                                            <div class="contact-value" id="profileLastnames"><?php echo htmlspecialchars($usuario_apellidos ?: 'No especificado'); ?></div>
                                         </div>
                                     </div>
                                     <div class="contact-item">
@@ -572,7 +626,6 @@
                                         </div>
                                         <div class="contact-details">
                                             <div class="contact-label">Correo Electrónico</div>
-                                            <!-- BACKEND: $usuario_correo viene de la sesión PHP -->
                                             <div class="contact-value" id="profileEmailCard"><?php echo htmlspecialchars($usuario_correo); ?></div>
                                         </div>
                                     </div>
@@ -582,8 +635,7 @@
                                         </div>
                                         <div class="contact-details">
                                             <div class="contact-label">Teléfono</div>
-                                            <!-- BACKEND: $usuario_telefono viene de la sesión PHP -->
-                                            <div class="contact-value" id="profilePhoneCard"><?php echo htmlspecialchars($usuario_telefono ?? 'No especificado'); ?></div>
+                                            <div class="contact-value" id="profilePhoneCard"><?php echo htmlspecialchars($usuario_telefono ?: 'No especificado'); ?></div>
                                         </div>
                                     </div>
                                 </div>
@@ -601,18 +653,15 @@
                                 <div class="form-grid">
                                     <div class="form-group">
                                         <label for="inpNombres" class="form-label">Nombres</label>
-                                        <!-- BACKEND: value pre-relleno con $usuario_nombres de la sesión PHP -->
                                         <input type="text" name="nombres" id="inpNombres" class="form-input" placeholder="Tus nombres" value="<?php echo htmlspecialchars($usuario_nombres); ?>">
                                     </div>
                                     <div class="form-group">
                                         <label for="inpApellidos" class="form-label">Apellidos</label>
-                                        <!-- BACKEND: value pre-relleno con $usuario_apellidos de la sesión PHP -->
-                                        <input type="text" name="apellidos" id="inpApellidos" class="form-input" placeholder="Tus apellidos" value="<?php echo htmlspecialchars($usuario_apellidos ?? ''); ?>">
+                                        <input type="text" name="apellidos" id="inpApellidos" class="form-input" placeholder="Tus apellidos" value="<?php echo htmlspecialchars($usuario_apellidos); ?>">
                                     </div>
                                     <div class="form-group">
                                         <label for="inpTelefono" class="form-label">Teléfono</label>
-                                        <!-- BACKEND: value pre-relleno con $usuario_telefono de la sesión PHP -->
-                                        <input type="tel" name="telefono" id="inpTelefono" class="form-input" placeholder="Tu teléfono" value="<?php echo htmlspecialchars($usuario_telefono ?? ''); ?>">
+                                        <input type="tel" name="telefono" id="inpTelefono" class="form-input" placeholder="Tu teléfono" value="<?php echo htmlspecialchars($usuario_telefono); ?>">
                                     </div>
                                 </div>
 
@@ -708,11 +757,11 @@
                 </p>
 
                 <div class="confirmation-actions">
-                    <button class="btn-cancel" onclick="window.profileManager.cancelarFoto()">
+                    <button class="btn-cancel" onclick="window.profileManager?.cancelarFoto()">
                         <i class="fas fa-times"></i>
                         Cancelar
                     </button>
-                    <button class="btn-confirm" onclick="window.profileManager.confirmarFoto()">
+                    <button class="btn-confirm" onclick="window.profileManager?.confirmarFoto()">
                         <i class="fas fa-check"></i>
                         Sí, Usar Esta Foto
                     </button>
@@ -742,11 +791,11 @@
     </div>
 
     <!-- SECCIÓN DE COMENTARIOS (Modal) -->
-    <div id="comentariosSection" class="modal-overlay" style="display: none;">
-        <div class="modal-content comentarios-modal">
+    <div id="comentariosSection" class="modal-overlay">
+        <div class="modal-content">
             <div class="modal-header">
                 <h3>Comentarios del Reporte</h3>
-                <button class="modal-close" onclick="ComentariosManager.cerrarComentarios()">
+                <button class="modal-close" onclick="ComentariosManager?.cerrarComentarios()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -763,7 +812,7 @@
                 <!-- Formulario para agregar comentario -->
                 <form id="formComentario" class="comentario-form">
                     <input type="hidden" id="comentarioIdReporte" name="id_reporte">
-                    <input type="hidden" name="id_usuario" id="comentarioIdUsuario">
+                    <input type="hidden" name="id_usuario" id="comentarioIdUsuario" value="<?php echo $usuario_id; ?>">
 
                     <div class="form-group">
                         <textarea
@@ -789,74 +838,72 @@
 
     <!-- TEMPLATE PARA CADA POST (oculto) -->
     <template id="postTemplate">
-    <div class="post" data-post-id="">
-        <div class="post-header">
-            <img class="avatar" src="/imagenes/default-avatar.png" alt="Avatar del usuario">
-            <div class="user-info">
-                <div class="user-name"></div>
-                <div class="post-meta">
+        <div class="post" data-post-id="">
+            <div class="post-header">
+                <img class="avatar" src="/imagenes/default-avatar.png" alt="Avatar del usuario">
+                <div class="user-info">
+                    <div class="user-name"></div>
+                    <div class="post-meta">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span class="post-location">Ubicación en mapa</span>
+                        <i class="fas fa-clock"></i>
+                        <span class="post-time"></span>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span class="post-incident-type"></span>
+                    </div>
+                    <div class="post-status">
+                        <span class="status-badge"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Imágenes del reporte -->
+            <div class="post-images"></div>
+
+            <!-- Descripción del reporte -->
+            <div class="post-desc"></div>
+
+            <!-- Información adicional -->
+            <div class="post-additional-info">
+                <div class="info-item">
+                    <i class="fas fa-road"></i>
+                    <span class="street-info"></span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-calendar-day"></i>
+                    <span class="report-date"></span>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="post-actions">
+                <button class="btn-small like-btn">
+                    <i class="fas fa-heart"></i>
+                    <span class="like-count">0</span>
+                </button>
+                <button class="btn-small comment-btn">
+                    <i class="fas fa-comment"></i>
+                    <span>Comentar</span>
+                </button>
+                <button class="btn-small view-map-btn">
                     <i class="fas fa-map-marker-alt"></i>
-                    <span class="post-location">Ubicación en mapa</span>
-                    <i class="fas fa-clock"></i>
-                    <span class="post-time"></span>
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span class="post-incident-type"></span>
+                    <span>Ver en Mapa</span>
+                </button>
+            </div>
+
+            <!-- Sección de comentarios (inicialmente oculta) -->
+            <div class="post-comments" style="display: none;">
+                <div class="comments-container"></div>
+                <div class="add-comment">
+                    <input type="text" placeholder="Escribe un comentario..." class="comment-input">
+                    <button class="btn-small comment-submit">Enviar</button>
                 </div>
-                <div class="post-status">
-                    <span class="status-badge"></span>
-                </div>
             </div>
         </div>
-
-        <!-- Imágenes del reporte -->
-        <div class="post-images">
-            <!-- Las imágenes se insertarán aquí dinámicamente -->
-        </div>
-
-        <!-- Descripción del reporte -->
-        <div class="post-desc"></div>
-
-        <!-- Información adicional -->
-        <div class="post-additional-info">
-            <div class="info-item">
-                <i class="fas fa-road"></i>
-                <span class="street-info"></span>
-            </div>
-            <div class="info-item">
-                <i class="fas fa-calendar-day"></i>
-                <span class="report-date"></span>
-            </div>
-        </div>
-
-        <!-- Acciones -->
-        <div class="post-actions">
-            <button class="btn-small like-btn">
-                <i class="fas fa-heart"></i>
-                <span class="like-count">0</span>
-            </button>
-            <button class="btn-small comment-btn">
-                <i class="fas fa-comment"></i>
-                <span>Comentar</span>
-            </button>
-            <button class="btn-small view-map-btn">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Ver en Mapa</span>
-            </button>
-        </div>
-
-        <!-- Sección de comentarios (inicialmente oculta) -->
-        <div class="post-comments" style="display: none;">
-            <div class="comments-container"></div>
-            <div class="add-comment">
-                <input type="text" placeholder="Escribe un comentario..." class="comment-input">
-                <button class="btn-small comment-submit">Enviar</button>
-            </div>
-        </div>
-    </div>
-</template>
+    </template>
 
     <script>
-        // BACKEND: redirige al controlador PHP de cierre de sesión
+        // Función para cerrar sesión
         function cerrarSesion() {
             if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
                 window.location.href = '../logout.php';
@@ -866,9 +913,10 @@
         // Mejorar la experiencia en móviles
         document.addEventListener('touchstart', function() {}, { passive: true });
 
-        // BACKEND: $mapUrl es la URL del mapa generada por PHP
-        const mapUrl = '<?php echo $mapUrl; ?>';
+        // URL del mapa
+        const mapUrl = <?php echo json_encode($mapUrl); ?>;
 
+        // ProfileManager
         class ProfileManager {
             constructor() {
                 this.isEditing = false;
@@ -883,7 +931,6 @@
             }
 
             setupEventListeners() {
-                // Botón Editar Perfil
                 const btnEditProfile = document.getElementById('btnEditProfile');
                 if (btnEditProfile) {
                     btnEditProfile.addEventListener('click', () => {
@@ -891,10 +938,9 @@
                     });
                     console.log('✅ Event listener agregado al botón Editar Perfil');
                 } else {
-                    console.error('❌ No se encontró el botón btnEditProfile');
+                    console.warn('⚠️ No se encontró el botón btnEditProfile');
                 }
 
-                // Botón Cancelar
                 const btnCancelProfile = document.getElementById('btnCancelProfile');
                 if (btnCancelProfile) {
                     btnCancelProfile.addEventListener('click', () => {
@@ -902,7 +948,6 @@
                     });
                 }
 
-                // Botón Guardar
                 const btnSaveProfile = document.getElementById('btnSaveProfile');
                 if (btnSaveProfile) {
                     btnSaveProfile.addEventListener('click', () => {
@@ -923,9 +968,9 @@
                     fotoPerfilInput.addEventListener('change', (e) => {
                         this.handleImageUpload(e);
                     });
-                    console.log('Configuración de subida de foto completada');
+                    console.log('✅ Configuración de subida de foto completada');
                 } else {
-                    console.warn('Elementos de subida de foto no encontrados');
+                    console.warn('⚠️ Elementos de subida de foto no encontrados');
                 }
             }
 
@@ -933,7 +978,6 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // Validaciones
                 if (!file.type.startsWith('image/')) {
                     this.mostrarNotificacion('Por favor selecciona una imagen válida', 'error');
                     return;
@@ -944,10 +988,8 @@
                     return;
                 }
 
-                // Guardar el archivo temporalmente
                 this.tempPhotoFile = file;
 
-                // Mostrar preview en el modal
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     this.mostrarModalConfirmacion(e.target.result);
@@ -968,10 +1010,7 @@
                     badge.style.display = 'flex';
                 }
 
-                // Mostrar modal con animación
                 modal.classList.add('active');
-
-                // Bloquear scroll del body
                 document.body.style.overflow = 'hidden';
             }
 
@@ -985,7 +1024,6 @@
                     badge.style.display = 'none';
                 }
 
-                // Restaurar scroll del body
                 document.body.style.overflow = '';
             }
 
@@ -996,7 +1034,6 @@
                 }
 
                 try {
-                    // Mostrar loading en el botón de confirmar
                     const confirmBtn = document.querySelector('.btn-confirm');
                     if (confirmBtn) {
                         confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
@@ -1005,7 +1042,6 @@
 
                     console.log('Subiendo foto de perfil...');
 
-                    // BACKEND: envía la foto al controlador PHP mediante fetch POST
                     const formData = new FormData();
                     formData.append('foto_perfil', this.tempPhotoFile);
                     formData.append('action', 'actualizar_foto_perfil');
@@ -1017,19 +1053,13 @@
 
                     if (response.ok) {
                         const result = await response.json();
-                        console.log('Respuesta del servidor:', result);
+                        console.log('✅ Respuesta del servidor:', result);
 
                         if (result.success) {
-                            // ACTUALIZAR INMEDIATAMENTE la foto en la UI
                             this.actualizarFotoEnUI(result.foto_perfil);
-
-                            // Ocultar modal
                             this.ocultarModalConfirmacion();
-
-                            // Limpiar el archivo temporal
                             this.tempPhotoFile = null;
 
-                            // Limpiar input de archivo
                             const fotoInput = document.getElementById('fotoPerfil');
                             if (fotoInput) {
                                 fotoInput.value = '';
@@ -1044,10 +1074,9 @@
                     }
 
                 } catch (error) {
-                    console.error('Error al confirmar foto:', error);
+                    console.error('❌ Error al confirmar foto:', error);
                     this.mostrarNotificacion('Error al actualizar foto: ' + error.message, 'error');
 
-                    // Restaurar botón de confirmar
                     const confirmBtn = document.querySelector('.btn-confirm');
                     if (confirmBtn) {
                         confirmBtn.innerHTML = '<i class="fas fa-check"></i> Sí, Usar Esta Foto';
@@ -1057,25 +1086,18 @@
             }
 
             cancelarFoto() {
-                // Ocultar modal
                 this.ocultarModalConfirmacion();
-
-                // Restaurar avatar original
                 this.restaurarAvatarOriginal();
-
-                // Limpiar archivo temporal
                 this.tempPhotoFile = null;
 
-                // Limpiar input de archivo
                 const fotoInput = document.getElementById('fotoPerfil');
                 if (fotoInput) {
                     fotoInput.value = '';
                 }
 
-                this.mostrarNotificacion(' Foto cancelada', 'info');
+                this.mostrarNotificacion('Foto cancelada', 'info');
             }
 
-            // Método para actualizar la foto
             actualizarFotoEnUI(nuevaFotoUrl) {
                 console.log('Actualizando avatar con nueva URL:', nuevaFotoUrl);
 
@@ -1084,43 +1106,38 @@
 
                 if (profileAvatar && defaultProfileAvatar) {
                     if (nuevaFotoUrl) {
-                        // Asegurar URL HTTPS en producción
                         let finalUrl = nuevaFotoUrl;
-                        if (window.location.protocol === 'https:' && nuevaFotoUrl.startsWith('http:')) {
+                        if (window.__CONFIG__.esProduccion && nuevaFotoUrl.startsWith('http:')) {
                             finalUrl = nuevaFotoUrl.replace('http:', 'https:');
                         }
 
-                        profileAvatar.src = finalUrl + '?t=' + new Date().getTime(); // Cache bust
+                        profileAvatar.src = finalUrl + '?t=' + new Date().getTime();
                         profileAvatar.style.display = 'block';
                         defaultProfileAvatar.style.display = 'none';
 
-                        // Actualizar también en la sesión/variable global
                         window.usuarioFotoPerfil = finalUrl;
-                        console.log('Avatar actualizado inmediatamente');
+                        console.log('✅ Avatar actualizado inmediatamente');
                     }
                 }
             }
 
             async guardarPerfil() {
                 try {
-                    // BACKEND: envía los datos del perfil al controlador PHP mediante fetch POST
                     const formData = new FormData();
-
-                    // Solo datos del formulario, NO la foto
-                    formData.append('nombres', document.getElementById('inpNombres').value);
-                    formData.append('apellidos', document.getElementById('inpApellidos').value);
-                    formData.append('telefono', document.getElementById('inpTelefono').value);
+                    formData.append('nombres', document.getElementById('inpNombres')?.value || '');
+                    formData.append('apellidos', document.getElementById('inpApellidos')?.value || '');
+                    formData.append('telefono', document.getElementById('inpTelefono')?.value || '');
                     formData.append('action', 'actualizar_perfil');
 
                     console.log('Guardando datos del perfil...');
 
-                    // Mostrar loading
                     const btnSave = document.getElementById('btnSaveProfile');
-                    const originalText = btnSave.innerHTML;
-                    btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-                    btnSave.disabled = true;
+                    const originalText = btnSave?.innerHTML;
+                    if (btnSave) {
+                        btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                        btnSave.disabled = true;
+                    }
 
-                    // BACKEND: controlador PHP que procesa la actualización del perfil
                     const response = await fetch('../controllers/perfilcontrolador.php', {
                         method: 'POST',
                         body: formData
@@ -1128,15 +1145,11 @@
 
                     if (response.ok) {
                         const result = await response.json();
-                        console.log(' Respuesta del servidor:', result);
+                        console.log('✅ Respuesta del servidor:', result);
 
                         if (result.success) {
-                            // Actualizar la UI con los nuevos datos
                             this.actualizarUI(result.data);
-
                             this.mostrarNotificacion('Perfil actualizado correctamente', 'success');
-
-                            // Salir del modo edición
                             this.toggleEditMode();
                         } else {
                             throw new Error(result.message || 'Error al actualizar perfil');
@@ -1146,10 +1159,9 @@
                     }
 
                 } catch (error) {
-                    console.error('Error al guardar perfil:', error);
+                    console.error('❌ Error al guardar perfil:', error);
                     this.mostrarNotificacion('Error al actualizar perfil: ' + error.message, 'error');
                 } finally {
-                    // Restaurar botón
                     const btnSave = document.getElementById('btnSaveProfile');
                     if (btnSave) {
                         btnSave.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
@@ -1164,19 +1176,20 @@
                 const profileInfo = document.getElementById('profileInfoCard');
                 const profileForm = document.getElementById('profileForm');
 
-                if (this.isEditing) {
-                    profileInfo.style.display = 'none';
-                    profileForm.style.display = 'block';
-                    console.log(' Modo edición activado');
-                } else {
-                    // Al cancelar, limpiar foto temporal si existe
-                    if (this.tempPhotoFile) {
-                        this.cancelarFoto();
-                    }
+                if (profileInfo && profileForm) {
+                    if (this.isEditing) {
+                        profileInfo.style.display = 'none';
+                        profileForm.style.display = 'block';
+                        console.log('✏️ Modo edición activado');
+                    } else {
+                        if (this.tempPhotoFile) {
+                            this.cancelarFoto();
+                        }
 
-                    profileInfo.style.display = 'block';
-                    profileForm.style.display = 'none';
-                    console.log('Modo visualización activado');
+                        profileInfo.style.display = 'block';
+                        profileForm.style.display = 'none';
+                        console.log('👁️ Modo visualización activado');
+                    }
                 }
             }
 
@@ -1184,11 +1197,13 @@
                 console.log('Actualizando UI con:', userData);
 
                 const elementsToUpdate = {
-                    'profileName': userData.nombres + ' ' + userData.apellidos,
-                    'profileNames': userData.nombres,
-                    'profileLastnames': userData.apellidos,
-                    'profilePhone': userData.telefono,
-                    'profilePhoneCard': userData.telefono
+                    'profileName': (userData.nombres || '') + ' ' + (userData.apellidos || ''),
+                    'profileNames': userData.nombres || '',
+                    'profileLastnames': userData.apellidos || '',
+                    'profileEmail': userData.correo || '',
+                    'profilePhone': userData.telefono || '',
+                    'profileEmailCard': userData.correo || '',
+                    'profilePhoneCard': userData.telefono || ''
                 };
 
                 for (const [id, value] of Object.entries(elementsToUpdate)) {
@@ -1198,7 +1213,7 @@
                     }
                 }
 
-                console.log('UI actualizada con nuevos datos');
+                console.log('✅ UI actualizada con nuevos datos');
             }
 
             restaurarAvatarOriginal() {
@@ -1208,7 +1223,7 @@
                 if (profileAvatar && defaultProfileAvatar) {
                     if (window.usuarioFotoPerfil) {
                         let finalUrl = window.usuarioFotoPerfil;
-                        if (window.location.protocol === 'https:' && finalUrl.startsWith('http:')) {
+                        if (window.__CONFIG__.esProduccion && finalUrl.startsWith('http:')) {
                             finalUrl = finalUrl.replace('http:', 'https:');
                         }
 
@@ -1223,25 +1238,22 @@
             }
 
             mostrarNotificacion(mensaje, tipo = 'info') {
-                // Crear notificación temporal
                 const notification = document.createElement('div');
                 notification.className = `profile-notification profile-notification-${tipo}`;
                 notification.innerHTML = `
                     <div class="notification-content">
-                        <i class="fas fa-${tipo === 'success' ? 'check' : tipo === 'error' ? 'exclamation-triangle' : 'info'}"></i>
+                        <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
                         <span>${mensaje}</span>
                     </div>
                 `;
 
                 document.body.appendChild(notification);
 
-                // Animación de entrada
                 setTimeout(() => {
                     notification.style.transform = 'translateX(0)';
                     notification.style.opacity = '1';
                 }, 100);
 
-                // Auto-eliminar después de 3 segundos
                 setTimeout(() => {
                     notification.style.transform = 'translateX(400px)';
                     notification.style.opacity = '0';
@@ -1260,33 +1272,40 @@
             window.profileManager = new ProfileManager();
 
             const navItems = document.querySelectorAll('.nav-item');
-            const views = document.querySelectorAll('#feedView, #notificationsView, #mapView, #profileView');
+            const views = {
+                feedView: document.getElementById('feedView'),
+                notificationsView: document.getElementById('notificationsView'),
+                mapView: document.getElementById('mapView'),
+                profileView: document.getElementById('profileView')
+            };
 
             navItems.forEach(item => {
                 item.addEventListener('click', function() {
                     const target = this.getAttribute('data-target');
 
-                    // Remover clase active de todos los items
                     navItems.forEach(nav => nav.classList.remove('active'));
-                    // Agregar clase active al item clickeado
                     this.classList.add('active');
 
                     // Ocultar todas las vistas
-                    views.forEach(view => view.style.display = 'none');
+                    Object.values(views).forEach(view => {
+                        if (view) view.style.display = 'none';
+                    });
 
                     // Mostrar la vista objetivo
-                    const targetView = document.getElementById(target);
-                    if (targetView) {
-                        targetView.style.display = 'block';
+                    if (views[target]) {
+                        views[target].style.display = 'block';
                     }
                 });
             });
 
             // Mostrar feedView por defecto
-            document.getElementById('feedView').style.display = 'block';
+            if (views.feedView) {
+                views.feedView.style.display = 'block';
+            }
         });
     </script>
-    <!-- BACKEND: scripts del servidor que gestionan SSE, notificaciones, comentarios, panel y mapa -->
+
+    <!-- Scripts que existirán en el futuro -->
     <script src="components/sse-notificaciones.js"></script>
     <script src="components/notificaciones.js"></script>
     <script src="components/comentarios.js"></script>
@@ -1294,95 +1313,98 @@
     <script type="module" src="components/mapa/index.js"></script>
     <script type="module" src="components/formulario/index.js"></script>
 
-
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
-            if (window.SSEManager) {
+            if (window.SSEManager?.inicializar) {
                 window.SSEManager.inicializar();
                 console.log('✅ SSE Manager unificado inicializado');
+            } else {
+                console.log('ℹ️ SSE Manager estará disponible próximamente');
             }
         }, 500);
     });
 
     window.addEventListener('beforeunload', function() {
-        if (window.SSEManager) {
+        if (window.SSEManager?.destruir) {
             window.SSEManager.destruir();
         }
     });
-</script>
+    </script>
+
     <script>
     // Detectar modo claro/oscuro del sistema y aplicar estilos
     function aplicarModoColor() {
         const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const root = document.documentElement;
 
         if (isDarkMode) {
-            // Variables CSS para modo oscuro
-            document.documentElement.style.setProperty('--modal-bg', '#1a1a1a');
-            document.documentElement.style.setProperty('--modal-text', '#e0e0e0');
-            document.documentElement.style.setProperty('--modal-heading', '#ffffff');
-            document.documentElement.style.setProperty('--modal-border', '#333333');
-            document.documentElement.style.setProperty('--modal-close', '#888888');
-            document.documentElement.style.setProperty('--modal-close-hover-bg', '#333333');
-            document.documentElement.style.setProperty('--modal-close-hover', '#ff6b6b');
-            document.documentElement.style.setProperty('--modal-list-bg', '#222222');
-            document.documentElement.style.setProperty('--modal-item-border', '#333333');
-            document.documentElement.style.setProperty('--modal-user', '#ffffff');
-            document.documentElement.style.setProperty('--modal-date', '#aaaaaa');
-            document.documentElement.style.setProperty('--modal-input-bg', '#2d2d2d');
-            document.documentElement.style.setProperty('--modal-input-text', '#e0e0e0');
-            document.documentElement.style.setProperty('--modal-input-border', '#444444');
-            document.documentElement.style.setProperty('--modal-input-focus', '#3498db');
-            document.documentElement.style.setProperty('--modal-input-focus-shadow', 'rgba(52, 152, 219, 0.3)');
-            document.documentElement.style.setProperty('--modal-counter', '#888888');
-            document.documentElement.style.setProperty('--modal-button-bg', '#3498db');
-            document.documentElement.style.setProperty('--modal-button-text', '#ffffff');
-            document.documentElement.style.setProperty('--modal-button-hover', '#2980b9');
-            document.documentElement.style.setProperty('--modal-button-disabled', '#555555');
+            root.style.setProperty('--modal-bg', '#1a1a1a');
+            root.style.setProperty('--modal-text', '#e0e0e0');
+            root.style.setProperty('--modal-heading', '#ffffff');
+            root.style.setProperty('--modal-border', '#333333');
+            root.style.setProperty('--modal-close', '#888888');
+            root.style.setProperty('--modal-close-hover-bg', '#333333');
+            root.style.setProperty('--modal-close-hover', '#ff6b6b');
+            root.style.setProperty('--modal-list-bg', '#222222');
+            root.style.setProperty('--modal-item-border', '#333333');
+            root.style.setProperty('--modal-user', '#ffffff');
+            root.style.setProperty('--modal-date', '#aaaaaa');
+            root.style.setProperty('--modal-input-bg', '#2d2d2d');
+            root.style.setProperty('--modal-input-text', '#e0e0e0');
+            root.style.setProperty('--modal-input-border', '#444444');
+            root.style.setProperty('--modal-input-focus', '#3498db');
+            root.style.setProperty('--modal-input-focus-shadow', 'rgba(52, 152, 219, 0.3)');
+            root.style.setProperty('--modal-counter', '#888888');
+            root.style.setProperty('--modal-button-bg', '#3498db');
+            root.style.setProperty('--modal-button-text', '#ffffff');
+            root.style.setProperty('--modal-button-hover', '#2980b9');
+            root.style.setProperty('--modal-button-disabled', '#555555');
         } else {
-            // Variables CSS para modo claro (valores por defecto)
-            document.documentElement.style.setProperty('--modal-bg', 'white');
-            document.documentElement.style.setProperty('--modal-text', '#2c3e50');
-            document.documentElement.style.setProperty('--modal-heading', '#2c3e50');
-            document.documentElement.style.setProperty('--modal-border', '#e9ecef');
-            document.documentElement.style.setProperty('--modal-close', '#6c757d');
-            document.documentElement.style.setProperty('--modal-close-hover-bg', '#f8f9fa');
-            document.documentElement.style.setProperty('--modal-close-hover', '#e74c3c');
-            document.documentElement.style.setProperty('--modal-list-bg', 'transparent');
-            document.documentElement.style.setProperty('--modal-item-border', '#f1f3f4');
-            document.documentElement.style.setProperty('--modal-user', '#2c3e50');
-            document.documentElement.style.setProperty('--modal-date', '#6c757d');
-            document.documentElement.style.setProperty('--modal-input-bg', 'white');
-            document.documentElement.style.setProperty('--modal-input-text', '#495057');
-            document.documentElement.style.setProperty('--modal-input-border', '#ddd');
-            document.documentElement.style.setProperty('--modal-input-focus', '#3498db');
-            document.documentElement.style.setProperty('--modal-input-focus-shadow', 'rgba(52, 152, 219, 0.2)');
-            document.documentElement.style.setProperty('--modal-counter', '#6c757d');
-            document.documentElement.style.setProperty('--modal-button-bg', '#3498db');
-            document.documentElement.style.setProperty('--modal-button-text', 'white');
-            document.documentElement.style.setProperty('--modal-button-hover', '#2980b9');
-            document.documentElement.style.setProperty('--modal-button-disabled', '#bdc3c7');
+            root.style.setProperty('--modal-bg', 'white');
+            root.style.setProperty('--modal-text', '#2c3e50');
+            root.style.setProperty('--modal-heading', '#2c3e50');
+            root.style.setProperty('--modal-border', '#e9ecef');
+            root.style.setProperty('--modal-close', '#6c757d');
+            root.style.setProperty('--modal-close-hover-bg', '#f8f9fa');
+            root.style.setProperty('--modal-close-hover', '#e74c3c');
+            root.style.setProperty('--modal-list-bg', 'transparent');
+            root.style.setProperty('--modal-item-border', '#f1f3f4');
+            root.style.setProperty('--modal-user', '#2c3e50');
+            root.style.setProperty('--modal-date', '#6c757d');
+            root.style.setProperty('--modal-input-bg', 'white');
+            root.style.setProperty('--modal-input-text', '#495057');
+            root.style.setProperty('--modal-input-border', '#ddd');
+            root.style.setProperty('--modal-input-focus', '#3498db');
+            root.style.setProperty('--modal-input-focus-shadow', 'rgba(52, 152, 219, 0.2)');
+            root.style.setProperty('--modal-counter', '#6c757d');
+            root.style.setProperty('--modal-button-bg', '#3498db');
+            root.style.setProperty('--modal-button-text', 'white');
+            root.style.setProperty('--modal-button-hover', '#2980b9');
+            root.style.setProperty('--modal-button-disabled', '#bdc3c7');
         }
     }
 
-    // Aplicar modo al cargar y cuando cambie
     document.addEventListener('DOMContentLoaded', function() {
         aplicarModoColor();
-
-        // Escuchar cambios en la preferencia de color
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', aplicarModoColor);
     });
-</script>
+    </script>
+
     <script>
-        // Inicializar ComentariosManager después de cargar el DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof ComentariosManager !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar si ComentariosManager existe y tiene método inicializar
+        if (typeof ComentariosManager !== 'undefined') {
+            if (ComentariosManager.inicializar) {
                 ComentariosManager.inicializar();
-                console.log('ComentariosManager inicializado correctamente');
+                console.log('✅ ComentariosManager inicializado correctamente');
             } else {
-                console.error('ComentariosManager no está definidao');
+                console.warn('⚠️ ComentariosManager no tiene método inicializar');
             }
-        });
+        } else {
+            console.log('ℹ️ ComentariosManager estará disponible próximamente');
+        }
+    });
     </script>
 </body>
 </html>

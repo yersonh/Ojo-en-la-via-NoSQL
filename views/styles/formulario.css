@@ -1,0 +1,1131 @@
+/* FORMULARIO TEMA OSCURO - Estilos modernos */
+
+:root {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3d3d3d;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --text-tertiary: #666666;
+    --accent-blue: #3b82f6;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+    --accent-purple: #8b5cf6;
+    --accent-yellow: #f59e0b;
+    --border-color: #404040;
+    --border-hover: #555555;
+    --shadow-light: rgba(0, 0, 0, 0.3);
+    --shadow-medium: rgba(0, 0, 0, 0.5);
+    --shadow-heavy: rgba(0, 0, 0, 0.7);
+}
+
+/* Contenedor principal del formulario */
+#formReporte {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Panel del formulario */
+#panel {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+#panel h2 {
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 10px;
+}
+
+/* Labels modernos */
+#formReporte label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: block;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+/* Grupos de formulario mejorados */
+.form-group {
+    margin-bottom: 0;
+}
+
+/* Campos de entrada en tema oscuro */
+#formReporte select,
+#formReporte textarea,
+#formReporte input[type="text"],
+#formReporte input[type="file"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+#formReporte select:focus,
+#formReporte textarea:focus,
+#formReporte input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background: var(--bg-tertiary);
+}
+
+/* Textarea específico */
+#formReporte textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+/* Coordenadas en tema oscuro */
+.coordenadas {
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    padding: 16px;
+    border-radius: 8px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    margin-top: 8px;
+    color: var(--text-primary);
+}
+
+.coordenadas span {
+    font-weight: 600;
+    color: var(--accent-blue);
+}
+
+/* SECCIÓN DE IMAGEN EN TEMA OSCURO */
+.campo-imagen {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px dashed var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.campo-imagen:hover {
+    border-color: var(--accent-blue);
+    background: var(--bg-tertiary);
+}
+
+/* Opciones de imagen mejoradas */
+.opciones-imagen {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.btn-camara, .btn-archivo {
+    width: 180px;
+    flex: auto;
+    padding: 14px 20px;
+    border: 2px solid var(--accent-blue);
+    background: var(--bg-secondary);
+    color: var(--accent-blue);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-camara:hover, .btn-archivo:hover {
+    background: var(--accent-blue);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-medium);
+}
+
+.separador {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Preview de imagen en tema oscuro */
+.preview {
+    position: relative;
+    margin-top: 16px;
+    text-align: center;
+}
+
+#previewImg {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 2px 8px var(--shadow-light);
+    transition: all 0.3s ease;
+}
+
+#previewImg:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px var(--shadow-medium);
+}
+
+.sin-imagen {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.sin-imagen:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    background: var(--bg-tertiary);
+}
+
+/* Cámara en tema oscuro */
+#videoCamara {
+    background: #000;
+    border-radius: 8px;
+    margin-top: 16px;
+    box-shadow: 0 4px 12px var(--shadow-heavy);
+    border: 1px solid var(--border-color);
+}
+
+.controles-camara {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.btn-capturar {
+    background: linear-gradient(135deg, var(--accent-green), #059669);
+    border: none;
+    padding: 14px 20px;
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    flex: 1;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-capturar:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-cancelar {
+    background: linear-gradient(135deg, var(--accent-red), #dc2626);
+    border: none;
+    padding: 14px 20px;
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    flex: 1;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-cancelar:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Botón principal en tema oscuro */
+#submitBtn {
+    background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
+    color: var(--text-primary);
+    border: none;
+    padding: 16px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px var(--shadow-medium);
+}
+
+#submitBtn:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+#submitBtn:disabled {
+    background: var(--text-tertiary);
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Loading en tema oscuro */
+.loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    border-radius: 8px;
+    margin: 16px 0;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Alertas en tema oscuro */
+.alert {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+    color: var(--accent-green);
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.alert-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+    color: var(--accent-red);
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+}
+
+/* ===== ESTILOS PARA MODO OFFLINE ===== */
+
+/* Banner de estado offline */
+#connection-status-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--accent-yellow), #d97706);
+    color: var(--text-primary);
+    padding: 12px 20px;
+    text-align: center;
+    font-weight: bold;
+    z-index: 10000;
+    box-shadow: 0 2px 10px var(--shadow-heavy);
+    animation: slideDown 0.5s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* ===== ESTILOS PARA MODO OFFLINE ===== */
+
+/* Banner de estado offline */
+#connection-status-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--accent-yellow), #d97706);
+    color: var(--text-primary);
+    padding: 12px 20px;
+    text-align: center;
+    font-weight: bold;
+    z-index: 10000;
+    box-shadow: 0 2px 10px var(--shadow-heavy);
+    animation: slideDown 0.5s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Formulario en modo offline - SOLO EL INDICADOR */
+#formReporte.offline-mode {
+    position: relative; /* Solo para posicionar el indicador */
+    /* MANTENER todos los estilos normales del formulario */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+#formReporte.offline-mode::before {
+    content: '📶 Modo offline';
+    position: absolute;
+    top: -8px;
+    right: 15px;
+    background: var(--accent-yellow);
+    color: var(--text-primary);
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: bold;
+    z-index: 10;
+}
+
+/* Asegurar que NINGÚN elemento dentro se vea afectado */
+#formReporte.offline-mode * {
+    /* Reset forzado para evitar herencia de estilos */
+    border-color: inherit !important;
+    background: inherit !important;
+    color: inherit !important;
+}
+
+/* Específicamente prevenir que los campos cambien */
+#formReporte.offline-mode select,
+#formReporte.offline-mode textarea,
+#formReporte.offline-mode input,
+#formReporte.offline-mode .form-group,
+#formReporte.offline-mode .campo-imagen {
+    border-color: var(--border-color) !important;
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+#formReporte.offline-mode select:focus,
+#formReporte.offline-mode textarea:focus,
+#formReporte.offline-mode input:focus {
+    border-color: var(--accent-blue) !important;
+    background: var(--bg-tertiary) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Botón de enviar en modo offline */
+.offline-submit {
+    background: linear-gradient(135deg, var(--accent-yellow), #d97706) !important;
+    border-color: var(--accent-yellow) !important;
+    color: var(--text-primary) !important;
+}
+
+.offline-submit:hover {
+    background: linear-gradient(135deg, #d97706, #b45309) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4) !important;
+}
+
+.offline-submit:disabled {
+    background: var(--text-tertiary) !important;
+    transform: none !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+}
+
+/* Alertas para modo offline */
+.alert-offline {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+    color: var(--accent-yellow);
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+    border-left: 4px solid var(--accent-yellow);
+}
+
+/* Animación para éxito offline */
+@keyframes pulse-offline {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    }
+}
+
+.offline-success-animation {
+    animation: pulse-offline 0.6s ease-in-out;
+}
+
+/* Badge de reportes pendientes */
+#badge-pendientes {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background: linear-gradient(135deg, var(--accent-red), #dc2626);
+    color: var(--text-primary);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 10000;
+    box-shadow: 0 2px 10px var(--shadow-heavy);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#badge-pendientes:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
+}
+
+/* Panel de reportes pendientes */
+#panel-pendientes {
+    position: fixed;
+    top: 50px;
+    left: 15px;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px var(--shadow-heavy);
+    z-index: 10001;
+    min-width: 280px;
+    max-width: 350px;
+    display: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+#panel-pendientes > div:first-child {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-secondary);
+    border-radius: 8px 8px 0 0;
+}
+
+#panel-pendientes > div:first-child strong {
+    color: var(--text-primary);
+}
+
+#cerrar-panel {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+#cerrar-panel:hover {
+    color: var(--accent-red);
+}
+
+#lista-pendientes {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--bg-primary);
+}
+
+/* Items de reportes pendientes */
+.pendiente-item {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.3s ease;
+}
+
+.pendiente-item:hover {
+    background: var(--bg-secondary);
+}
+
+.pendiente-item:last-child {
+    border-bottom: none;
+}
+
+.pendiente-info {
+    flex: 1;
+}
+
+.pendiente-id {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.pendiente-fecha {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.pendiente-estado {
+    background: var(--accent-yellow);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* Botón de sincronizar en el panel */
+#btn-sincronizar {
+    background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
+    color: var(--text-primary);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+#btn-sincronizar:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+#btn-sincronizar:disabled {
+    background: var(--text-tertiary);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Alertas de fallback para cuando no hay elementos de alerta */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Sección de comentarios en tema oscuro */
+.comentarios-section {
+    margin-top: 30px;
+    border-top: 2px solid var(--border-color);
+    padding-top: 24px;
+}
+
+.comentarios-section h3 {
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.comentarios-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    background: var(--bg-secondary);
+}
+
+.form-comentario {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#textoComentario {
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 80px;
+    transition: all 0.3s ease;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+#textoComentario:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background: var(--bg-tertiary);
+}
+
+#btnComentario {
+    background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+    color: var(--text-primary);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+#btnComentario:hover {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* ===== CORRECCIONES PARA MANTENER TEMA OSCURO ===== */
+
+/* Estados de los campos - CORREGIDOS para mantener tema oscuro */
+.campo-error {
+    border-color: var(--accent-red) !important;
+    background: var(--bg-secondary) !important; /* Mantener fondo oscuro */
+}
+
+.campo-exito {
+    border-color: var(--accent-green) !important;
+    background: var(--bg-secondary) !important; /* Mantener fondo oscuro */
+}
+
+/* Estados de validación visual - CORREGIDOS para mantener tema oscuro */
+#formReporte select:valid,
+#formReporte textarea:valid,
+#formReporte input:valid {
+    border-color: var(--accent-green);
+    background: var(--bg-secondary) !important; /* Mantener fondo oscuro */
+}
+
+#formReporte select:invalid,
+#formReporte textarea:invalid,
+#formReporte input:invalid {
+    border-color: var(--border-color);
+    background: var(--bg-secondary) !important; /* Mantener fondo oscuro */
+}
+
+/* Asegurar que los campos mantengan el tema oscuro en todos los estados */
+#formReporte select,
+#formReporte textarea,
+#formReporte input[type="text"],
+#formReporte input[type="file"] {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+#formReporte select:focus,
+#formReporte textarea:focus,
+#formReporte input[type="text"]:focus {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Forzar tema oscuro en todos los estados del select */
+#tipo {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+#tipo:focus {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+#tipo option {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+#tipo option:checked {
+    background: var(--accent-blue) !important;
+    color: var(--text-primary) !important;
+}
+
+#tipo option:hover {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Contador de caracteres */
+.contador-caracteres {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: right;
+    margin-top: 4px;
+    transition: color 0.3s ease;
+}
+
+.contador-caracteres .contador-actual {
+    font-weight: 600;
+}
+
+.campo-focus {
+    position: relative;
+}
+
+.campo-focus::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* Mensajes de error */
+.mensaje-error {
+    color: var(--accent-red);
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mensaje-error::before {
+    content: '⚠️';
+    font-size: 10px;
+}
+
+/* Botones con estados mejorados */
+.btn-camara:disabled,
+.btn-archivo:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Efectos de transición para la cámara */
+#videoCamara {
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+#videoCamara[style*="display: block"] {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Confirmaciones temporales */
+.confirmacion-foto {
+    animation: fadeInOut 2s ease-in-out;
+    background: var(--accent-green);
+    color: var(--text-primary);
+}
+
+/* Loading states mejorados */
+.btn-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Efecto de shake para errores */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Placeholders mejorados */
+#formReporte ::placeholder {
+    color: var(--text-tertiary);
+    font-size: 13px;
+    transition: color 0.3s ease;
+}
+
+#formReporte :focus::placeholder {
+    color: var(--text-secondary);
+}
+
+/* Scrollbar personalizado para tema oscuro */
+.comentarios-list::-webkit-scrollbar,
+#lista-pendientes::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comentarios-list::-webkit-scrollbar-track,
+#lista-pendientes::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 3px;
+}
+
+.comentarios-list::-webkit-scrollbar-thumb,
+#lista-pendientes::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.comentarios-list::-webkit-scrollbar-thumb:hover,
+#lista-pendientes::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-blue);
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+    #formReporte {
+        gap: 16px;
+        padding: 15px; /* Añadir padding en móvil */
+    }
+
+    .opciones-imagen {
+        flex-direction: column;
+    }
+
+    .separador {
+        display: none;
+    }
+
+    .btn-camara, .btn-archivo {
+        width: 100%;
+    }
+
+    .controles-camara {
+        flex-direction: column;
+    }
+
+    .btn-capturar, .btn-cancelar {
+        padding: 16px;
+    }
+
+    #submitBtn {
+        padding: 18px;
+        font-size: 16px;
+    }
+
+    .campo-imagen {
+        padding: 16px;
+    }
+
+    /* Responsive para modo offline */
+    #connection-status-message {
+        font-size: 12px;
+        padding: 10px 15px;
+        line-height: 1.4;
+    }
+
+    #badge-pendientes {
+        top: 10px;
+        left: 10px;
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+    }
+
+    #panel-pendientes {
+        top: 45px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+        min-width: auto;
+        max-height: 40vh;
+    }
+
+}
+
+@media (max-width: 480px) {
+    #formReporte select,
+    #formReporte textarea,
+    #formReporte input[type="text"] {
+        padding: 14px;
+        font-size: 16px; /* Previene zoom en iOS */
+    }
+
+    .btn-camara, .btn-archivo {
+        padding: 16px;
+        font-size: 16px;
+    }
+
+    #submitBtn {
+        padding: 20px;
+        font-size: 18px;
+    }
+
+    .comentarios-section h3 {
+        font-size: 16px;
+    }
+
+    #textoComentario {
+        min-height: 60px;
+    }
+
+    #btnComentario {
+        padding: 14px;
+    }
+}
+
+/* Efectos de transición para todos los elementos interactivos */
+#formReporte * {
+    transition: all 0.2s ease;
+}
+
+/* Focus states mejorados */
+#formReporte select:focus-visible,
+#formReporte textarea:focus-visible,
+#formReporte input:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* Animaciones adicionales */
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; transform: translateY(-10px); }
+    50% { opacity: 1; transform: translateY(0); }
+}
+
+.spinner-mini {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--text-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* CORRECCIÓN ESPECÍFICA PARA EL BUG DEL SELECT - NO MODIFICA ESTILOS EXISTENTES */
+
+/* Asegurar que las opciones del select sean visibles en tema oscuro */
+#tipo option {
+    background: #2d2d2d !important;
+    color: #ffffff !important;
+    padding: 12px !important;
+    font-size: 14px !important;
+}
+
+/* Cuando una opción está seleccionada o en hover */
+#tipo option:checked {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+#tipo option:hover {
+    background: #404040 !important;
+    color: #ffffff !important;
+}
+
+/* Asegurar que el select mantenga su z-index cuando está abierto */
+#tipo {
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* Forzar que el dropdown use los estilos del sistema cuando sea necesario */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    #tipo {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+    }
+
+    #tipo:focus {
+        z-index: 1001 !important;
+    }
+}
+
+/* Indicador de estado de conexión */
+.status-indicator {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 10000;
+    transition: all 0.3s ease;
+}
+
+.status-online {
+    background: #10b981;
+    color: white;
+}
+
+.status-offline {
+    background: #f59e0b;
+    color: white;
+}
+
+/* Botón de sincronización manual */
+.btn-sincronizar {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.btn-sincronizar:hover {
+    background: #2563eb;
+}
+
+/* Estados de carga para sincronización */
+.sincronizando {
+    position: relative;
+    color: transparent !important;
+}
+
+.sincronizando::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--text-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
