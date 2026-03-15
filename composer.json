@@ -4,9 +4,8 @@
     "type": "project",
     "require": {
         "php": ">=8.2",
-        "ext-pdo": "*",
-        "ext-pdo_pgsql": "*",
-        "ext-pgsql": "*",
+        "mongodb/mongodb": "^1.18",
+        "ext-mongodb": "*",
         "ext-redis": "*",
         "ext-curl": "*",
         "ext-mbstring": "*"

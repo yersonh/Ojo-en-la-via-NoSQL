@@ -13,7 +13,7 @@ chmod -R 777 storage
 echo "🔍 Verificando configuración..."
 echo "PHP Version: $(php -v | head -n 1)"
 echo "Extensiones cargadas:"
-php -m | grep -E "pdo_pgsql|pgsql|redis|curl"
+php -m | grep -E "mongodb|redis|curl"
 
 # Iniciar servidor PHP
 echo "🚀 Iniciando servidor PHP en puerto $PORT"

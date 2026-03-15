@@ -1,5 +1,17 @@
 [phases.setup]
-nixPkgs = ["php82", "php82Extensions.pdo", "php82Extensions.pdo_pgsql", "php82Extensions.pgsql", "php82Extensions.redis", "php82Extensions.pdo_mysql", "php82Extensions.mysqli", "php82Extensions.gd", "php82Extensions.mbstring", "php82Extensions.curl", "php82Extensions.zip", "php82Extensions.xml", "php82Extensions.bcmath", "php82Extensions.fileinfo", "php82Extensions.opcache"]
+nixPkgs = [
+  "php82",
+  "php82Extensions.mongodb",
+  "php82Extensions.redis",
+  "php82Extensions.curl",
+  "php82Extensions.mbstring",
+  "php82Extensions.gd",
+  "php82Extensions.zip",
+  "php82Extensions.xml",
+  "php82Extensions.bcmath",
+  "php82Extensions.fileinfo",
+  "php82Extensions.opcache"
+]
 
 [phases.install]
 cmds = [
