@@ -668,7 +668,7 @@ try {
             display: block;
         }
 
-        logout-btn {
+       .logout-btn {
             text-decoration: none;
             color: white;
             background: #d84d57;
@@ -682,6 +682,13 @@ try {
 
         .logout-btn:hover {
             background: #c53d47;
+        }
+
+        /*boton de cámara*/ 
+          #abrirCamara,
+        #tomarFoto {
+            width: 100%;
+            margin-top: 10px;
         }
 
     </style>
@@ -754,7 +761,13 @@ try {
                     <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
 
                     <label for="foto">Fotografía (opcional):</label>
-                    <input type="file" name="foto" id="foto" accept=".jpg,.jpeg,.png,.webp">
+                    <input type="file" name="foto" id="foto" accept="image/*">
+
+                    <button type="button" id="abrirCamara">Activar cámara</button>
+
+                    <video id="video" autoplay playsinline style="display:none; width:100%; margin-top:10px; border-radius:12px;"></video>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                    <button type="button" id="tomarFoto" style="display:none;">Tomar foto</button>
 
                     <div class="info-ubicacion oculto" id="infoUbicacion">
                         <strong>Ubicación seleccionada:</strong><br>
@@ -814,5 +827,67 @@ try {
 
             <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
             <script src="/views/components/JS_usuario/menu-inferior.js"></script>
+            <script>
+const abrirCamaraBtn = document.getElementById('abrirCamara');
+const tomarFotoBtn = document.getElementById('tomarFoto');
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const inputFoto = document.getElementById('foto');
+
+let stream = null;
+
+if (abrirCamaraBtn) {
+    abrirCamaraBtn.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' },
+                audio: false
+            });
+
+            video.srcObject = stream;
+            video.style.display = 'block';
+            tomarFotoBtn.style.display = 'block';
+        } catch (error) {
+            alert('No se pudo abrir la cámara.');
+            console.error(error);
+        }
+    });
+}
+
+if (tomarFotoBtn) {
+    tomarFotoBtn.addEventListener('click', () => {
+        if (!video.videoWidth || !video.videoHeight) {
+            alert('La cámara todavía no está lista.');
+            return;
+        }
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                alert('No se pudo capturar la foto.');
+                return;
+            }
+
+            const archivo = new File([blob], 'foto_camara.png', { type: 'image/png' });
+            const dt = new DataTransfer();
+            dt.items.add(archivo);
+            inputFoto.files = dt.files;
+        }, 'image/png');
+
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+
+        video.style.display = 'none';
+        tomarFotoBtn.style.display = 'none';
+    });
+}
+</script>
 </body>
 </html>
