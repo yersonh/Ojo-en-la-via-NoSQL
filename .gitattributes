@@ -1,0 +1,22 @@
+# Normalizar fines de línea a LF
+* text=auto
+
+# Archivos binarios que no deben ser normalizados
+*.jpg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.exe binary
+
+# Archivos PHP - forzar LF
+*.php text
+*.html text
+*.css text
+*.js text
+*.json text
+
+# Archivos de configuración
+*.gitattributes text
+*.editorconfig text
