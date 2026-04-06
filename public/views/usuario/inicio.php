@@ -199,7 +199,7 @@ try {
              top: 8px;
              left: 50%;
             transform: translateX(-50%);
-            width: 70%;
+            width: 80%;
             z-index: 3001;
             height: 56px;
             padding: 0 14px;
