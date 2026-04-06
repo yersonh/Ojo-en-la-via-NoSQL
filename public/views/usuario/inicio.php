@@ -685,11 +685,63 @@ try {
         }
 
         /*boton de cámara*/ 
+            .foto-opciones {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-foto {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 46px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #4f7df0, #5f8df7);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(79, 125, 240, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .btn-foto:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(79, 125, 240, 0.32);
+        }
+
+        .btn-foto:active {
+            transform: scale(0.98);
+        }
+
+        .nombre-archivo {
+            margin-top: 6px;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+            background: rgba(255,255,255,0.6);
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+
+        #video {
+            width: 100%;
+            margin-top: 12px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
           #abrirCamara,
         #tomarFoto {
             width: 100%;
             margin-top: 10px;
         }
+
 
     </style>
 </head>
@@ -760,14 +812,20 @@ try {
                     <label for="descripcion">Descripción:</label>
                     <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
 
-                    <label for="foto">Fotografía (opcional):</label>
-                    <input type="file" name="foto" id="foto" accept="image/*">
+                   <label for="foto">Fotografía (opcional):</label>
 
-                    <button type="button" id="abrirCamara">Activar cámara</button>
+                    <div class="foto-opciones">
+                        <label for="foto" class="btn-foto">Subir archivo</label>
+                        <button type="button" id="abrirCamara" class="btn-foto">Activar cámara</button>
+                    </div>
 
-                    <video id="video" autoplay playsinline style="display:none; width:100%; margin-top:10px; border-radius:12px;"></video>
+                    <input type="file" name="foto" id="foto" accept="image/*" hidden>
+
+                    <p id="nombreArchivo" class="nombre-archivo">Ningún archivo seleccionado</p>
+
+                    <video id="video" autoplay playsinline style="display:none;"></video>
                     <canvas id="canvas" style="display:none;"></canvas>
-                    <button type="button" id="tomarFoto" style="display:none;">Tomar foto</button>
+                    <button type="button" id="tomarFoto" class="btn-foto" style="display:none;">Tomar foto</button>
 
                     <div class="info-ubicacion oculto" id="infoUbicacion">
                         <strong>Ubicación seleccionada:</strong><br>
@@ -777,44 +835,10 @@ try {
 
                     <input type="hidden" name="latitud" id="latitudInput">
                     <input type="hidden" name="longitud" id="longitudInput">
-
                     <button type="submit">Registrar</button>
                 </form>
             </div>
 
-     <!--    <div class="panel">
-            <h3>Registrar incidente</h3>
-
-           
-
-            <form action="" method="POST" enctype="multipart/form-data">
-                <label for="tipo">Tipo de incidente:</label>
-                <select name="tipo" id="tipo" required>
-                    <option value="">Seleccione un tipo</option>
-                    <option value="Accidente">Accidente</option>
-                    <option value="Hueco">Hueco</option>
-                    <option value="Tráfico">Tráfico</option>
-                    <option value="Obstrucción">Obstrucción</option>
-                </select>
-
-                <label for="descripcion">Descripción:</label>
-                <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
-
-                <label for="foto">Fotografía (opcional):</label>
-                <input type="file" name="foto" id="foto" accept=".jpg,.jpeg,.png,.webp">
-
-                <div class="info-ubicacion oculto" id="infoUbicacion">
-                    <strong>Ubicación seleccionada:</strong><br>
-                    Latitud: <span id="latitud">No seleccionada</span><br>
-                    Longitud: <span id="longitud">No seleccionada</span>
-                </div>
-
-                <input type="hidden" name="latitud" id="latitudInput">
-                <input type="hidden" name="longitud" id="longitudInput">
-
-                <button type="submit">Registrar</button>
-            </form>
-        </div>-->
     </div>
 
 
@@ -827,67 +851,81 @@ try {
 
             <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
             <script src="/views/components/JS_usuario/menu-inferior.js"></script>
-            <script>
-const abrirCamaraBtn = document.getElementById('abrirCamara');
-const tomarFotoBtn = document.getElementById('tomarFoto');
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const inputFoto = document.getElementById('foto');
+         <script>
+        const inputFoto = document.getElementById('foto');
+        const nombreArchivo = document.getElementById('nombreArchivo');
+        const abrirCamaraBtn = document.getElementById('abrirCamara');
+        const tomarFotoBtn = document.getElementById('tomarFoto');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
 
-let stream = null;
+        let stream = null;
 
-if (abrirCamaraBtn) {
-    abrirCamaraBtn.addEventListener('click', async () => {
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' },
-                audio: false
+        if (inputFoto) {
+            inputFoto.addEventListener('change', () => {
+                if (inputFoto.files && inputFoto.files.length > 0) {
+                    nombreArchivo.textContent = inputFoto.files[0].name;
+                } else {
+                    nombreArchivo.textContent = 'Ningún archivo seleccionado';
+                }
             });
-
-            video.srcObject = stream;
-            video.style.display = 'block';
-            tomarFotoBtn.style.display = 'block';
-        } catch (error) {
-            alert('No se pudo abrir la cámara.');
-            console.error(error);
-        }
-    });
-}
-
-if (tomarFotoBtn) {
-    tomarFotoBtn.addEventListener('click', () => {
-        if (!video.videoWidth || !video.videoHeight) {
-            alert('La cámara todavía no está lista.');
-            return;
         }
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        if (abrirCamaraBtn) {
+            abrirCamaraBtn.addEventListener('click', async () => {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment' },
+                        audio: false
+                    });
 
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        canvas.toBlob((blob) => {
-            if (!blob) {
-                alert('No se pudo capturar la foto.');
-                return;
-            }
-
-            const archivo = new File([blob], 'foto_camara.png', { type: 'image/png' });
-            const dt = new DataTransfer();
-            dt.items.add(archivo);
-            inputFoto.files = dt.files;
-        }, 'image/png');
-
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    tomarFotoBtn.style.display = 'block';
+                } catch (error) {
+                    alert('No se pudo abrir la cámara.');
+                    console.error(error);
+                }
+            });
         }
 
-        video.style.display = 'none';
-        tomarFotoBtn.style.display = 'none';
-    });
-}
+        if (tomarFotoBtn) {
+            tomarFotoBtn.addEventListener('click', () => {
+                if (!video.videoWidth || !video.videoHeight) {
+                    alert('La cámara todavía no está lista.');
+                    return;
+                }
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        alert('No se pudo capturar la foto.');
+                        return;
+                    }
+
+                    const archivo = new File([blob], 'foto_camara.png', { type: 'image/png' });
+                    const dt = new DataTransfer();
+                    dt.items.add(archivo);
+                    inputFoto.files = dt.files;
+                    nombreArchivo.textContent = archivo.name;
+                }, 'image/png');
+
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+
+                video.style.display = 'none';
+                tomarFotoBtn.style.display = 'none';
+            });
+        }
 </script>
+</script>
+
 </body>
 </html>
