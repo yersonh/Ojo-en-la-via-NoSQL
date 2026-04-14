@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $imagenes[] = 'uploads/reportes/' . $nombreArchivo;
             }
+
             $documento = [
                 'usuario_id' => new \MongoDB\BSON\ObjectId($_SESSION['usuario_id']),
                 'usuario_email' => $_SESSION['usuario_email'] ?? '',
@@ -94,8 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-
-//reportes para mostrar en el mapa 
 $reportesMapa = [];
 
 try {
@@ -104,46 +103,46 @@ try {
     ]);
 
     foreach ($cursor as $reporte) {
-    $lat = $reporte['ubicacion']['latitud'] ?? null;
-    $lng = $reporte['ubicacion']['longitud'] ?? null;
+        $lat = $reporte['ubicacion']['latitud'] ?? null;
+        $lng = $reporte['ubicacion']['longitud'] ?? null;
 
-    if ($lat !== null && $lng !== null) {
-        $fechaFormateada = '';
+        if ($lat !== null && $lng !== null) {
+            $fechaFormateada = '';
 
-        if (
-            !empty($reporte['fecha_reporte']) &&
-            $reporte['fecha_reporte'] instanceof \MongoDB\BSON\UTCDateTime
-        ) {
-            $fechaFormateada = $reporte['fecha_reporte']
-                ->toDateTime()
-                ->setTimezone(new DateTimeZone('America/Bogota'))
-                ->format('d/m/Y, H:i');
+            if (
+                !empty($reporte['fecha_reporte']) &&
+                $reporte['fecha_reporte'] instanceof \MongoDB\BSON\UTCDateTime
+            ) {
+                $fechaFormateada = $reporte['fecha_reporte']
+                    ->toDateTime()
+                    ->setTimezone(new DateTimeZone('America/Bogota'))
+                    ->format('d/m/Y, H:i');
+            }
+
+            $imagenesReporte = $reporte['imagenes'] ?? [];
+            $primeraImagen = null;
+
+            if (is_array($imagenesReporte) && isset($imagenesReporte[0])) {
+                $primeraImagen = $imagenesReporte[0];
+            } elseif ($imagenesReporte instanceof \MongoDB\Model\BSONArray) {
+                $imagenesArray = $imagenesReporte->getArrayCopy();
+                $primeraImagen = $imagenesArray[0] ?? null;
+            }
+
+            $reportesMapa[] = [
+                'id' => (string) $reporte['_id'],
+                'tipo' => $reporte['tipo'] ?? 'Incidente',
+                'descripcion' => $reporte['descripcion'] ?? '',
+                'latitud' => (float) $lat,
+                'longitud' => (float) $lng,
+                'direccion_texto' => $reporte['direccion_texto'] ?? '',
+                'imagen' => $primeraImagen,
+                'usuario_email' => $reporte['usuario_email'] ?? 'No disponible',
+                'fecha' => $fechaFormateada,
+                'estado' => $reporte['estado'] ?? 'activo'
+            ];
         }
-
-        $imagenesReporte = $reporte['imagenes'] ?? [];
-        $primeraImagen = null;
-
-        if (is_array($imagenesReporte) && isset($imagenesReporte[0])) {
-            $primeraImagen = $imagenesReporte[0];
-        } elseif ($imagenesReporte instanceof \MongoDB\Model\BSONArray) {
-            $imagenesArray = $imagenesReporte->getArrayCopy();
-            $primeraImagen = $imagenesArray[0] ?? null;
-        }
-
-        $reportesMapa[] = [
-            'id' => (string) $reporte['_id'],
-            'tipo' => $reporte['tipo'] ?? 'Incidente',
-            'descripcion' => $reporte['descripcion'] ?? '',
-            'latitud' => (float) $lat,
-            'longitud' => (float) $lng,
-            'direccion_texto' => $reporte['direccion_texto'] ?? '',
-            'imagen' => $primeraImagen,
-            'usuario_email' => $reporte['usuario_email'] ?? 'No disponible',
-            'fecha' => $fechaFormateada,
-            'estado' => $reporte['estado'] ?? 'activo'
-        ];
     }
-}
 } catch (Throwable $e) {
     $reportesMapa = [];
 }
@@ -158,13 +157,15 @@ try {
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
     <style>
-        .oculto {
-            display: none;
-        }
+        /* ========= RESET ========= */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        .oculto {
+            display: none;
         }
 
         html, body {
@@ -178,6 +179,7 @@ try {
             background: #111;
         }
 
+        /* ========= LAYOUT GENERAL ========= */
         .contenedor {
             position: relative;
             width: 100%;
@@ -194,6 +196,7 @@ try {
             height: 100%;
         }
 
+        /* ========= TOPBAR ========= */
         .topbar {
             position: absolute;
             top: 8px;
@@ -201,14 +204,14 @@ try {
             transform: translateX(-50%);
             width: calc(100% - 32px);
             max-width: 900px;
-            z-index: 3001;
             min-height: 56px;
             padding: 0 14px;
-            background: linear-gradient(90deg, #0f5f96, #0b6ea9);
-            color: white;
+            z-index: 3001;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: white;
+            background: linear-gradient(90deg, #0f5f96, #0b6ea9);
             border-radius: 0 0 10px 10px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
         }
@@ -221,27 +224,55 @@ try {
         }
 
         .topbar h2 {
-            font-size: 18px;
             margin: 0;
+            font-size: 18px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .topbar a {
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #e8d5a9;
+            color: #7a6123;
+            font-weight: bold;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255,255,255,0.9);
+            overflow: hidden;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .logout-btn {
             text-decoration: none;
             color: white;
-            background: #dc3545;
-            padding: 9px 14px;
-            border-radius: 10px;
+            background: #d84d57;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
             transition: 0.2s ease;
+            white-space: nowrap;
         }
 
-        .topbar a:hover {
-            background: #bb2d3b;
+        .logout-btn:hover {
+            background: #c53d47;
         }
 
-         .panel {
+        /* ========= PANEL ========= */
+        .panel {
             position: absolute;
             top: 80px;
             right: 16px;
@@ -252,11 +283,9 @@ try {
             padding: 18px;
             border-radius: 26px;
             z-index: 3001;
-
             background: rgba(255, 255, 255, 0.10);
             backdrop-filter: blur(22px) saturate(160%);
             -webkit-backdrop-filter: blur(22px) saturate(160%);
-
             border: 1px solid rgba(255, 255, 255, 0.28);
             box-shadow:
                 0 8px 30px rgba(0, 0, 0, 0.16),
@@ -278,19 +307,25 @@ try {
             );
         }
 
+        .panel > * {
+            position: relative;
+            z-index: 1;
+        }
+
         .panel h3 {
             margin-bottom: 16px;
             color: #333;
         }
 
-            .panel label:not(.btn-foto) {
+        .panel label:not(.btn-foto) {
             display: block;
             margin-top: 12px;
             margin-bottom: 6px;
             font-weight: bold;
             color: #333;
         }
-         .panel select,
+
+        .panel select,
         .panel textarea,
         .panel input[type="file"] {
             width: 100%;
@@ -306,25 +341,13 @@ try {
                 inset 0 1px 0 rgba(255, 255, 255, 0.22),
                 0 4px 12px rgba(0, 0, 0, 0.05);
         }
+
         .panel textarea {
             resize: vertical;
             min-height: 100px;
         }
 
-      /*  .panel button {
-            margin-top: 15px;
-            background: #0d6efd;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .panel button:hover {
-            background: #0b5ed7;
-        }*/
-
-         .panel button[type="submit"] {
+        .panel button[type="submit"] {
             width: 100%;
             margin-top: 15px;
             padding: 12px;
@@ -342,15 +365,8 @@ try {
         .panel button[type="submit"]:hover {
             transform: translateY(-1px);
         }
-     /*   .info-ubicacion {
-            margin-top: 14px;
-            padding: 10px;
-            background: #f1f3f5;
-            border-radius: 10px;
-            font-size: 14px;
-            color: #333;
-        }*/
-          .info-ubicacion {
+
+        .info-ubicacion {
             margin-top: 14px;
             padding: 12px;
             background: rgba(255, 255, 255, 0.10);
@@ -364,7 +380,8 @@ try {
                 inset 0 1px 0 rgba(255, 255, 255, 0.18),
                 0 4px 14px rgba(0, 0, 0, 0.05);
         }
-                
+
+        /* ========= ALERTAS ========= */
         .alerta {
             margin-bottom: 12px;
             padding: 12px;
@@ -382,6 +399,125 @@ try {
             color: #842029;
         }
 
+        /* ========= BOTONES DE FOTO ========= */
+        .foto-opciones {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+            margin-bottom: 12px;
+        }
+
+        .btn-foto {
+            width: 100%;
+            min-width: 0;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 16px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 18px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #ffffff !important;
+            font-size: 15px;
+            font-weight: 700;
+            white-space: nowrap;
+            text-align: center;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            background: linear-gradient(135deg, #5f8df7 0%, #4c78ea 55%, #3563d6 100%);
+            box-shadow:
+                0 8px 20px rgba(28, 75, 160, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.12);
+            transition: transform 0.18s ease, filter 0.18s ease;
+        }
+
+        .panel label.btn-foto {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            color: #ffffff !important;
+        }
+
+        .btn-foto span {
+            color: #ffffff !important;
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn-foto:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.03);
+        }
+
+        .btn-foto:active {
+            transform: scale(0.98);
+        }
+
+        .nombre-archivo {
+            margin-top: 6px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.70);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            color: #4b5563;
+            font-size: 14px;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.35),
+                0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .nombre-archivo.vacio {
+            color: #6b7280;
+            justify-content: center;
+        }
+
+        #nombreArchivoTexto {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .quitar-archivo {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        #video {
+            width: 100%;
+            margin-top: 12px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        #tomarFoto {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* ========= NAVEGACIÓN INFERIOR ========= */
         .bottom-nav {
             position: fixed;
             left: 50%;
@@ -441,47 +577,8 @@ try {
             background: transparent;
         }
 
-        @media (max-width: 768px) {
-            .topbar {
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                padding: 10px 14px;
-            }
-
-            .topbar h2 {
-                font-size: 15px;
-            }
-
-            .topbar a {
-                padding: 8px 12px;
-                font-size: 13px;
-            }
-
-            .panel {
-                left: 10px;
-                right: 10px;
-                top: auto;
-                bottom: 80px;
-                width: auto;
-                max-height: 38vh;
-                padding: 14px;
-            }
-
-            .bottom-nav {
-                bottom: 0;
-                width: 100%;
-                max-width: 100%;
-                border-radius: 18px 18px 0 0;
-            }
-
-            .bottom-hover-zone {
-                display: none;
-            }
-        }
-
-
-             .leaflet-popup-content-wrapper {
+        /* ========= POPUPS DEL MAPA ========= */
+        .leaflet-popup-content-wrapper {
             border-radius: 16px;
             padding: 0;
             overflow: hidden;
@@ -625,7 +722,8 @@ try {
         .popup-button:hover {
             background: #1565c0;
         }
-        /* estilo para los iconos que estan en el mapa de alertas */
+
+        /* ========= MARCADORES ========= */
         .icono-reporte-personalizado {
             background: transparent !important;
             border: none !important;
@@ -647,191 +745,60 @@ try {
             font-size: 18px;
             line-height: 1;
         }
-        
-                /* avatar en la barra superior */
-             .user-avatar {
-                width: 34px;
-                height: 34px;
-                border-radius: 50%;
-                background: #e8d5a9;
-                color: #7a6123;
-                font-weight: bold;
-                font-size: 17px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border: 2px solid rgba(255,255,255,0.9);
-                overflow: hidden;
-                flex-shrink: 0;
-                text-transform: uppercase;
+
+        /* ========= RESPONSIVE ========= */
+        @media (max-width: 768px) {
+            .topbar {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                width: auto;
+                transform: none;
+                padding: 10px 14px;
+                border-radius: 12px;
             }
 
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+            .topbar h2 {
+                font-size: 15px;
+            }
+
+            .logout-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .panel {
+                left: 10px;
+                right: 10px;
+                top: auto;
+                bottom: 80px;
+                width: auto;
+                max-height: 38vh;
+                padding: 14px;
+            }
+
+            .bottom-nav {
+                bottom: 0;
+                width: 100%;
+                max-width: 100%;
+                border-radius: 18px 18px 0 0;
+            }
+
+            .bottom-hover-zone {
+                display: none;
+            }
         }
 
-       .logout-btn {
-            text-decoration: none;
-            color: white;
-            background: #d84d57;
-            padding: 8px 14px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 600;
-            transition: 0.2s ease;
-            white-space: nowrap;
+        @media (max-width: 480px) {
+            .foto-opciones {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-foto {
+                height: 50px;
+                font-size: 14px;
+            }
         }
-
-        .logout-btn:hover {
-            background: #c53d47;
-        }
-
-        /*boton de cámara*/ 
-           .foto-opciones {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            margin-bottom: 12px;
-        }
-          .btn-foto {
-             flex: 1;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0;
-            padding: 0 18px;
-            border: 1px solid rgba(255, 255, 255, 0.28);
-            border-radius: 18px;
-            cursor: pointer;
-            text-decoration: none;
-            color: #ffffff !important;
-            font-size: 15px;
-            font-weight: 700;
-            white-space: nowrap;
-            text-align: center;
-            appearance: none;
-            -webkit-appearance: none;
-            outline: none;
-            background: linear-gradient(135deg, #5f8df7 0%, #4c78ea 55%, #3563d6 100%);
-            box-shadow:
-                0 8px 20px rgba(28, 75, 160, 0.35),
-                inset 0 1px 0 rgba(255, 255, 255, 0.30),
-                inset 0 -2px 6px rgba(0, 0, 0, 0.12);
-            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-
-        }
-            .panel label.btn-foto {
-        display: flex;
-        margin-top: 0;
-        margin-bottom: 0;
-        color: #ffffff !important;
-    }
-
-        .btn-foto:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.03);
-        }
-
-        .btn-foto:active {
-            transform: scale(0.98);
-        }
-        .btn-foto span {
-            color: #ffffff !important;
-        }
-
-       
-        .nombre-archivo {
-            margin-top: 6px;
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 12px 14px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.70);
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            color: #4b5563;
-            font-size: 14px;
-            box-shadow:
-                inset 0 1px 0 rgba(255,255,255,0.35),
-                0 4px 12px rgba(0,0,0,0.05);
-        }
-
-             .nombre-archivo.vacio {
-            color: #6b7280;
-            justify-content: center;
-        }
-            #nombreArchivoTexto {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .quitar-archivo {
-            width: 28px;
-            height: 28px;
-            border: none;
-            border-radius: 50%;
-            background: #e74c3c;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        #video {
-            width: 100%;
-            margin-top: 12px;
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        
-        #tomarFoto {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        @media (max-width: 768px) {
-           .topbar {
-        top: 10px;
-        left: 10px;
-        right: 10px;
-        width: auto;
-        transform: none;
-        padding: 10px 14px;
-        border-radius: 12px;
-    }
-
-    .topbar h2 {
-        font-size: 15px;
-    }
-
-    .logout-btn {
-        padding: 8px 12px;
-        font-size: 12px;
-    }
-
-    .foto-opciones {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .btn-foto {
-        width: 100%;
-        height: 48px;
-        font-size: 14px;
-    }
-        }
-
-
     </style>
 </head>
 <body>
@@ -856,196 +823,198 @@ try {
 
     <div class="contenedor">
         <div class="topbar">
-    <div class="topbar-left">
-       <div class="user-avatar">
-    <?php if (!empty($_SESSION['foto_perfil'])): ?>
-        <img src="<?php echo htmlspecialchars($_SESSION['foto_perfil']); ?>" alt="Foto de perfil">
-    <?php else: ?>
-        <?php
-            $inicial = 'U';
-            if (!empty($nombreMostrar)) {
-                $inicial = strtoupper(substr(trim($nombreMostrar), 0, 1));
-            }
-            echo $inicial;
-        ?>
-    <?php endif; ?>
-</div>
-        <h2>Bienvenida, <?php echo htmlspecialchars($nombreMostrar); ?></h2>
-    </div>
+            <div class="topbar-left">
+                <div class="user-avatar">
+                    <?php if (!empty($_SESSION['foto_perfil'])): ?>
+                        <img src="<?php echo htmlspecialchars($_SESSION['foto_perfil']); ?>" alt="Foto de perfil">
+                    <?php else: ?>
+                        <?php
+                            $inicial = 'U';
+                            if (!empty($nombreMostrar)) {
+                                $inicial = strtoupper(substr(trim($nombreMostrar), 0, 1));
+                            }
+                            echo $inicial;
+                        ?>
+                    <?php endif; ?>
+                </div>
+                <h2>Bienvenida, <?php echo htmlspecialchars($nombreMostrar); ?></h2>
+            </div>
 
-    <a href="../../logout.php" class="logout-btn">Cerrar sesión</a>
-</div>
+            <a href="../../logout.php" class="logout-btn">Cerrar sesión</a>
+        </div>
+
         <div class="mapa">
             <div id="map"></div>
         </div>
 
-                    <div class="panel oculto" id="panelRegistro">
-                <h3>Registrar incidente</h3>
+        <div class="panel oculto" id="panelRegistro">
+            <h3>Registrar incidente</h3>
 
-                <?php if ($mensaje !== ''): ?>
-                    <div class="alerta <?php echo htmlspecialchars($tipoMensaje); ?>">
-                        <?php echo htmlspecialchars($mensaje); ?>
-                    </div>
-                <?php endif; ?>
+            <?php if ($mensaje !== ''): ?>
+                <div class="alerta <?php echo htmlspecialchars($tipoMensaje); ?>">
+                    <?php echo htmlspecialchars($mensaje); ?>
+                </div>
+            <?php endif; ?>
 
-                <form action="" method="POST" enctype="multipart/form-data">
-                    <label for="tipo">Tipo de incidente:</label>
-                    <select name="tipo" id="tipo" required>
-                        <option value="">Seleccione un tipo</option>
-                        <option value="Accidente">Accidente</option>
-                        <option value="Hueco">Hueco</option>
-                        <option value="Tráfico">Tráfico</option>
-                        <option value="Obstrucción">Obstrucción</option>
-                    </select>
+            <form action="" method="POST" enctype="multipart/form-data">
+                <label for="tipo">Tipo de incidente:</label>
+                <select name="tipo" id="tipo" required>
+                    <option value="">Seleccione un tipo</option>
+                    <option value="Accidente">Accidente</option>
+                    <option value="Hueco">Hueco</option>
+                    <option value="Tráfico">Tráfico</option>
+                    <option value="Obstrucción">Obstrucción</option>
+                </select>
 
-                    <label for="descripcion">Descripción:</label>
-                    <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
-<label for="foto">Fotografía (opcional):</label>
+                <label for="descripcion">Descripción:</label>
+                <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
 
-            <div class="foto-opciones">
-            <label for="foto" class="btn-foto">
-                <span>Subir archivo</span>
-            </label>
+                <label for="foto">Fotografía (opcional):</label>
 
-            <button type="button" id="abrirCamara" class="btn-foto">
-                <span>Activar cámara</span>
-            </button>
+                <div class="foto-opciones">
+                    <label for="foto" class="btn-foto">
+                        <span>Subir archivo</span>
+                    </label>
+
+                    <button type="button" id="abrirCamara" class="btn-foto">
+                        <span>Activar cámara</span>
+                    </button>
+                </div>
+
+                <input type="file" name="foto" id="foto" accept="image/*" hidden>
+
+                <div id="archivoInfo" class="nombre-archivo vacio">
+                    <span id="nombreArchivoTexto">Ningún archivo seleccionado</span>
+                    <button type="button" id="quitarArchivo" class="quitar-archivo" style="display:none;">✕</button>
+                </div>
+
+                <video id="video" autoplay playsinline style="display:none;"></video>
+                <canvas id="canvas" style="display:none;"></canvas>
+                <button type="button" id="tomarFoto" class="btn-foto" style="display:none;">Tomar foto</button>
+
+                <div class="info-ubicacion oculto" id="infoUbicacion">
+                    <strong>Ubicación seleccionada:</strong><br>
+                    Latitud: <span id="latitud">No seleccionada</span><br>
+                    Longitud: <span id="longitud">No seleccionada</span>
+                </div>
+
+                <input type="hidden" name="latitud" id="latitudInput">
+                <input type="hidden" name="longitud" id="longitudInput">
+
+                <button type="submit">Registrar</button>
+            </form>
         </div>
-
-            <input type="file" name="foto" id="foto" accept="image/*" hidden>
-
-            <div id="archivoInfo" class="nombre-archivo vacio">
-                <span id="nombreArchivoTexto">Ningún archivo seleccionado</span>
-                <button type="button" id="quitarArchivo" class="quitar-archivo" style="display:none;">✕</button>
-            </div>
-
-            <video id="video" autoplay playsinline style="display:none;"></video>
-            <canvas id="canvas" style="display:none;"></canvas>
-            <button type="button" id="tomarFoto" class="btn-foto" style="display:none;">Tomar foto</button>
-
-                    <div class="info-ubicacion oculto" id="infoUbicacion">
-                        <strong>Ubicación seleccionada:</strong><br>
-                        Latitud: <span id="latitud">No seleccionada</span><br>
-                        Longitud: <span id="longitud">No seleccionada</span>
-                    </div>
-
-                    <input type="hidden" name="latitud" id="latitudInput">
-                    <input type="hidden" name="longitud" id="longitudInput">
-                    <button type="submit">Registrar</button>
-                </form>
-            </div>
-
     </div>
 
-
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-            <?php include __DIR__ . '/../components/mapa/map-config.php'; ?>
+    <?php include __DIR__ . '/../components/mapa/map-config.php'; ?>
 
-            <script>
-                window.reportesDB = <?php echo json_encode($reportesMapa, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-            </script>
+    <script>
+        window.reportesDB = <?php echo json_encode($reportesMapa, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    </script>
 
-            <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
-            <script src="/views/components/JS_usuario/menu-inferior.js"></script>
-         <script>
-    const inputFoto = document.getElementById('foto');
-    const nombreArchivoTexto = document.getElementById('nombreArchivoTexto');
-    const archivoInfo = document.getElementById('archivoInfo');
-    const quitarArchivoBtn = document.getElementById('quitarArchivo');
-    const abrirCamaraBtn = document.getElementById('abrirCamara');
-    const tomarFotoBtn = document.getElementById('tomarFoto');
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
+    <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
+    <script src="/views/components/JS_usuario/menu-inferior.js"></script>
 
-    let stream = null;
+    <script>
+        const inputFoto = document.getElementById('foto');
+        const nombreArchivoTexto = document.getElementById('nombreArchivoTexto');
+        const archivoInfo = document.getElementById('archivoInfo');
+        const quitarArchivoBtn = document.getElementById('quitarArchivo');
+        const abrirCamaraBtn = document.getElementById('abrirCamara');
+        const tomarFotoBtn = document.getElementById('tomarFoto');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
 
-    function actualizarVistaArchivo() {
-        if (inputFoto.files && inputFoto.files.length > 0) {
-            nombreArchivoTexto.textContent = inputFoto.files[0].name;
-            quitarArchivoBtn.style.display = 'flex';
-            archivoInfo.classList.remove('vacio');
-        } else {
-            nombreArchivoTexto.textContent = 'Ningún archivo seleccionado';
-            quitarArchivoBtn.style.display = 'none';
-            archivoInfo.classList.add('vacio');
-        }
-    }
+        let stream = null;
 
-    function cerrarCamara() {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
+        function actualizarVistaArchivo() {
+            if (inputFoto.files && inputFoto.files.length > 0) {
+                nombreArchivoTexto.textContent = inputFoto.files[0].name;
+                quitarArchivoBtn.style.display = 'flex';
+                archivoInfo.classList.remove('vacio');
+            } else {
+                nombreArchivoTexto.textContent = 'Ningún archivo seleccionado';
+                quitarArchivoBtn.style.display = 'none';
+                archivoInfo.classList.add('vacio');
+            }
         }
 
-        video.srcObject = null;
-        video.style.display = 'none';
-        tomarFotoBtn.style.display = 'none';
-    }
+        function cerrarCamara() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
 
-    if (inputFoto) {
-        inputFoto.addEventListener('change', actualizarVistaArchivo);
-    }
+            video.srcObject = null;
+            video.style.display = 'none';
+            tomarFotoBtn.style.display = 'none';
+        }
 
-    if (quitarArchivoBtn) {
-        quitarArchivoBtn.addEventListener('click', () => {
-            inputFoto.value = '';
-            actualizarVistaArchivo();
-            cerrarCamara();
-        });
-    }
+        if (inputFoto) {
+            inputFoto.addEventListener('change', actualizarVistaArchivo);
+        }
 
-    if (abrirCamaraBtn) {
-        abrirCamaraBtn.addEventListener('click', async () => {
-            try {
+        if (quitarArchivoBtn) {
+            quitarArchivoBtn.addEventListener('click', () => {
+                inputFoto.value = '';
+                actualizarVistaArchivo();
                 cerrarCamara();
+            });
+        }
 
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' },
-                    audio: false
-                });
+        if (abrirCamaraBtn) {
+            abrirCamaraBtn.addEventListener('click', async () => {
+                try {
+                    cerrarCamara();
 
-                video.srcObject = stream;
-                video.style.display = 'block';
-                tomarFotoBtn.style.display = 'flex';
-            } catch (error) {
-                alert('No se pudo abrir la cámara.');
-                console.error(error);
-            }
-        });
-    }
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment' },
+                        audio: false
+                    });
 
-    if (tomarFotoBtn) {
-        tomarFotoBtn.addEventListener('click', () => {
-            if (!video.videoWidth || !video.videoHeight) {
-                alert('La cámara todavía no está lista.');
-                return;
-            }
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    tomarFotoBtn.style.display = 'flex';
+                } catch (error) {
+                    alert('No se pudo abrir la cámara.');
+                    console.error(error);
+                }
+            });
+        }
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            canvas.toBlob((blob) => {
-                if (!blob) {
-                    alert('No se pudo capturar la foto.');
+        if (tomarFotoBtn) {
+            tomarFotoBtn.addEventListener('click', () => {
+                if (!video.videoWidth || !video.videoHeight) {
+                    alert('La cámara todavía no está lista.');
                     return;
                 }
 
-                const archivo = new File([blob], 'foto_camara.png', { type: 'image/png' });
-                const dt = new DataTransfer();
-                dt.items.add(archivo);
-                inputFoto.files = dt.files;
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
 
-                actualizarVistaArchivo();
-            }, 'image/png');
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            cerrarCamara();
-        });
-    }
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        alert('No se pudo capturar la foto.');
+                        return;
+                    }
 
-    actualizarVistaArchivo();
-</script>
+                    const archivo = new File([blob], 'foto_camara.png', { type: 'image/png' });
+                    const dt = new DataTransfer();
+                    dt.items.add(archivo);
+                    inputFoto.files = dt.files;
+
+                    actualizarVistaArchivo();
+                }, 'image/png');
+
+                cerrarCamara();
+            });
+        }
+
+        actualizarVistaArchivo();
+    </script>
 </body>
 </html>
