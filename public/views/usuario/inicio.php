@@ -909,13 +909,19 @@ try {
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <?php include __DIR__ . '/../components/mapa/map-config.php'; ?>
 
-    <script>
-        window.reportesDB = <?php echo json_encode($reportesMapa, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-    </script>
+        <script>
+            window.reportesDB = <?php echo json_encode($reportesMapa, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        </script>
 
-    <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
-    <script src="/views/components/JS_usuario/menu-inferior.js"></script>
+        <?php if (!empty($reportesMapa)): ?>
+            <pre style="position:absolute; z-index:9999; background:white; color:black; max-width:90%; max-height:200px; overflow:auto;">
+        <?php print_r($reportesMapa); ?>
+            </pre>
+        <?php endif; ?>
 
+        <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
+        <script src="/views/components/JS_usuario/menu-inferior.js"></script>7
+        
     <script>
         const inputFoto = document.getElementById('foto');
         const nombreArchivoTexto = document.getElementById('nombreArchivoTexto');
