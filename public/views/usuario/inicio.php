@@ -303,20 +303,7 @@ try {
         .panel textarea {
             resize: vertical;
             min-height: 100px;
-        }
-
-      /*  .panel button {
-            margin-top: 15px;
-            background: #0d6efd;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .panel button:hover {
-            background: #0b5ed7;
-        }*/
+        
 
          .panel button[type="submit"] {
             width: 100%;
@@ -336,14 +323,7 @@ try {
         .panel button[type="submit"]:hover {
             transform: translateY(-1px);
         }
-     /*   .info-ubicacion {
-            margin-top: 14px;
-            padding: 10px;
-            background: #f1f3f5;
-            border-radius: 10px;
-            font-size: 14px;
-            color: #333;
-        }*/
+    
           .info-ubicacion {
             margin-top: 14px;
             padding: 12px;
@@ -684,42 +664,39 @@ try {
         }
 
         /*boton de cámara*/ 
-            .foto-opciones {
+          .foto-opciones {
             display: flex;
-            gap: 14px;
+            gap: 12px;
             margin-top: 10px;
             margin-bottom: 12px;
         }
 
-            .btn-foto {
-            flex: 1;
-            height: 56px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: nowrap;
-            gap: 10px;
-            padding: 0 18px;
-            border: 1px solid rgba(255, 255, 255, 0.28);
-            border-radius: 18px;
-            cursor: pointer;
-            text-decoration: none;
-            color: #ffffff;
-            font-size: 15px;
-            font-weight: 700;
-            white-space: nowrap;
-            text-align: center;
-            appearance: none;
-            -webkit-appearance: none;
-            outline: none;
-            background: linear-gradient(135deg, #5f8df7 0%, #4c78ea 55%, #3563d6 100%);
-            box-shadow:
-                0 8px 20px rgba(28, 75, 160, 0.35),
-                inset 0 1px 0 rgba(255, 255, 255, 0.30),
-                inset 0 -2px 6px rgba(0, 0, 0, 0.12);
-            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-        }
+           .btn-foto {
+                flex: 1;
+                height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 14px;
+                border: 1px solid rgba(255, 255, 255, 0.28);
+                border-radius: 18px;
+                cursor: pointer;
+                text-decoration: none;
+                color: #ffffff;
+                font-size: 15px;
+                font-weight: 700;
+                text-align: center;
+                white-space: nowrap;
+                appearance: none;
+                -webkit-appearance: none;
+                outline: none;
+                background: linear-gradient(135deg, #5f8df7 0%, #4c78ea 55%, #3563d6 100%);
+                box-shadow:
+                    0 8px 20px rgba(28, 75, 160, 0.35),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                    inset 0 -2px 6px rgba(0, 0, 0, 0.12);
+                transition: transform 0.18s ease, filter 0.18s ease;
+}
 
         .btn-foto:hover {
             transform: translateY(-2px);
@@ -729,14 +706,7 @@ try {
         .btn-foto:active {
             transform: scale(0.98);
         }
-        .btn-foto-icon {
-            font-size: 18px;
-            line-height: 1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
+       
 
        
          .nombre-archivo {
@@ -821,6 +791,7 @@ try {
             .btn-foto span:last-child {
                 white-space: nowrap;
             }
+          
         }
 
 
@@ -894,24 +865,20 @@ try {
                     <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
 <label for="foto">Fotografía (opcional):</label>
 
-<div class="foto-opciones">
-    <label for="foto" class="btn-foto">
-        <span class="btn-foto-icon">📁</span>
-        <span>Subir archivo</span>
-    </label>
+                <div class="foto-opciones">
+                    <label for="foto" class="btn-foto">Subir archivo</label>
 
-                <button type="button" id="abrirCamara" class="btn-foto">
-                    <span class="btn-foto-icon">📷</span>
-                    <span>Activar cámara</span>
-                </button>
-            </div>
+                    <button type="button" id="abrirCamara" class="btn-foto">
+                        Activar cámara
+                    </button>
+                </div>
 
-            <input type="file" name="foto" id="foto" accept="image/*" hidden>
+                <input type="file" name="foto" id="foto" accept="image/*" hidden>
 
-            <div id="archivoInfo" class="nombre-archivo vacio">
-                <span id="nombreArchivoTexto">Ningún archivo seleccionado</span>
-                <button type="button" id="quitarArchivo" class="quitar-archivo" style="display:none;">✕</button>
-            </div>
+                <div id="archivoInfo" class="nombre-archivo vacio">
+                    <span id="nombreArchivoTexto">Ningún archivo seleccionado</span>
+                    <button type="button" id="quitarArchivo" class="quitar-archivo" style="display:none;">✕</button>
+                </div>
 
             <video id="video" autoplay playsinline style="display:none;"></video>
             <canvas id="canvas" style="display:none;"></canvas>
