@@ -196,12 +196,13 @@ try {
 
         .topbar {
             position: absolute;
-             top: 8px;
-             left: 50%;
+            top: 8px;
+            left: 50%;
             transform: translateX(-50%);
-            width: 80%;
+            width: calc(100% - 32px);
+            max-width: 900px;
             z-index: 3001;
-            height: 56px;
+            min-height: 56px;
             padding: 0 14px;
             background: linear-gradient(90deg, #0f5f96, #0b6ea9);
             color: white;
@@ -211,15 +212,20 @@ try {
             border-radius: 0 0 10px 10px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
         }
+
         .topbar-left {
             display: flex;
             align-items: center;
             gap: 10px;
+            min-width: 0;
         }
 
         .topbar h2 {
             font-size: 18px;
             margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .topbar a {
@@ -684,41 +690,36 @@ try {
         }
 
         /*boton de cámara*/ 
-            .foto-opciones {
+           .foto-opciones {
             display: flex;
-            gap: 14px;
+            gap: 10px;
             margin-top: 10px;
             margin-bottom: 12px;
         }
-
-            .btn-foto {
+          .btn-foto {
             flex: 1;
-            height: 56px;
+            min-width: 0;
+            height: 50px;
             display: flex;
-            flex-direction: row;
             align-items: center;
             justify-content: center;
-            flex-wrap: nowrap;
-            gap: 10px;
-            padding: 0 18px;
+            gap: 8px;
+            padding: 0 12px;
             border: 1px solid rgba(255, 255, 255, 0.28);
-            border-radius: 18px;
+            border-radius: 16px;
             cursor: pointer;
             text-decoration: none;
             color: #ffffff;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             white-space: nowrap;
-            text-align: center;
-            appearance: none;
-            -webkit-appearance: none;
-            outline: none;
             background: linear-gradient(135deg, #5f8df7 0%, #4c78ea 55%, #3563d6 100%);
             box-shadow:
                 0 8px 20px rgba(28, 75, 160, 0.35),
                 inset 0 1px 0 rgba(255, 255, 255, 0.30),
                 inset 0 -2px 6px rgba(0, 0, 0, 0.12);
-            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+            transition: transform 0.18s ease, filter 0.18s ease;
+            border: none;
         }
 
         .btn-foto:hover {
@@ -755,17 +756,31 @@ try {
             box-shadow:
                 inset 0 1px 0 rgba(255,255,255,0.35),
                 0 4px 12px rgba(0,0,0,0.05);
-            word-break: break-word;
         }
-        .nombre-archivo.vacio {
+
+             .nombre-archivo.vacio {
             color: #6b7280;
             justify-content: center;
         }
-                #nombreArchivoTexto {
+            #nombreArchivoTexto {
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .quitar-archivo {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
         #video {
             width: 100%;
@@ -781,20 +796,35 @@ try {
         }
 
         @media (max-width: 768px) {
-            .foto-opciones {
-                flex-direction: row;
-                gap: 10px;
-            }
+           .topbar {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        transform: none;
+        padding: 10px 14px;
+        border-radius: 12px;
+    }
 
-            .btn-foto {
-                height: 52px;
-                font-size: 14px;
-                padding: 0 12px;
-            }
+    .topbar h2 {
+        font-size: 15px;
+    }
 
-            .btn-foto span:last-child {
-                white-space: nowrap;
-            }
+    .logout-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .foto-opciones {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-foto {
+        width: 100%;
+        height: 48px;
+        font-size: 14px;
+    }
         }
 
 
