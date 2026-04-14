@@ -896,17 +896,15 @@ try {
                     <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
 <label for="foto">Fotografía (opcional):</label>
 
-<div class="foto-opciones">
-    <label for="foto" class="btn-foto">
-        <span class="btn-foto-icon">📁</span>
-        <span>Subir archivo</span>
-    </label>
+        <div class="foto-opciones">
+            <label for="foto" class="btn-foto">
+                <span>Subir archivo</span>
+            </label>
 
-                <button type="button" id="abrirCamara" class="btn-foto">
-                    <span class="btn-foto-icon">📷</span>
-                    <span>Activar cámara</span>
-                </button>
-            </div>
+            <button type="button" id="abrirCamara" class="btn-foto">
+                <span>Activar cámara</span>
+            </button>
+        </div>
 
             <input type="file" name="foto" id="foto" accept="image/*" hidden>
 
