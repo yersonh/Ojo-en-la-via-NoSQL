@@ -318,7 +318,7 @@ try {
             background: #0b5ed7;
         }*/
 
-           .panel button {
+         .panel button[type="submit"] {
             width: 100%;
             margin-top: 15px;
             padding: 12px;
@@ -327,14 +327,13 @@ try {
             color: white;
             font-weight: bold;
             cursor: pointer;
-
             background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(29, 78, 216, 0.72));
             box-shadow:
                 0 8px 24px rgba(37, 99, 235, 0.28),
                 inset 0 1px 0 rgba(255, 255, 255, 0.22);
         }
 
-        .panel button:hover {
+        .panel button[type="submit"]:hover {
             transform: translateY(-1px);
         }
      /*   .info-ubicacion {
@@ -692,12 +691,14 @@ try {
             margin-bottom: 12px;
         }
 
-        .btn-foto {
+            .btn-foto {
             flex: 1;
             height: 56px;
             display: flex;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
+            flex-wrap: nowrap;
             gap: 10px;
             padding: 0 18px;
             border: 1px solid rgba(255, 255, 255, 0.28);
@@ -707,44 +708,39 @@ try {
             color: #ffffff;
             font-size: 15px;
             font-weight: 700;
+            white-space: nowrap;
+            text-align: center;
             appearance: none;
             -webkit-appearance: none;
             outline: none;
-
-            background: linear-gradient(135deg, #557eea 0%, #3f6fdf 55%, #2f5fd0 100%);
+            background: linear-gradient(135deg, #5f8df7 0%, #4c78ea 55%, #3563d6 100%);
             box-shadow:
                 0 8px 20px rgba(28, 75, 160, 0.35),
                 inset 0 1px 0 rgba(255, 255, 255, 0.30),
                 inset 0 -2px 6px rgba(0, 0, 0, 0.12);
-
             transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
         }
 
-            .btn-foto:hover {
+        .btn-foto:hover {
             transform: translateY(-2px);
-            box-shadow:
-                0 10px 24px rgba(28, 75, 160, 0.42),
-                inset 0 1px 0 rgba(255, 255, 255, 0.32),
-                inset 0 -2px 6px rgba(0, 0, 0, 0.14);
             filter: brightness(1.03);
         }
 
         .btn-foto:active {
             transform: scale(0.98);
         }
-
-                .btn-foto-icon {
+        .btn-foto-icon {
             font-size: 18px;
             line-height: 1;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
-
        
-        .nombre-archivo {
-            margin-top: 6px;
+         .nombre-archivo {
+            margin-top: 8px;
             min-height: 48px;
             display: flex;
             align-items: center;
@@ -759,18 +755,44 @@ try {
             box-shadow:
                 inset 0 1px 0 rgba(255,255,255,0.35),
                 0 4px 12px rgba(0,0,0,0.05);
-            word-break: break-word;
-        }
+             }
+
         .nombre-archivo.vacio {
-            color: #6b7280;
             justify-content: center;
+            color: #6b7280;
         }
-                #nombreArchivoTexto {
-            flex: 1;
+        #nombreArchivoTexto {
+             flex: 1;
+            min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        .panel .quitar-archivo {
+        width: 30px !important;
+        height: 30px !important;
+        margin-top: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 50% !important;
+        background: #ef4444 !important;
+        color: #fff !important;
+        font-size: 18px !important;
+        font-weight: bold;
+        cursor: pointer;
+        flex: 0 0 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25) !important;
+    }
+
+    .panel .quitar-archivo:hover {
+        background: #dc2626 !important;
+        transform: scale(1.05);
+    }
+
+
         #video {
             width: 100%;
             margin-top: 12px;
