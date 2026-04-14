@@ -697,29 +697,32 @@ try {
             margin-bottom: 12px;
         }
           .btn-foto {
-            flex: 1;
-            min-width: 0;
-            height: 50px;
+             flex: 1;
+            height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 0 12px;
+            gap: 0;
+            padding: 0 18px;
             border: 1px solid rgba(255, 255, 255, 0.28);
-            border-radius: 16px;
+            border-radius: 18px;
             cursor: pointer;
             text-decoration: none;
-            color: #ffffff;
-            font-size: 14px;
+            color: #ffffff !important;
+            font-size: 15px;
             font-weight: 700;
             white-space: nowrap;
+            text-align: center;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
             background: linear-gradient(135deg, #5f8df7 0%, #4c78ea 55%, #3563d6 100%);
             box-shadow:
                 0 8px 20px rgba(28, 75, 160, 0.35),
                 inset 0 1px 0 rgba(255, 255, 255, 0.30),
                 inset 0 -2px 6px rgba(0, 0, 0, 0.12);
-            transition: transform 0.18s ease, filter 0.18s ease;
-            border: none;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+
         }
 
         .btn-foto:hover {
@@ -730,13 +733,8 @@ try {
         .btn-foto:active {
             transform: scale(0.98);
         }
-        .btn-foto-icon {
-            font-size: 18px;
-            line-height: 1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+        .btn-foto span {
+            color: #ffffff !important;
         }
 
        
