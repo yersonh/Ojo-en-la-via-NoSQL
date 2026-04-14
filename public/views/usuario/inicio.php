@@ -283,7 +283,7 @@ try {
             color: #333;
         }
 
-        .panel label {
+            .panel label:not(.btn-foto) {
             display: block;
             margin-top: 12px;
             margin-bottom: 6px;
@@ -724,6 +724,12 @@ try {
             transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 
         }
+            .panel label.btn-foto {
+        display: flex;
+        margin-top: 0;
+        margin-bottom: 0;
+        color: #ffffff !important;
+    }
 
         .btn-foto:hover {
             transform: translateY(-2px);
@@ -896,7 +902,7 @@ try {
                     <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
 <label for="foto">Fotografía (opcional):</label>
 
-        <div class="foto-opciones">
+            <div class="foto-opciones">
             <label for="foto" class="btn-foto">
                 <span>Subir archivo</span>
             </label>
