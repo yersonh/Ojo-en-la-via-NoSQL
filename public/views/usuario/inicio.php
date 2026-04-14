@@ -687,48 +687,90 @@ try {
         /*boton de cámara*/ 
             .foto-opciones {
             display: flex;
-            gap: 10px;
+            gap: 14px;
             margin-top: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .btn-foto {
             flex: 1;
+            height: 56px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 46px;
-            border: none;
-            border-radius: 14px;
-            background: linear-gradient(90deg, #4f7df0, #5f8df7);
-            color: white;
-            font-size: 15px;
-            font-weight: 600;
+            justify-content: center;
+            gap: 10px;
+            padding: 0 18px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 18px;
             cursor: pointer;
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(79, 125, 240, 0.25);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 700;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+
+            background: linear-gradient(135deg, #557eea 0%, #3f6fdf 55%, #2f5fd0 100%);
+            box-shadow:
+                0 8px 20px rgba(28, 75, 160, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.30),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.12);
+
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
         }
 
-        .btn-foto:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 14px rgba(79, 125, 240, 0.32);
+            .btn-foto:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 10px 24px rgba(28, 75, 160, 0.42),
+                inset 0 1px 0 rgba(255, 255, 255, 0.32),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.14);
+            filter: brightness(1.03);
         }
 
         .btn-foto:active {
             transform: scale(0.98);
         }
 
-        .nombre-archivo {
-            margin-top: 6px;
-            font-size: 14px;
-            color: #555;
-            text-align: center;
-            background: rgba(255,255,255,0.6);
-            padding: 8px 12px;
-            border-radius: 12px;
+                .btn-foto-icon {
+            font-size: 18px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+
+       
+        .nombre-archivo {
+            margin-top: 6px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.70);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            color: #4b5563;
+            font-size: 14px;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.35),
+                0 4px 12px rgba(0,0,0,0.05);
+            word-break: break-word;
+        }
+        .nombre-archivo.vacio {
+            color: #6b7280;
+            justify-content: center;
+        }
+                #nombreArchivoTexto {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         #video {
             width: 100%;
             margin-top: 12px;
@@ -736,10 +778,27 @@ try {
             overflow: hidden;
         }
 
-          #abrirCamara,
+        
         #tomarFoto {
             width: 100%;
             margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .foto-opciones {
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .btn-foto {
+                height: 52px;
+                font-size: 14px;
+                padding: 0 12px;
+            }
+
+            .btn-foto span:last-child {
+                white-space: nowrap;
+            }
         }
 
 
@@ -811,21 +870,30 @@ try {
 
                     <label for="descripcion">Descripción:</label>
                     <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
+<label for="foto">Fotografía (opcional):</label>
 
-                   <label for="foto">Fotografía (opcional):</label>
+<div class="foto-opciones">
+    <label for="foto" class="btn-foto">
+        <span class="btn-foto-icon">📁</span>
+        <span>Subir archivo</span>
+    </label>
 
-                    <div class="foto-opciones">
-                        <label for="foto" class="btn-foto">Subir archivo</label>
-                        <button type="button" id="abrirCamara" class="btn-foto">Activar cámara</button>
-                    </div>
+                <button type="button" id="abrirCamara" class="btn-foto">
+                    <span class="btn-foto-icon">📷</span>
+                    <span>Activar cámara</span>
+                </button>
+            </div>
 
-                    <input type="file" name="foto" id="foto" accept="image/*" hidden>
+            <input type="file" name="foto" id="foto" accept="image/*" hidden>
 
-                    <p id="nombreArchivo" class="nombre-archivo">Ningún archivo seleccionado</p>
+            <div id="archivoInfo" class="nombre-archivo vacio">
+                <span id="nombreArchivoTexto">Ningún archivo seleccionado</span>
+                <button type="button" id="quitarArchivo" class="quitar-archivo" style="display:none;">✕</button>
+            </div>
 
-                    <video id="video" autoplay playsinline style="display:none;"></video>
-                    <canvas id="canvas" style="display:none;"></canvas>
-                    <button type="button" id="tomarFoto" class="btn-foto" style="display:none;">Tomar foto</button>
+            <video id="video" autoplay playsinline style="display:none;"></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <button type="button" id="tomarFoto" class="btn-foto" style="display:none;">Tomar foto</button>
 
                     <div class="info-ubicacion oculto" id="infoUbicacion">
                         <strong>Ubicación seleccionada:</strong><br>
@@ -852,80 +920,104 @@ try {
             <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
             <script src="/views/components/JS_usuario/menu-inferior.js"></script>
          <script>
-        const inputFoto = document.getElementById('foto');
-        const nombreArchivo = document.getElementById('nombreArchivo');
-        const abrirCamaraBtn = document.getElementById('abrirCamara');
-        const tomarFotoBtn = document.getElementById('tomarFoto');
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
+    const inputFoto = document.getElementById('foto');
+    const nombreArchivoTexto = document.getElementById('nombreArchivoTexto');
+    const archivoInfo = document.getElementById('archivoInfo');
+    const quitarArchivoBtn = document.getElementById('quitarArchivo');
+    const abrirCamaraBtn = document.getElementById('abrirCamara');
+    const tomarFotoBtn = document.getElementById('tomarFoto');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
 
-        let stream = null;
+    let stream = null;
 
-        if (inputFoto) {
-            inputFoto.addEventListener('change', () => {
-                if (inputFoto.files && inputFoto.files.length > 0) {
-                    nombreArchivo.textContent = inputFoto.files[0].name;
-                } else {
-                    nombreArchivo.textContent = 'Ningún archivo seleccionado';
-                }
-            });
+    function actualizarVistaArchivo() {
+        if (inputFoto.files && inputFoto.files.length > 0) {
+            nombreArchivoTexto.textContent = inputFoto.files[0].name;
+            quitarArchivoBtn.style.display = 'flex';
+            archivoInfo.classList.remove('vacio');
+        } else {
+            nombreArchivoTexto.textContent = 'Ningún archivo seleccionado';
+            quitarArchivoBtn.style.display = 'none';
+            archivoInfo.classList.add('vacio');
+        }
+    }
+
+    function cerrarCamara() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
         }
 
-        if (abrirCamaraBtn) {
-            abrirCamaraBtn.addEventListener('click', async () => {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment' },
-                        audio: false
-                    });
+        video.srcObject = null;
+        video.style.display = 'none';
+        tomarFotoBtn.style.display = 'none';
+    }
 
-                    video.srcObject = stream;
-                    video.style.display = 'block';
-                    tomarFotoBtn.style.display = 'block';
-                } catch (error) {
-                    alert('No se pudo abrir la cámara.');
-                    console.error(error);
-                }
-            });
-        }
+    if (inputFoto) {
+        inputFoto.addEventListener('change', actualizarVistaArchivo);
+    }
 
-        if (tomarFotoBtn) {
-            tomarFotoBtn.addEventListener('click', () => {
-                if (!video.videoWidth || !video.videoHeight) {
-                    alert('La cámara todavía no está lista.');
+    if (quitarArchivoBtn) {
+        quitarArchivoBtn.addEventListener('click', () => {
+            inputFoto.value = '';
+            actualizarVistaArchivo();
+            cerrarCamara();
+        });
+    }
+
+    if (abrirCamaraBtn) {
+        abrirCamaraBtn.addEventListener('click', async () => {
+            try {
+                cerrarCamara();
+
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+
+                video.srcObject = stream;
+                video.style.display = 'block';
+                tomarFotoBtn.style.display = 'flex';
+            } catch (error) {
+                alert('No se pudo abrir la cámara.');
+                console.error(error);
+            }
+        });
+    }
+
+    if (tomarFotoBtn) {
+        tomarFotoBtn.addEventListener('click', () => {
+            if (!video.videoWidth || !video.videoHeight) {
+                alert('La cámara todavía no está lista.');
+                return;
+            }
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    alert('No se pudo capturar la foto.');
                     return;
                 }
 
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
+                const archivo = new File([blob], 'foto_camara.png', { type: 'image/png' });
+                const dt = new DataTransfer();
+                dt.items.add(archivo);
+                inputFoto.files = dt.files;
 
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                actualizarVistaArchivo();
+            }, 'image/png');
 
-                canvas.toBlob((blob) => {
-                    if (!blob) {
-                        alert('No se pudo capturar la foto.');
-                        return;
-                    }
+            cerrarCamara();
+        });
+    }
 
-                    const archivo = new File([blob], 'foto_camara.png', { type: 'image/png' });
-                    const dt = new DataTransfer();
-                    dt.items.add(archivo);
-                    inputFoto.files = dt.files;
-                    nombreArchivo.textContent = archivo.name;
-                }, 'image/png');
-
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                    stream = null;
-                }
-
-                video.style.display = 'none';
-                tomarFotoBtn.style.display = 'none';
-            });
-        }
+    actualizarVistaArchivo();
 </script>
-</script>
-
 </body>
 </html>
