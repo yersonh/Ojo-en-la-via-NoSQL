@@ -161,22 +161,22 @@ try {
 <body>
     <div class="bottom-hover-zone" id="bottomHoverZone"></div>
 
-        <nav class="bottom-nav" id="bottomNav">
-        <a href="#" class="active" data-panel="alertas">
-            <span class="icon">🔔</span>
-            <span>Alertas</span>
-        </a>
+    <nav class="bottom-nav" id="bottomNav">
+    <a href="#" class="active" data-panel="alertas">
+        <span class="icon">🔔</span>
+        <span>Alertas</span>
+    </a>
 
-        <a href="#" data-panel="mapa">
-            <span class="icon">🗺️</span>
-            <span>Mapa</span>
-        </a>
+    <a href="#" data-panel="mapa">
+        <span class="icon">🗺️</span>
+        <span>Mapa</span>
+    </a>
 
-        <a href="#" data-panel="perfil">
-            <span class="icon">👤</span>
-            <span>Perfil</span>
-        </a>
-    </nav>
+    <a href="#" data-panel="perfil">
+        <span class="icon">👤</span>
+        <span>Perfil</span>
+    </a>
+</nav>
 
     <div class="contenedor">
         <div class="topbar">
@@ -207,33 +207,6 @@ try {
                 📍 Mi ubicación
             </button>
         </div>
-   <section class="panel-navegacion panel-activo" id="panelAlertas">
-            <h3>Alertas recientes</h3>
-            <p>Consulta los reportes activos cerca de ti.</p>
-
-            <div id="listaAlertas" class="lista-alertas">
-                <p class="texto-vacio">Cargando alertas...</p>
-            </div>
-        </section>
-
-        <section class="panel-navegacion" id="panelPerfil">
-            <h3>Mi perfil</h3>
-
-            <div class="perfil-card">
-                <div class="perfil-avatar">
-                    <?php echo htmlspecialchars($inicial ?? 'U'); ?>
-                </div>
-
-                <div>
-                    <strong><?php echo htmlspecialchars($nombreMostrar); ?></strong>
-                    <p><?php echo htmlspecialchars($_SESSION['usuario_email'] ?? ''); ?></p>
-                </div>
-            </div>
-
-            <a href="../../logout.php" class="perfil-logout">Cerrar sesión</a>
-     </section>
-
-
         <div class="panel oculto" id="panelRegistro">
             <h3>Registrar incidente</h3>
 
@@ -242,6 +215,7 @@ try {
                     <?php echo htmlspecialchars($mensaje); ?>
                 </div>
             <?php endif; ?>
+
             <form action="" method="POST" enctype="multipart/form-data">
                 <label for="tipo">Tipo de incidente:</label>
                 <select name="tipo" id="tipo" required>
@@ -309,8 +283,6 @@ try {
         <script src="/views/components/JS_usuario/menu-inferior.js"></script>
         <script src="/views/components/JS_usuario/ubicacion-actual.js"></script>
         <script src="/views/components/JS_usuario/foto-camara.js"></script>
-        <script src="/views/components/JS_usuario/panel-navegacion.js"></script>
     
-
 </body>
 </html>
