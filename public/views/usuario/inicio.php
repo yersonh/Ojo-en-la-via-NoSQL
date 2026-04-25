@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ],
                 'direccion_texto' => '',
                 'imagenes' => $imagenes,
-                'estado' => 'activo',
+                'estado' => 'Pendiente',
                 'fecha_reporte' => new \MongoDB\BSON\UTCDateTime()
             ];
 
