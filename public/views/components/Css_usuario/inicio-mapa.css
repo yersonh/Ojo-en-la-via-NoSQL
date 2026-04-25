@@ -666,5 +666,81 @@
             opacity: 0.7;
             cursor: not-allowed;
         }
-    
+    /* paginas de  alerta y perfil */
+    .pagina-simple {
+    min-height: 100vh;
+    padding: 24px 18px 120px;
+    background: linear-gradient(180deg, #0f5f96, #0b1f33);
+    color: white;
+}
+
+.pagina-simple h2 {
+    margin-bottom: 18px;
+    font-size: 24px;
+}
+
+.perfil-contenedor {
+    max-width: 420px;
+    margin: 70px auto 0;
+    padding: 28px 20px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.12);
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.perfil-avatar-grande {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #1e88e5;
+    color: white;
+    font-size: 38px;
+    font-weight: bold;
+}
+
+.perfil-correo {
+    margin-top: 8px;
+    color: #d7e9f7;
+}
+
+.btn-cerrar-sesion {
+    display: block;
+    margin-top: 24px;
+    padding: 13px;
+    border-radius: 14px;
+    background: #e53935;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.lista-alertas-pagina {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.alerta-card {
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+
+.alerta-card h3 {
+    margin-bottom: 8px;
+}
+
+.alerta-card p {
+    margin-bottom: 10px;
+    color: #eef6ff;
+}
+
+.alerta-card small {
+    color: #c9d9e8;
+}
   

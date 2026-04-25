@@ -160,23 +160,22 @@ try {
 </head>
 <body>
     <div class="bottom-hover-zone" id="bottomHoverZone"></div>
-
     <nav class="bottom-nav" id="bottomNav">
-    <a href="#" class="active" data-panel="alertas">
-        <span class="icon">🔔</span>
-        <span>Alertas</span>
-    </a>
+        <a href="alertas.php">
+            <span class="icon">🔔</span>
+            <span>Alertas</span>
+        </a>
 
-    <a href="#" data-panel="mapa">
-        <span class="icon">🗺️</span>
-        <span>Mapa</span>
-    </a>
+        <a href="inicio.php" class="active">
+            <span class="icon">🗺️</span>
+            <span>Mapa</span>
+        </a>
 
-    <a href="#" data-panel="perfil">
-        <span class="icon">👤</span>
-        <span>Perfil</span>
-    </a>
-</nav>
+        <a href="perfil.php">
+            <span class="icon">👤</span>
+            <span>Perfil</span>
+        </a>
+    </nav>
 
     <div class="contenedor">
         <div class="topbar">

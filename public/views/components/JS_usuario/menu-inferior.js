@@ -22,23 +22,32 @@ function ocultarMenu() {
     }, 700);
 }
 
-if (bottomHoverZone && bottomNav && mapElement) {
-    bottomHoverZone.addEventListener('mouseenter', mostrarMenu);
-    bottomNav.addEventListener('mouseenter', mostrarMenu);
+if (bottomNav) {
+    // Si NO hay mapa, por ejemplo en perfil.php o alertas.php,
+    // dejamos el menú visible siempre.
+    if (!mapElement) {
+        bottomNav.classList.add('visible');
+    }
 
-    bottomHoverZone.addEventListener('mouseleave', ocultarMenu);
-    bottomNav.addEventListener('mouseleave', ocultarMenu);
+    // Si SÍ hay mapa, usamos el efecto de mostrar/ocultar.
+    if (bottomHoverZone && mapElement) {
+        bottomHoverZone.addEventListener('mouseenter', mostrarMenu);
+        bottomNav.addEventListener('mouseenter', mostrarMenu);
 
-    mapElement.addEventListener('mousemove', function (e) {
-        const altoVentana = window.innerHeight;
-        const distanciaAbajo = altoVentana - e.clientY;
+        bottomHoverZone.addEventListener('mouseleave', ocultarMenu);
+        bottomNav.addEventListener('mouseleave', ocultarMenu);
 
-        if (distanciaAbajo <= 50) {
-            mostrarMenu();
-        } else if (!bottomNav.matches(':hover')) {
-            ocultarMenu();
-        }
-    });
+        mapElement.addEventListener('mousemove', function (e) {
+            const altoVentana = window.innerHeight;
+            const distanciaAbajo = altoVentana - e.clientY;
 
-    mapElement.addEventListener('mouseleave', ocultarMenu);
+            if (distanciaAbajo <= 50) {
+                mostrarMenu();
+            } else if (!bottomNav.matches(':hover')) {
+                ocultarMenu();
+            }
+        });
+
+        mapElement.addEventListener('mouseleave', ocultarMenu);
+    }
 }
