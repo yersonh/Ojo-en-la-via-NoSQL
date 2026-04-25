@@ -799,6 +799,31 @@ try {
                 font-size: 14px;
             }
         }
+          /* ========= NAVEGACIÓN INFERIOR ========= */
+                .btn-mi-ubicacion {
+            position: absolute;
+            left: 16px;
+            bottom: 95px;
+            z-index: 3002;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 999px;
+            background: rgba(30, 136, 229, 0.95);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn-mi-ubicacion:hover {
+            background: #1565c0;
+        }
+
+        .btn-mi-ubicacion:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
