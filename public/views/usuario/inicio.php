@@ -99,7 +99,7 @@ $reportesMapa = [];
 
 try {
     $cursor = $reportes->find([
-        'estado' => 'activo'
+        'estado' => 'Pendiente'
     ]);
 
     foreach ($cursor as $reporte) {
@@ -139,7 +139,7 @@ try {
                 'imagen' => $primeraImagen,
                 'usuario_email' => $reporte['usuario_email'] ?? 'No disponible',
                 'fecha' => $fechaFormateada,
-                'estado' => $reporte['estado'] ?? 'activo'
+                'estado' => $reporte['estado'] ?? 'Pendiente'
             ];
         }
     }
