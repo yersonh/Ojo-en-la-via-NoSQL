@@ -667,3 +667,98 @@
             cursor: not-allowed;
         }
     
+    /* ========= panel de abajo de navegacion ========= */
+        .panel-navegacion {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 105px;
+        z-index: 2500;
+        display: none;
+        padding: 18px;
+        border-radius: 22px;
+        background: rgba(20, 20, 20, 0.92);
+        color: white;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(10px);
+    }
+
+    .panel-navegacion.panel-activo {
+        display: block;
+    }
+
+    .panel-navegacion h3 {
+        margin-bottom: 8px;
+        font-size: 18px;
+    }
+
+    .panel-navegacion p {
+        margin: 0;
+        color: #d5d5d5;
+        font-size: 14px;
+    }
+
+    .lista-alertas {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 230px;
+        overflow-y: auto;
+    }
+
+    .alerta-item {
+        padding: 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.09);
+    }
+
+    .alerta-item strong {
+        display: block;
+        margin-bottom: 4px;
+        color: white;
+    }
+
+    .alerta-item small {
+        display: block;
+        margin-top: 6px;
+        color: #bdbdbd;
+    }
+
+    .texto-vacio {
+        color: #bdbdbd;
+    }
+
+    .perfil-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.09);
+    }
+
+    .perfil-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #1e88e5;
+        color: white;
+        font-weight: bold;
+        font-size: 20px;
+    }
+
+    .perfil-logout {
+        display: block;
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 14px;
+        text-align: center;
+        text-decoration: none;
+        background: #e53935;
+        color: white;
+        font-weight: bold;
+    }
