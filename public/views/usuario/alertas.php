@@ -87,7 +87,6 @@ function obtenerNombreDesdeLookup($reporte)
 
     return 'Usuario sin nombre';
 }
-
 try {
     $db = conectarMongoDB();
 
@@ -96,7 +95,7 @@ try {
     $cursor = $reportes->aggregate([
         [
             '$lookup' => [
-                'from' => 'usuarios',
+                'from' => 'usuario',
                 'localField' => 'usuario_id',
                 'foreignField' => '_id',
                 'as' => 'usuario'
@@ -150,7 +149,13 @@ try {
         <section class="lista-alertas-pagina">
             <?php foreach ($cursor as $reporte): ?>
                 <?php
-                   $nombreUsuario = $reporte['usuario_nombre'] ?? 'Usuario sin nombre';
+                    $usuarioReporte = $reporte['usuario'][0] ?? null;
+
+                    $nombreUsuario = 'Usuario sin nombre';
+
+                    if ($usuarioReporte && !empty($usuarioReporte['nombre_completo'])) {
+                        $nombreUsuario = $usuarioReporte['nombre_completo'];
+                    }
 
                     $tipo = $reporte['tipo']
                         ?? $reporte['tipo_incidente']

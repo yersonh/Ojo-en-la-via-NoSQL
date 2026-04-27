@@ -86,10 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $imagenes[] = '/uploads/reportes/' . $nombreArchivo;
             }
 
-          $documento = [
+                $documento = [
                 'usuario_id' => new \MongoDB\BSON\ObjectId($_SESSION['usuario_id']),
-                'usuario_nombre' => $nombreUsuarioActual,
-                'usuario_email' => $_SESSION['usuario_email'] ?? '',
                 'tipo' => $tipo,
                 'descripcion' => $descripcion,
                 'ubicacion' => [
@@ -98,10 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ],
                 'direccion_texto' => '',
                 'imagenes' => $imagenes,
-                'estado' => 'Pendiente',
+                'estado' => 'pendiente',
                 'fecha_reporte' => new \MongoDB\BSON\UTCDateTime()
             ];
-
             $resultado = $reportes->insertOne($documento);
 
             if ($resultado->getInsertedCount() > 0) {
