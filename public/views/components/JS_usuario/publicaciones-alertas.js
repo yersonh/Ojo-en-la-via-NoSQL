@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('reporte_id', reporteId);
 
             try {
-                const respuesta = await fetch('like-reporte.php', {
+                const respuesta = await fetch('/views/components/usuario/like_reporte.php', {
                     method: 'POST',
                     body: formData
                 });
