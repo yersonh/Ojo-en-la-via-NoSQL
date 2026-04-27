@@ -69,29 +69,12 @@ function textoEstado($estado)
 
 function obtenerNombreUsuario($reporte, $usuarios)
 {
-    if (!empty($reporte['usuario_nombre'])) {
-        return $reporte['usuario_nombre'];
-    }
-
-    if (!empty($reporte['nombre_usuario'])) {
-        return $reporte['nombre_usuario'];
-    }
-
-    if (!empty($reporte['nombre'])) {
-        return $reporte['nombre'];
-    }
-
-    $usuarioId = $reporte['usuario_id']
-        ?? $reporte['id_usuario']
-        ?? $reporte['user_id']
-        ?? null;
-
-    if (empty($usuarioId)) {
-        return 'Usuario';
+    if (empty($reporte['usuario_id'])) {
+        return 'Usuario sin nombre';
     }
 
     try {
-        $usuario = null;
+        $usuarioId = $reporte['usuario_id'];
 
         if ($usuarioId instanceof \MongoDB\BSON\ObjectId) {
             $usuario = $usuarios->findOne([
@@ -100,32 +83,25 @@ function obtenerNombreUsuario($reporte, $usuarios)
         } else {
             $usuarioIdTexto = (string) $usuarioId;
 
-            $usuario = $usuarios->findOne([
-                '_id' => $usuarioIdTexto
-            ]);
-
-            if (!$usuario && preg_match('/^[a-f\d]{24}$/i', $usuarioIdTexto)) {
-                $usuario = $usuarios->findOne([
-                    '_id' => new \MongoDB\BSON\ObjectId($usuarioIdTexto)
-                ]);
+            if (!preg_match('/^[a-f\d]{24}$/i', $usuarioIdTexto)) {
+                return 'Usuario sin nombre';
             }
+
+            $usuario = $usuarios->findOne([
+                '_id' => new \MongoDB\BSON\ObjectId($usuarioIdTexto)
+            ]);
         }
 
-        if ($usuario) {
-            return $usuario['nombre']
-                ?? $usuario['nombre_completo']
-                ?? $usuario['username']
-                ?? $usuario['email']
-                ?? 'Usuario';
+        if (!$usuario) {
+            return 'Usuario sin nombre';
         }
 
-        return 'Usuario';
+        return $usuario['nombre_completo'] ?? 'Usuario sin nombre';
 
     } catch (Throwable $e) {
-        return 'Usuario';
+        return 'Usuario sin nombre';
     }
 }
-
 try {
     $db = conectarMongoDB();
 
