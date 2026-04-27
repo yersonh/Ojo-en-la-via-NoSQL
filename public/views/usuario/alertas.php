@@ -91,6 +91,8 @@ try {
     $db = conectarMongoDB();
 
     $reportes = $db->reportes;
+    $likesReportes = $db->likes_reportes;
+    $comentariosPublicacion = $db->comentarios_publicacion;
 
     $cursor = $reportes->aggregate([
         [
@@ -189,6 +191,21 @@ try {
                         : 0;
 
                     $inicial = mb_strtoupper(mb_substr($nombreUsuario, 0, 1));
+                    $reporteIdObj = $reporte['_id'];
+                $usuarioIdActual = new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
+
+                $totalLikes = $likesReportes->countDocuments([
+                    'reporte_id' => $reporteIdObj
+                ]);
+
+                $yaDioLike = $likesReportes->countDocuments([
+                    'reporte_id' => $reporteIdObj,
+                    'usuario_id' => $usuarioIdActual
+                ]) > 0;
+
+                $totalComentariosPublicacion = $comentariosPublicacion->countDocuments([
+                    'reporte_id' => $reporteIdObj
+                ]);
                 ?>
 
                 <article class="alerta-card-red">
@@ -239,7 +256,13 @@ try {
                     </div>
 
                     <div class="alerta-acciones">
-                        <button type="button">❤️ <?php echo $likes; ?></button>
+                    <button 
+                        type="button"
+                        class="btn-like-reporte <?php echo $yaDioLike ? 'liked' : ''; ?>"
+                        data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
+                    >
+                        ❤️ <span class="like-count"><?php echo $totalLikes; ?></span>
+                    </button>
 
                         <button type="button">
                             💬 Comentarios (<?php echo $comentarios; ?>)
@@ -259,5 +282,6 @@ try {
     </main>
 
     <script src="/views/components/JS_usuario/menu-inferior.js"></script>
+    <script src="/views/components/JS_usuario/publicaciones-alertas.js"></script>
 </body>
 </html>

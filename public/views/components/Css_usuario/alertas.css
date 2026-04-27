@@ -176,3 +176,8 @@
         gap: 5px;
     }
 }
+.btn-like-reporte.liked {
+    background: rgba(255, 70, 90, 0.18);
+    border-color: #ff4d64;
+    color: #ff6b7d;
+}
