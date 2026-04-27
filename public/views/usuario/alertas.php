@@ -67,26 +67,29 @@ function textoEstado($estado)
     }
 }
 
-function obtenerNombreDesdeLookup($reporte)
+function normalizarEstado($estado)
 {
-    if (!empty($reporte['usuario'])) {
-        foreach ($reporte['usuario'] as $usuario) {
-            if (!empty($usuario['nombre_completo'])) {
-                return $usuario['nombre_completo'];
-            }
+    $estado = strtolower(trim($estado));
 
-            if (!empty($usuario['nombre'])) {
-                return $usuario['nombre'];
-            }
-
-            if (!empty($usuario['nombre_usuario'])) {
-                return $usuario['nombre_usuario'];
-            }
-        }
+    if ($estado === 'pendiente') {
+        return 'pendiente';
     }
 
-    return 'Usuario sin nombre';
+    if ($estado === 'en revisión' || $estado === 'en_revision') {
+        return 'en_revision';
+    }
+
+    if ($estado === 'notificado') {
+        return 'notificado';
+    }
+
+    if ($estado === 'resuelto') {
+        return 'resuelto';
+    }
+
+    return 'pendiente';
 }
+
 try {
     $db = conectarMongoDB();
 
@@ -157,6 +160,10 @@ try {
 
                     if ($usuarioReporte && !empty($usuarioReporte['nombre_completo'])) {
                         $nombreUsuario = $usuarioReporte['nombre_completo'];
+                    } elseif ($usuarioReporte && !empty($usuarioReporte['nombre'])) {
+                        $nombreUsuario = $usuarioReporte['nombre'];
+                    } elseif ($usuarioReporte && !empty($usuarioReporte['nombre_usuario'])) {
+                        $nombreUsuario = $usuarioReporte['nombre_usuario'];
                     }
 
                     $tipo = $reporte['tipo']
@@ -165,7 +172,7 @@ try {
 
                     $descripcion = $reporte['descripcion'] ?? 'Sin descripción';
 
-                    $estado = strtolower($reporte['estado'] ?? 'pendiente');
+                    $estado = normalizarEstado($reporte['estado'] ?? 'pendiente');
 
                     $latitud = $reporte['latitud']
                         ?? $reporte['ubicacion']['lat']
@@ -182,30 +189,23 @@ try {
                     $fechaFormateada = formatearFecha($fecha);
                     $tiempo = tiempoTranscurrido($fecha);
 
-                    $comentarios = isset($reporte['comentarios']) && is_countable($reporte['comentarios'])
-                        ? count($reporte['comentarios'])
-                        : 0;
-
-                    $likes = isset($reporte['likes']) && is_countable($reporte['likes'])
-                        ? count($reporte['likes'])
-                        : 0;
-
                     $inicial = mb_strtoupper(mb_substr($nombreUsuario, 0, 1));
+
                     $reporteIdObj = $reporte['_id'];
-                $usuarioIdActual = new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
+                    $usuarioIdActual = new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
 
-                $totalLikes = $likesReportes->countDocuments([
-                    'reporte_id' => $reporteIdObj
-                ]);
+                    $totalLikes = $likesReportes->countDocuments([
+                        'reporte_id' => $reporteIdObj
+                    ]);
 
-                $yaDioLike = $likesReportes->countDocuments([
-                    'reporte_id' => $reporteIdObj,
-                    'usuario_id' => $usuarioIdActual
-                ]) > 0;
+                    $yaDioLike = $likesReportes->countDocuments([
+                        'reporte_id' => $reporteIdObj,
+                        'usuario_id' => $usuarioIdActual
+                    ]) > 0;
 
-                $totalComentariosPublicacion = $comentariosPublicacion->countDocuments([
-                    'reporte_id' => $reporteIdObj
-                ]);
+                    $totalComentariosPublicacion = $comentariosPublicacion->countDocuments([
+                        'reporte_id' => $reporteIdObj
+                    ]);
                 ?>
 
                 <article class="alerta-card-red">
@@ -256,16 +256,16 @@ try {
                     </div>
 
                     <div class="alerta-acciones">
-                    <button 
-                        type="button"
-                        class="btn-like-reporte <?php echo $yaDioLike ? 'liked' : ''; ?>"
-                        data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
-                    >
-                        ❤️ <span class="like-count"><?php echo $totalLikes; ?></span>
-                    </button>
+                        <button 
+                            type="button"
+                            class="btn-like-reporte <?php echo $yaDioLike ? 'liked' : ''; ?>"
+                            data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
+                        >
+                            ❤️ <span class="like-count"><?php echo $totalLikes; ?></span>
+                        </button>
 
-                        <button type="button">
-                            💬 Comentarios (<?php echo $comentarios; ?>)
+                        <button type="button" class="btn-abrir-comentarios">
+                            💬 Comentarios (<span class="comment-count"><?php echo $totalComentariosPublicacion; ?></span>)
                         </button>
 
                         <?php if ($latitud !== null && $longitud !== null): ?>
@@ -282,6 +282,6 @@ try {
     </main>
 
     <script src="/views/components/JS_usuario/menu-inferior.js"></script>
-    <script src="/views/components/JS_usuario/publicaciones-alertas.js"></script>
+    <script src="/views/components/JS_usuario/likes-reportes.js"></script>
 </body>
 </html>

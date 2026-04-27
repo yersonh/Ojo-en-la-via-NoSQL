@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.btn-like-reporte').forEach((btn) => {
+    const botonesLike = document.querySelectorAll('.btn-like-reporte');
+
+    botonesLike.forEach((btn) => {
         btn.addEventListener('click', async () => {
             const reporteId = btn.dataset.reporteId;
 
@@ -12,7 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: formData
                 });
 
-                const data = await respuesta.json();
+                const texto = await respuesta.text();
+                console.log('Respuesta del servidor:', texto);
+
+                const data = JSON.parse(texto);
 
                 if (!data.ok) {
                     alert(data.mensaje || 'No se pudo procesar el like.');
@@ -20,9 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 btn.classList.toggle('liked', data.liked);
-                btn.querySelector('.like-count').textContent = data.likes;
+
+                const contador = btn.querySelector('.like-count');
+
+                if (contador) {
+                    contador.textContent = data.likes;
+                }
 
             } catch (error) {
+                console.error('Error real del like:', error);
                 alert('Error al conectar con el servidor.');
             }
         });
