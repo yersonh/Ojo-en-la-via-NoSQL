@@ -9,12 +9,57 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
+function formatearFecha($fecha)
+{
+    if ($fecha instanceof \MongoDB\BSON\UTCDateTime) {
+        return $fecha
+            ->toDateTime()
+            ->setTimezone(new DateTimeZone('America/Bogota'))
+            ->format('d \d\e F \d\e Y');
+    }
+
+    return 'Fecha no disponible';
+}
+
+function tiempoTranscurrido($fecha)
+{
+    if (!$fecha instanceof \MongoDB\BSON\UTCDateTime) {
+        return '';
+    }
+
+    $fechaReporte = $fecha->toDateTime()->setTimezone(new DateTimeZone('America/Bogota'));
+    $ahora = new DateTime('now', new DateTimeZone('America/Bogota'));
+
+    $diferencia = $ahora->getTimestamp() - $fechaReporte->getTimestamp();
+
+    if ($diferencia < 3600) {
+        return floor($diferencia / 60) . ' min';
+    }
+
+    if ($diferencia < 86400) {
+        return floor($diferencia / 3600) . ' h';
+    }
+
+    return floor($diferencia / 86400) . ' d';
+}
+
+function textoEstado($estado)
+{
+    return match ($estado) {
+        'pendiente' => 'PENDIENTE',
+        'en_revision' => 'EN REVISIÓN',
+        'notificado' => 'NOTIFICADO',
+        'resuelto' => 'RESUELTO',
+        default => strtoupper($estado ?: 'PENDIENTE')
+    };
+}
+
 try {
     $db = conectarMongoDB();
     $reportes = $db->reportes;
 
     $cursor = $reportes->find(
-        ['estado' => 'activo'],
+        [],
         ['sort' => ['fecha_reporte' => -1]]
     );
 } catch (Throwable $e) {
@@ -27,10 +72,10 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alertas</title>
-
-    <link rel="stylesheet" href="/views/components/Css_usuario/inicio-mapa.css">
+<link rel="stylesheet" href="/views/components/Css_usuario/inicio-mapa.css">
+<link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
 </head>
-<body>
+<body class="body-alertas">
 
     <div class="bottom-hover-zone" id="bottomHoverZone"></div>
 
@@ -51,38 +96,106 @@ try {
         </a>
     </nav>
 
-    <main class="pagina-simple">
-        <h2>Alertas recientes</h2>
+    <main class="pagina-alertas">
+        <h2 class="titulo-alertas">Alertas recientes</h2>
 
-        <div class="lista-alertas-pagina">
+        <section class="lista-alertas-pagina">
             <?php foreach ($cursor as $reporte): ?>
                 <?php
-                    $fechaFormateada = 'Fecha no disponible';
+                    $nombreUsuario = $reporte['usuario_nombre']
+                        ?? $reporte['nombre_usuario']
+                        ?? $reporte['nombre']
+                        ?? 'Usuario';
 
-                    if (
-                        !empty($reporte['fecha_reporte']) &&
-                        $reporte['fecha_reporte'] instanceof \MongoDB\BSON\UTCDateTime
-                    ) {
-                        $fechaFormateada = $reporte['fecha_reporte']
-                            ->toDateTime()
-                            ->setTimezone(new DateTimeZone('America/Bogota'))
-                            ->format('d/m/Y, H:i');
-                    }
+                    $tipo = $reporte['tipo']
+                        ?? $reporte['tipo_incidente']
+                        ?? 'Incidente';
+
+                    $descripcion = $reporte['descripcion'] ?? 'Sin descripción';
+
+                    $estado = $reporte['estado'] ?? 'pendiente';
+
+                    $latitud = $reporte['latitud']
+                        ?? $reporte['ubicacion']['lat']
+                        ?? $reporte['ubicacion']['latitud']
+                        ?? null;
+
+                    $longitud = $reporte['longitud']
+                        ?? $reporte['ubicacion']['lng']
+                        ?? $reporte['ubicacion']['longitud']
+                        ?? null;
+
+                    $fecha = $reporte['fecha_reporte'] ?? null;
+                    $fechaFormateada = formatearFecha($fecha);
+                    $tiempo = tiempoTranscurrido($fecha);
+
+                    $comentarios = isset($reporte['comentarios']) && is_countable($reporte['comentarios'])
+                        ? count($reporte['comentarios'])
+                        : 0;
+
+                    $likes = isset($reporte['likes']) && is_countable($reporte['likes'])
+                        ? count($reporte['likes'])
+                        : 0;
+
+                    $inicial = mb_strtoupper(mb_substr($nombreUsuario, 0, 1));
                 ?>
 
-                <article class="alerta-card">
-                    <h3><?php echo htmlspecialchars($reporte['tipo'] ?? 'Incidente'); ?></h3>
+                <article class="alerta-card-red">
+                    <div class="alerta-header">
+                        <div class="alerta-avatar">
+                            <?php echo htmlspecialchars($inicial); ?>
+                        </div>
 
-                    <p>
-                        <?php echo htmlspecialchars($reporte['descripcion'] ?? 'Sin descripción'); ?>
+                        <div class="alerta-info">
+                            <div class="alerta-linea-superior">
+                                <strong><?php echo htmlspecialchars($nombreUsuario); ?></strong>
+                            </div>
+
+                            <div class="alerta-meta">
+                                <span>📍 Ubicación en mapa</span>
+                                <?php if (!empty($tiempo)): ?>
+                                    <span>⏱ <?php echo htmlspecialchars($tiempo); ?></span>
+                                <?php endif; ?>
+                                <span class="chip-tipo">
+                                    <?php echo htmlspecialchars($tipo); ?>
+                                </span>
+                            </div>
+
+                            <span class="chip-estado estado-<?php echo htmlspecialchars($estado); ?>">
+                                <?php echo htmlspecialchars(textoEstado($estado)); ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <p class="alerta-descripcion">
+                        <?php echo htmlspecialchars($descripcion); ?>
                     </p>
 
-                    <small>
-                        <?php echo htmlspecialchars($fechaFormateada); ?>
-                    </small>
+                    <div class="alerta-detalles">
+                        <?php if ($latitud !== null && $longitud !== null): ?>
+                            <div>🛣️ Coordenadas: <?php echo htmlspecialchars($latitud); ?>, <?php echo htmlspecialchars($longitud); ?></div>
+                        <?php else: ?>
+                            <div>🛣️ Coordenadas no disponibles</div>
+                        <?php endif; ?>
+
+                        <div>🗓️ <?php echo htmlspecialchars($fechaFormateada); ?></div>
+                    </div>
+
+                    <div class="alerta-acciones">
+                        <button type="button">❤️ <?php echo $likes; ?></button>
+                        <button type="button">💬 Comentarios (<?php echo $comentarios; ?>)</button>
+
+                        <?php if ($latitud !== null && $longitud !== null): ?>
+                            <a href="inicio.php?lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
+                                📍 Ver en Mapa
+                            </a>
+                        <?php else: ?>
+                            <a href="inicio.php">📍 Ver en Mapa</a>
+                        <?php endif; ?>
+                    </div>
                 </article>
             <?php endforeach; ?>
-        </div>
+        </section>
     </main>
 
     <script src="/views/components/JS_usuario/menu-inferior.js"></script>
