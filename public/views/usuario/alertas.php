@@ -150,7 +150,7 @@ try {
         <section class="lista-alertas-pagina">
             <?php foreach ($cursor as $reporte): ?>
                 <?php
-                    $nombreUsuario = obtenerNombreDesdeLookup($reporte);
+                   $nombreUsuario = $reporte['usuario_nombre'] ?? 'Usuario sin nombre';
 
                     $tipo = $reporte['tipo']
                         ?? $reporte['tipo_incidente']
