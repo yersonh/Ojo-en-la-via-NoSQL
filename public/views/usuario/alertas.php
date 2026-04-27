@@ -15,7 +15,7 @@ function formatearFecha($fecha)
         return $fecha
             ->toDateTime()
             ->setTimezone(new DateTimeZone('America/Bogota'))
-            ->format('d \d\e F \d\e Y');
+            ->format('d/m/Y');
     }
 
     return 'Fecha no disponible';
@@ -32,6 +32,10 @@ function tiempoTranscurrido($fecha)
 
     $diferencia = $ahora->getTimestamp() - $fechaReporte->getTimestamp();
 
+    if ($diferencia < 60) {
+        return 'Ahora';
+    }
+
     if ($diferencia < 3600) {
         return floor($diferencia / 60) . ' min';
     }
@@ -45,23 +49,94 @@ function tiempoTranscurrido($fecha)
 
 function textoEstado($estado)
 {
-    return match ($estado) {
-        'pendiente' => 'PENDIENTE',
-        'en_revision' => 'EN REVISIÓN',
-        'notificado' => 'NOTIFICADO',
-        'resuelto' => 'RESUELTO',
-        default => strtoupper($estado ?: 'PENDIENTE')
-    };
+    switch ($estado) {
+        case 'pendiente':
+            return 'PENDIENTE';
+
+        case 'en_revision':
+            return 'EN REVISIÓN';
+
+        case 'notificado':
+            return 'NOTIFICADO';
+
+        case 'resuelto':
+            return 'RESUELTO';
+
+        default:
+            return strtoupper($estado ?: 'PENDIENTE');
+    }
+}
+
+function obtenerNombreUsuario($reporte, $usuarios)
+{
+    if (!empty($reporte['usuario_nombre'])) {
+        return $reporte['usuario_nombre'];
+    }
+
+    if (!empty($reporte['nombre_usuario'])) {
+        return $reporte['nombre_usuario'];
+    }
+
+    if (!empty($reporte['nombre'])) {
+        return $reporte['nombre'];
+    }
+
+    $usuarioId = $reporte['usuario_id']
+        ?? $reporte['id_usuario']
+        ?? $reporte['user_id']
+        ?? null;
+
+    if (empty($usuarioId)) {
+        return 'Usuario';
+    }
+
+    try {
+        $usuario = null;
+
+        if ($usuarioId instanceof \MongoDB\BSON\ObjectId) {
+            $usuario = $usuarios->findOne([
+                '_id' => $usuarioId
+            ]);
+        } else {
+            $usuarioIdTexto = (string) $usuarioId;
+
+            $usuario = $usuarios->findOne([
+                '_id' => $usuarioIdTexto
+            ]);
+
+            if (!$usuario && preg_match('/^[a-f\d]{24}$/i', $usuarioIdTexto)) {
+                $usuario = $usuarios->findOne([
+                    '_id' => new \MongoDB\BSON\ObjectId($usuarioIdTexto)
+                ]);
+            }
+        }
+
+        if ($usuario) {
+            return $usuario['nombre']
+                ?? $usuario['nombre_completo']
+                ?? $usuario['username']
+                ?? $usuario['email']
+                ?? 'Usuario';
+        }
+
+        return 'Usuario';
+
+    } catch (Throwable $e) {
+        return 'Usuario';
+    }
 }
 
 try {
     $db = conectarMongoDB();
+
     $reportes = $db->reportes;
+    $usuarios = $db->usuarios;
 
     $cursor = $reportes->find(
         [],
         ['sort' => ['fecha_reporte' => -1]]
     );
+
 } catch (Throwable $e) {
     $cursor = [];
 }
@@ -72,8 +147,9 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alertas</title>
-<link rel="stylesheet" href="/views/components/Css_usuario/inicio-mapa.css">
-<link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
+
+    <link rel="stylesheet" href="/views/components/Css_usuario/inicio-mapa.css">
+    <link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
 </head>
 <body class="body-alertas">
 
@@ -102,10 +178,7 @@ try {
         <section class="lista-alertas-pagina">
             <?php foreach ($cursor as $reporte): ?>
                 <?php
-                    $nombreUsuario = $reporte['usuario_nombre']
-                        ?? $reporte['nombre_usuario']
-                        ?? $reporte['nombre']
-                        ?? 'Usuario';
+                    $nombreUsuario = obtenerNombreUsuario($reporte, $usuarios);
 
                     $tipo = $reporte['tipo']
                         ?? $reporte['tipo_incidente']
@@ -126,6 +199,7 @@ try {
                         ?? null;
 
                     $fecha = $reporte['fecha_reporte'] ?? null;
+
                     $fechaFormateada = formatearFecha($fecha);
                     $tiempo = tiempoTranscurrido($fecha);
 
@@ -153,9 +227,11 @@ try {
 
                             <div class="alerta-meta">
                                 <span>📍 Ubicación en mapa</span>
+
                                 <?php if (!empty($tiempo)): ?>
                                     <span>⏱ <?php echo htmlspecialchars($tiempo); ?></span>
                                 <?php endif; ?>
+
                                 <span class="chip-tipo">
                                     <?php echo htmlspecialchars($tipo); ?>
                                 </span>
@@ -173,7 +249,11 @@ try {
 
                     <div class="alerta-detalles">
                         <?php if ($latitud !== null && $longitud !== null): ?>
-                            <div>🛣️ Coordenadas: <?php echo htmlspecialchars($latitud); ?>, <?php echo htmlspecialchars($longitud); ?></div>
+                            <div>
+                                🛣️ Coordenadas:
+                                <?php echo htmlspecialchars($latitud); ?>,
+                                <?php echo htmlspecialchars($longitud); ?>
+                            </div>
                         <?php else: ?>
                             <div>🛣️ Coordenadas no disponibles</div>
                         <?php endif; ?>
@@ -183,7 +263,10 @@ try {
 
                     <div class="alerta-acciones">
                         <button type="button">❤️ <?php echo $likes; ?></button>
-                        <button type="button">💬 Comentarios (<?php echo $comentarios; ?>)</button>
+
+                        <button type="button">
+                            💬 Comentarios (<?php echo $comentarios; ?>)
+                        </button>
 
                         <?php if ($latitud !== null && $longitud !== null): ?>
                             <a href="inicio.php?lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
