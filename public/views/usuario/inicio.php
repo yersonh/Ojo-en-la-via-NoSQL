@@ -118,13 +118,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $reportesMapa = [];
 
 try {
-    $cursor = $reportes->find([
-        'estado' => 'Pendiente'
-    ]);
+    $cursor = $reportes->find(
+        [
+            'estado' => [
+                '$in' => ['pendiente', 'Pendiente', 'en_revision', 'En revisión', 'notificado', 'Notificado']
+            ]
+        ],
+        [
+            'sort' => ['fecha_reporte' => -1]
+        ]
+    );
 
     foreach ($cursor as $reporte) {
-        $lat = $reporte['ubicacion']['latitud'] ?? null;
-        $lng = $reporte['ubicacion']['longitud'] ?? null;
+        $lat = $reporte['ubicacion']['latitud']
+            ?? $reporte['ubicacion']['lat']
+            ?? $reporte['latitud']
+            ?? null;
+
+        $lng = $reporte['ubicacion']['longitud']
+            ?? $reporte['ubicacion']['lng']
+            ?? $reporte['longitud']
+            ?? null;
 
         if ($lat !== null && $lng !== null) {
             $fechaFormateada = '';
@@ -142,11 +156,12 @@ try {
             $imagenesReporte = $reporte['imagenes'] ?? [];
             $primeraImagen = null;
 
+            if ($imagenesReporte instanceof \MongoDB\Model\BSONArray) {
+                $imagenesReporte = $imagenesReporte->getArrayCopy();
+            }
+
             if (is_array($imagenesReporte) && isset($imagenesReporte[0])) {
                 $primeraImagen = $imagenesReporte[0];
-            } elseif ($imagenesReporte instanceof \MongoDB\Model\BSONArray) {
-                $imagenesArray = $imagenesReporte->getArrayCopy();
-                $primeraImagen = $imagenesArray[0] ?? null;
             }
 
             $reportesMapa[] = [
@@ -155,11 +170,12 @@ try {
                 'descripcion' => $reporte['descripcion'] ?? '',
                 'latitud' => (float) $lat,
                 'longitud' => (float) $lng,
+                'lat' => (float) $lat,
+                'lng' => (float) $lng,
                 'direccion_texto' => $reporte['direccion_texto'] ?? '',
                 'imagen' => $primeraImagen,
-                'usuario_email' => $reporte['usuario_email'] ?? 'No disponible',
                 'fecha' => $fechaFormateada,
-                'estado' => $reporte['estado'] ?? 'Pendiente'
+                'estado' => $reporte['estado'] ?? 'pendiente'
             ];
         }
     }
@@ -287,16 +303,10 @@ try {
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <?php include __DIR__ . '/../components/mapa/map-config.php'; ?>
-
-        <script>
-            window.reportesDB = <?php echo json_encode($reportesMapa, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-        </script>
-    /*    
-        <?php if (!empty($reportesMapa)): ?>
-            <pre style="position:absolute; z-index:9999; background:white; color:black; max-width:90%; max-height:200px; overflow:auto;">
-        <?php print_r($reportesMapa); ?>
-            </pre>
-        <?php endif; ?>*/
+    <script>
+        window.reportesDB = <?php echo json_encode($reportesMapa, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        console.log('Reportes enviados al mapa:', window.reportesDB);
+    </script>
 
         <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
         <script src="/views/components/JS_usuario/menu-inferior.js"></script>
