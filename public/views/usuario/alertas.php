@@ -67,51 +67,47 @@ function textoEstado($estado)
     }
 }
 
-function obtenerNombreUsuario($reporte, $usuarios)
+function obtenerNombreDesdeLookup($reporte)
 {
-    if (empty($reporte['usuario_id'])) {
-        return 'Usuario sin nombre';
-    }
-
-    try {
-        $usuarioId = $reporte['usuario_id'];
-
-        if ($usuarioId instanceof \MongoDB\BSON\ObjectId) {
-            $usuario = $usuarios->findOne([
-                '_id' => $usuarioId
-            ]);
-        } else {
-            $usuarioIdTexto = (string) $usuarioId;
-
-            if (!preg_match('/^[a-f\d]{24}$/i', $usuarioIdTexto)) {
-                return 'Usuario sin nombre';
+    if (!empty($reporte['usuario'])) {
+        foreach ($reporte['usuario'] as $usuario) {
+            if (!empty($usuario['nombre_completo'])) {
+                return $usuario['nombre_completo'];
             }
 
-            $usuario = $usuarios->findOne([
-                '_id' => new \MongoDB\BSON\ObjectId($usuarioIdTexto)
-            ]);
+            if (!empty($usuario['nombre'])) {
+                return $usuario['nombre'];
+            }
+
+            if (!empty($usuario['nombre_usuario'])) {
+                return $usuario['nombre_usuario'];
+            }
         }
-
-        if (!$usuario) {
-            return 'Usuario sin nombre';
-        }
-
-        return $usuario['nombre_completo'] ?? 'Usuario sin nombre';
-
-    } catch (Throwable $e) {
-        return 'Usuario sin nombre';
     }
+
+    return 'Usuario sin nombre';
 }
+
 try {
     $db = conectarMongoDB();
 
     $reportes = $db->reportes;
-    $usuarios = $db->usuarios;
 
-    $cursor = $reportes->find(
-        [],
-        ['sort' => ['fecha_reporte' => -1]]
-    );
+    $cursor = $reportes->aggregate([
+        [
+            '$lookup' => [
+                'from' => 'usuarios',
+                'localField' => 'usuario_id',
+                'foreignField' => '_id',
+                'as' => 'usuario'
+            ]
+        ],
+        [
+            '$sort' => [
+                'fecha_reporte' => -1
+            ]
+        ]
+    ]);
 
 } catch (Throwable $e) {
     $cursor = [];
@@ -154,7 +150,7 @@ try {
         <section class="lista-alertas-pagina">
             <?php foreach ($cursor as $reporte): ?>
                 <?php
-                    $nombreUsuario = obtenerNombreUsuario($reporte, $usuarios);
+                    $nombreUsuario = obtenerNombreDesdeLookup($reporte);
 
                     $tipo = $reporte['tipo']
                         ?? $reporte['tipo_incidente']
@@ -162,7 +158,7 @@ try {
 
                     $descripcion = $reporte['descripcion'] ?? 'Sin descripción';
 
-                    $estado = $reporte['estado'] ?? 'pendiente';
+                    $estado = strtolower($reporte['estado'] ?? 'pendiente');
 
                     $latitud = $reporte['latitud']
                         ?? $reporte['ubicacion']['lat']
