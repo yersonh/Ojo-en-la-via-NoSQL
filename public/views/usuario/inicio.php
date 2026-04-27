@@ -19,7 +19,29 @@ if ($nombreMostrar === '') {
 
 try {
     $db = conectarMongoDB();
+
     $reportes = $db->reportes;
+    $usuarios = $db->usuarios;
+
+    $nombreUsuarioActual = 'Usuario sin nombre';
+
+    if (!empty($_SESSION['usuario_id'])) {
+        try {
+            $usuarioActual = $usuarios->findOne([
+                '_id' => new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id'])
+            ]);
+
+            if ($usuarioActual && !empty($usuarioActual['nombre_completo'])) {
+                $nombreUsuarioActual = $usuarioActual['nombre_completo'];
+
+                $_SESSION['usuario_nombre'] = $nombreUsuarioActual;
+                $nombreMostrar = $nombreUsuarioActual;
+            }
+        } catch (Throwable $e) {
+            $nombreUsuarioActual = 'Usuario sin nombre';
+        }
+    }
+
 } catch (Throwable $e) {
     die("Error de conexión: " . htmlspecialchars($e->getMessage()));
 }
@@ -64,8 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $imagenes[] = '/uploads/reportes/' . $nombreArchivo;
             }
 
-            $documento = [
+          $documento = [
                 'usuario_id' => new \MongoDB\BSON\ObjectId($_SESSION['usuario_id']),
+                'usuario_nombre' => $nombreUsuarioActual,
                 'usuario_email' => $_SESSION['usuario_email'] ?? '',
                 'tipo' => $tipo,
                 'descripcion' => $descripcion,
