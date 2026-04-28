@@ -22,7 +22,7 @@ try {
     }
 
     $db = conectarMongoDB();
-    $likesReportes = $db->likes_reportes;
+    $likesReportes = $db->likes_reporte;
 
     $likesReportes->createIndex(
         [

@@ -94,7 +94,7 @@ try {
     $db = conectarMongoDB();
 
     $reportes = $db->reportes;
-    $likesReportes = $db->likes_reportes;
+    $likesReportes = $db->likes_reporte;
     $comentariosPublicacion = $db->comentarios_publicacion;
 
     $cursor = $reportes->aggregate([
