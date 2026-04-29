@@ -181,3 +181,16 @@
     border-color: #ff4d64;
     color: #ff6b7d;
 }
+.body-alertas {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.pagina-alertas {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+    padding-bottom: 140px !important;
+}
