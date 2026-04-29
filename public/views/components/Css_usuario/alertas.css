@@ -1,15 +1,31 @@
-.body-alertas {
+/* ========= BASE ALERTAS ========= */
+
+html {
+    width: 100%;
+    min-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+body.body-alertas {
     min-height: 100vh;
     margin: 0;
     background: #262626;
     color: #f4f4f4;
     font-family: Arial, sans-serif;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
+
+/* ========= CONTENEDOR PRINCIPAL ========= */
 
 .pagina-alertas {
     width: min(820px, 92%);
     margin: 0 auto;
-    padding: 28px 0 110px;
+    padding: 28px 0 150px;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
 }
 
 .titulo-alertas {
@@ -24,6 +40,8 @@
     flex-direction: column;
     gap: 24px;
 }
+
+/* ========= TARJETA DE ALERTA ========= */
 
 .alerta-card-red {
     background: #171717;
@@ -72,6 +90,8 @@
     font-size: 11px;
 }
 
+/* ========= CHIPS ========= */
+
 .chip-tipo {
     background: #3498db;
     color: white;
@@ -111,6 +131,8 @@
     color: #ffffff;
 }
 
+/* ========= CONTENIDO ALERTA ========= */
+
 .alerta-descripcion {
     margin: 18px 0 14px;
     color: #e6e6e6;
@@ -126,6 +148,8 @@
     font-size: 13px;
     line-height: 1.8;
 }
+
+/* ========= ACCIONES ========= */
 
 .alerta-acciones {
     border-top: 1px solid #333;
@@ -157,10 +181,93 @@
     background: #2f2f2f;
 }
 
+.btn-like-reporte.liked {
+    background: rgba(255, 70, 90, 0.18);
+    border-color: #ff4d64;
+    color: #ff6b7d;
+}
+
+/* ========= NAVEGACIÓN INFERIOR ========= */
+
+.bottom-nav {
+    position: fixed;
+    left: 50%;
+    bottom: -90px;
+    transform: translateX(-50%);
+    width: min(460px, calc(100% - 20px));
+    height: 72px;
+    background: rgba(10, 10, 10, 0.96);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -10px 35px rgba(0, 0, 0, 0.35);
+    z-index: 4000;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    border-radius: 18px 18px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: bottom 0.25s ease;
+}
+
+.bottom-nav.visible {
+    bottom: 0;
+}
+
+.bottom-nav a {
+    flex: 1;
+    height: 100%;
+    text-decoration: none;
+    color: #a9a9a9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    gap: 4px;
+    transition: color 0.2s ease, background 0.2s ease;
+    border-radius: 14px;
+}
+
+.bottom-nav a:hover,
+.bottom-nav a.active {
+    color: #2f7df6;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.bottom-nav .icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.bottom-hover-zone {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 40px;
+    z-index: 3001;
+    background: transparent;
+}
+
+/* ========= RESPONSIVE ========= */
+
+@media (max-width: 768px) {
+    .bottom-nav {
+        bottom: 0;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .bottom-hover-zone {
+        display: none;
+    }
+}
+
 @media (max-width: 600px) {
     .pagina-alertas {
         width: 94%;
         padding-top: 18px;
+        padding-bottom: 130px;
     }
 
     .alerta-card-red {
@@ -175,22 +282,4 @@
     .alerta-meta {
         gap: 5px;
     }
-}
-.btn-like-reporte.liked {
-    background: rgba(255, 70, 90, 0.18);
-    border-color: #ff4d64;
-    color: #ff6b7d;
-}
-.body-alertas {
-    height: auto !important;
-    min-height: 100vh !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-.pagina-alertas {
-    height: auto !important;
-    min-height: 100vh !important;
-    overflow: visible !important;
-    padding-bottom: 140px !important;
 }

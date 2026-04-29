@@ -280,8 +280,6 @@ try {
             <?php endforeach; ?>
         </section>
     </main>
-
-    <script src="/views/components/JS_usuario/menu-inferior.js"></script>
     <script src="/views/components/JS_usuario/likes-reportes.js"></script>
 </body>
 </html>
