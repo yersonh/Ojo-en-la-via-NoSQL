@@ -95,7 +95,7 @@ try {
 
     $reportes = $db->reportes;
     $likesReportes = $db->likes_reporte;
-    $comentariosPublicacion = $db->comentarios_publicacion;
+    $comentariosPublicacion = $db->comentarios_reporte;
 
     $cursor = $reportes->aggregate([
         [
@@ -124,7 +124,6 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alertas</title>
 
-    <link rel="stylesheet" href="/views/components/Css_usuario/inicio-mapa.css">
     <link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
 </head>
 <body class="body-alertas">
@@ -264,9 +263,13 @@ try {
                             ❤️ <span class="like-count"><?php echo $totalLikes; ?></span>
                         </button>
 
-                        <button type="button" class="btn-abrir-comentarios">
-                            💬 Comentarios (<span class="comment-count"><?php echo $totalComentariosPublicacion; ?></span>)
-                        </button>
+                        <button 
+                        type="button" 
+                        class="btn-abrir-comentarios"
+                        data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
+                    >
+                        💬 Comentarios (<span class="comment-count"><?php echo $totalComentariosPublicacion; ?></span>)
+                    </button>
 
                         <?php if ($latitud !== null && $longitud !== null): ?>
                             <a href="inicio.php?lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
@@ -280,6 +283,8 @@ try {
             <?php endforeach; ?>
         </section>
     </main>
-    <script src="/views/components/JS_usuario/likes-reportes.js"></script>
+   <script src="/views/components/JS_usuario/menu-inferior.js"></script>
+<script src="/views/components/JS_usuario/likes-reportes.js"></script>
+
 </body>
 </html>
