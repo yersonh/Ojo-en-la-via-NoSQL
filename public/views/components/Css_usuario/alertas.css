@@ -20,14 +20,13 @@ body.body-alertas {
 /* ========= CONTENEDOR PRINCIPAL ========= */
 
 .pagina-alertas {
-    width: min(820px, 92%);
+    width: min(580px, 92%);
     margin: 0 auto;
     padding: 28px 0 150px;
     height: auto;
     min-height: 100vh;
     overflow: visible;
 }
-
 .titulo-alertas {
     color: #ffffff;
     font-size: 22px;
@@ -47,8 +46,8 @@ body.body-alertas {
     background: #171717;
     border: 1px solid #3d3d3d;
     border-radius: 14px;
-    padding: 22px 24px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    padding: 20px 22px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
 }
 
 .alerta-header {
@@ -142,15 +141,14 @@ body.body-alertas {
 
 .alerta-detalles {
     background: #303030;
+    border-left: 4px solid #1e9bff;
     border-radius: 8px;
-    padding: 13px 16px;
+    padding: 12px 15px;
     color: #d7d7d7;
     font-size: 13px;
     line-height: 1.8;
 }
-
 /* ========= ACCIONES ========= */
-
 .alerta-acciones {
     border-top: 1px solid #333;
     margin-top: 17px;
@@ -187,7 +185,6 @@ body.body-alertas {
     color: #ff6b7d;
 }
 
-/* ========= NAVEGACIÓN INFERIOR ========= */
 
 /* ========= NAVEGACIÓN INFERIOR ========= */
 
@@ -255,6 +252,32 @@ body.body-alertas {
 }
 /* ========= RESPONSIVE ========= */
 
+@media (max-width: 600px) {
+    .pagina-alertas {
+        width: 94%;
+        padding-top: 18px;
+        padding-bottom: 130px;
+    }
+
+    .alerta-card-red {
+        padding: 18px 16px;
+    }
+
+    .alerta-acciones {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .alerta-acciones button,
+    .alerta-acciones a {
+        font-size: 11px;
+        height: 34px;
+    }
+
+    .alerta-meta {
+        gap: 5px;
+    }
+}
 @media (max-width: 768px) {
     .bottom-nav {
         bottom: 0;
@@ -267,17 +290,3 @@ body.body-alertas {
         display: none;
     }
 }
-
-
-    .alerta-card-red {
-        padding: 18px 16px;
-    }
-
-    .alerta-acciones {
-        grid-template-columns: 1fr;
-        gap: 9px;
-    }
-
-    .alerta-meta {
-        gap: 5px;
-    }
