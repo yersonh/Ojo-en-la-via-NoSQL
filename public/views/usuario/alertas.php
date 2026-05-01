@@ -95,7 +95,7 @@ try {
 
     $reportes = $db->reportes;
     $likesReportes = $db->likes_reporte;
-    $comentariosPublicacion = $db->comentarios_reporte;
+    $comentariosReporte = $db->comentarios_reporte;
 
     $cursor = $reportes->aggregate([
         [
@@ -202,9 +202,9 @@ try {
                         'usuario_id' => $usuarioIdActual
                     ]) > 0;
 
-                    $totalComentariosPublicacion = $comentariosPublicacion->countDocuments([
-                        'reporte_id' => $reporteIdObj
-                    ]);
+               $totalComentariosReporte = $comentariosReporte->countDocuments([
+                    'reporte_id' => $reporte['_id']
+                ]);
                 ?>
 
                 <article class="alerta-card-red">
@@ -283,8 +283,38 @@ try {
             <?php endforeach; ?>
         </section>
     </main>
-   <script src="/views/components/JS_usuario/menu-inferior.js"></script>
+    <div class="comentarios-overlay" id="comentariosOverlay">
+    <div class="comentarios-modal">
+        <div class="comentarios-header">
+            <h3><span id="comentariosTotal">0</span> comentarios</h3>
+            <button type="button" id="cerrarComentarios" class="cerrar-comentarios">×</button>
+        </div>
+
+        <div class="comentarios-lista" id="comentariosLista">
+            <p class="comentarios-vacio">Cargando comentarios...</p>
+        </div>
+
+        <form class="comentario-form" id="comentarioForm">
+            <input type="hidden" id="comentarioReporteId" name="reporte_id">
+
+            <div class="comentario-input-wrap">
+                <input 
+                    type="text" 
+                    id="comentarioTexto" 
+                    name="comentario" 
+                    placeholder="Agregar comentario..." 
+                    maxlength="500"
+                    autocomplete="off"
+                >
+
+                <button type="submit">Enviar</button>
+            </div>
+        </form>
+    </div>
+</div>
+ <script src="/views/components/JS_usuario/menu-inferior.js"></script>
 <script src="/views/components/JS_usuario/likes-reportes.js"></script>
+<script src="/views/components/JS_usuario/comentarios-reportes.js"></script>
 
 </body>
 </html>
