@@ -101,9 +101,9 @@ async function cargarComentarios(reporteId) {
     comentariosLista.innerHTML = '<p class="comentarios-vacio">Cargando comentarios...</p>';
 
     try {
-        const respuesta = await fetch(`/views/usuario/listar_comentarios.php?reporte_id=${encodeURIComponent(reporteId)}`, {
-            method: 'GET',
-            credentials: 'same-origin'
+        const respuesta = await fetch(`/views/components/usuario/listar_comentarios.php?reporte_id=${encodeURIComponent(reporteId)}`, {
+        method: 'GET',
+        credentials: 'same-origin'
         });
 
         const textoRespuesta = await respuesta.text();
