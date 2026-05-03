@@ -102,9 +102,9 @@ async function cargarComentarios(reporteId) {
 
     try {
         const respuesta = await fetch(`/views/usuario/listar_comentario.php?reporte_id=${encodeURIComponent(reporteId)}`, {
-    method: 'GET',
-    credentials: 'same-origin'
-    });
+            method: 'GET',
+            credentials: 'same-origin'
+        });
 
         const textoRespuesta = await respuesta.text();
         console.log('Respuesta listar comentarios:', textoRespuesta);
@@ -142,8 +142,23 @@ async function cargarComentarios(reporteId) {
 
                         <div class="comentario-meta">
                             <span>${escapeHTML(comentario.fecha)}</span>
-                            <button type="button">Responder</button>
-                            <button type="button">♡ ${comentario.likes}</button>
+
+                            <button 
+                                type="button" 
+                                class="btn-responder-comentario"
+                                data-comentario-id="${escapeHTML(comentario.id)}"
+                                data-usuario="${escapeHTML(comentario.usuario)}"
+                            >
+                                Responder
+                            </button>
+
+                            <button 
+                                type="button" 
+                                class="btn-like-comentario"
+                                data-comentario-id="${escapeHTML(comentario.id)}"
+                            >
+                                ♡ <span>${comentario.likes ?? 0}</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -155,6 +170,64 @@ async function cargarComentarios(reporteId) {
         comentariosLista.innerHTML = '<p class="comentarios-vacio">Error al cargar comentarios.</p>';
     }
 }
+
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-like-comentario');
+
+    if (!btn) {
+        return;
+    }
+
+    const comentarioId = btn.dataset.comentarioId;
+
+    if (!comentarioId) {
+        alert('No se encontró el comentario.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('comentario_id', comentarioId);
+
+    try {
+        const respuesta = await fetch('/views/usuario/like_comentario.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+
+        const textoRespuesta = await respuesta.text();
+        console.log('Respuesta like comentario:', textoRespuesta);
+
+        const data = JSON.parse(textoRespuesta);
+
+        if (!data.ok) {
+            alert(data.mensaje || 'No se pudo actualizar el like.');
+            return;
+        }
+
+        btn.innerHTML = `${data.liked ? '♥' : '♡'} <span>${data.total_likes}</span>`;
+
+    } catch (error) {
+        console.error('Error al dar like al comentario:', error);
+        alert('Error al conectar con el servidor.');
+    }
+});
+
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-responder-comentario');
+
+    if (!btn) {
+        return;
+    }
+
+    const usuario = btn.dataset.usuario || '';
+
+    comentarioTexto.focus();
+
+    if (usuario) {
+        comentarioTexto.value = `@${usuario} `;
+    }
+});
 
 function escapeHTML(texto) {
     return String(texto ?? '')
