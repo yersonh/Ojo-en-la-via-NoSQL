@@ -77,8 +77,8 @@ function capitalizarEstado(estado) {
     if (!estado) return 'Activo';
     return estado.charAt(0).toUpperCase() + estado.slice(1);
 }
-
 function crearPopupReporte(reporte) {
+    const reporteId = escaparHtml(reporte.id || reporte._id || '');
     const tipo = escaparHtml(reporte.tipo || 'Incidente');
     const descripcion = escaparHtml(reporte.descripcion || 'Sin descripción');
     const usuarioEmail = escaparHtml(reporte.usuario_email || 'No disponible');
@@ -127,7 +127,12 @@ function crearPopupReporte(reporte) {
                     <div class="popup-status">${estado}</div>
                 </div>
 
-                <button type="button" class="popup-button">💬 Ver Comentarios</button>
+                <a 
+                    href="/views/usuario/alertas.php?comentarios=${reporteId}"
+                    class="popup-button"
+                >
+                    💬 Ver Comentarios
+                </a>
             </div>
         </div>
     `;

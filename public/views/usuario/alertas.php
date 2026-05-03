@@ -1,6 +1,6 @@
+
 <?php
 session_start();
-
 
 require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
@@ -126,8 +126,9 @@ try {
     <title>Alertas</title>
 
     <link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
-    <link rel="stylesheet" href="/views/components/CSS_usuario/comentarios-reportes.css">
+    <link rel="stylesheet" href="/views/components/Css_usuario/comentarios-reportes.css">
 </head>
+
 <body class="body-alertas">
 
     <div class="bottom-hover-zone" id="bottomHoverZone"></div>
@@ -204,12 +205,13 @@ try {
                         'usuario_id' => $usuarioIdActual
                     ]) > 0;
 
-               $totalComentariosReporte = $comentariosReporte->countDocuments([
-                    'reporte_id' => $reporte['_id']
-                ]);
+                    $totalComentariosReporte = $comentariosReporte->countDocuments([
+                        'reporte_id' => $reporteIdObj,
+                        'comentario_padre_id' => null
+                    ]);
                 ?>
 
-                <article class="alerta-card-red">
+                <article class="alerta-card-red" id="reporte-<?php echo htmlspecialchars((string) $reporte['_id']); ?>">
                     <div class="alerta-header">
                         <div class="alerta-avatar">
                             <?php echo htmlspecialchars($inicial); ?>
@@ -266,12 +268,12 @@ try {
                         </button>
 
                         <button 
-                        type="button" 
-                        class="btn-abrir-comentarios"
-                        data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
-                    >
-                       💬 Comentarios (<span class="comment-count"><?php echo $totalComentariosReporte; ?></span>)
-                    </button>
+                            type="button" 
+                            class="btn-abrir-comentarios"
+                            data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
+                        >
+                            💬 Comentarios (<span class="comment-count"><?php echo $totalComentariosReporte; ?></span>)
+                        </button>
 
                         <?php if ($latitud !== null && $longitud !== null): ?>
                             <a href="inicio.php?lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
@@ -285,38 +287,39 @@ try {
             <?php endforeach; ?>
         </section>
     </main>
+
     <div class="comentarios-overlay" id="comentariosOverlay">
-    <div class="comentarios-modal">
-        <div class="comentarios-header">
-            <h3><span id="comentariosTotal">0</span> comentarios</h3>
-            <button type="button" id="cerrarComentarios" class="cerrar-comentarios">×</button>
-        </div>
-
-        <div class="comentarios-lista" id="comentariosLista">
-            <p class="comentarios-vacio">Cargando comentarios...</p>
-        </div>
-
-        <form class="comentario-form" id="comentarioForm">
-            <input type="hidden" id="comentarioReporteId" name="reporte_id">
-
-            <div class="comentario-input-wrap">
-                <input 
-                    type="text" 
-                    id="comentarioTexto" 
-                    name="comentario" 
-                    placeholder="Agregar comentario..." 
-                    maxlength="500"
-                    autocomplete="off"
-                >
-
-                <button type="submit">Enviar</button>
+        <div class="comentarios-modal">
+            <div class="comentarios-header">
+                <h3><span id="comentariosTotal">0</span> comentarios</h3>
+                <button type="button" id="cerrarComentarios" class="cerrar-comentarios">×</button>
             </div>
-        </form>
-    </div>
-</div>
- <script src="/views/components/JS_usuario/menu-inferior.js"></script>
-<script src="/views/components/JS_usuario/likes-reportes.js"></script>
-<script src="/views/components/JS_usuario/comentarios-reportes.js"></script>
 
+            <div class="comentarios-lista" id="comentariosLista">
+                <p class="comentarios-vacio">Cargando comentarios...</p>
+            </div>
+
+            <form class="comentario-form" id="comentarioForm">
+                <input type="hidden" id="comentarioReporteId" name="reporte_id">
+
+                <div class="comentario-input-wrap">
+                    <input 
+                        type="text" 
+                        id="comentarioTexto" 
+                        name="comentario" 
+                        placeholder="Agregar comentario..." 
+                        maxlength="500"
+                        autocomplete="off"
+                    >
+
+                    <button type="submit">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/views/components/JS_usuario/menu-inferior.js"></script>
+    <script src="/views/components/JS_usuario/likes-reportes.js"></script>
+    <script src="/views/components/JS_usuario/comentarios-reportes.js"></script>
 </body>
 </html>
