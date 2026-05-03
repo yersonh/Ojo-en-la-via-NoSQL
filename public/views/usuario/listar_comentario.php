@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-
 require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
@@ -137,7 +136,7 @@ try {
         ]
     ]);
 
-    $lista = [];
+    $comentariosTemporales = [];
 
     foreach ($cursor as $comentario) {
         $usuario = null;
@@ -158,16 +157,48 @@ try {
             'comentario_id' => $comentarioId
         ]);
 
-        $lista[] = [
+        $comentarioPadreId = null;
+
+        if (
+            isset($comentario['comentario_padre_id']) &&
+            $comentario['comentario_padre_id'] instanceof MongoDB\BSON\ObjectId
+        ) {
+            $comentarioPadreId = (string) $comentario['comentario_padre_id'];
+        }
+
+        $comentariosTemporales[] = [
             'id' => (string) $comentarioId,
             'usuario' => $nombre,
             'inicial' => strtoupper(substr($nombre, 0, 1)),
             'foto_perfil' => $foto,
             'comentario' => (string) ($comentario['comentario'] ?? ''),
             'fecha' => tiempoComentario($comentario['fecha_comentario'] ?? null),
-            'likes' => $totalLikes
+            'likes' => $totalLikes,
+            'comentario_padre_id' => $comentarioPadreId,
+            'respuestas' => []
         ];
     }
+
+    $principales = [];
+    $respuestas = [];
+
+    foreach ($comentariosTemporales as $comentario) {
+        if ($comentario['comentario_padre_id'] === null) {
+            $principales[$comentario['id']] = $comentario;
+        } else {
+            $respuestas[] = $comentario;
+        }
+    }
+
+    foreach ($respuestas as $respuesta) {
+        $padreId = $respuesta['comentario_padre_id'];
+
+        if (isset($principales[$padreId])) {
+            $principales[$padreId]['respuestas'][] = $respuesta;
+        }
+    }
+
+    $lista = array_values($principales);
 
     responderJson([
         'ok' => true,

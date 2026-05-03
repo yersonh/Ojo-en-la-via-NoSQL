@@ -1,0 +1,38 @@
+.comentario-bloque {
+    width: 100%;
+    margin-bottom: 14px;
+}
+
+.comentario-respuestas {
+    margin-left: 54px;
+    margin-top: 8px;
+    padding-left: 12px;
+    border-left: 2px solid #e5e5e5;
+}
+
+.comentario-respuesta {
+    margin-top: 10px;
+}
+
+.comentario-avatar-respuesta {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.comentario-burbuja-respuesta {
+    background: #f3f3f3;
+}
+
+.comentario-meta button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+}
+
+.comentario-meta button:hover {
+    color: #0b74de;
+}

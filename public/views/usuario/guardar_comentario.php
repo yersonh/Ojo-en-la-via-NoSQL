@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-
 require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
@@ -24,12 +23,26 @@ try {
 
     $reporteIdTexto = $_POST['reporte_id'] ?? '';
     $comentarioTexto = trim($_POST['comentario'] ?? '');
+    $comentarioPadreTexto = $_POST['comentario_padre_id'] ?? '';
 
     if (!preg_match('/^[a-f\d]{24}$/i', $reporteIdTexto)) {
         responderJson([
             'ok' => false,
             'mensaje' => 'ID de reporte inválido.'
         ], 400);
+    }
+
+    $comentarioPadreId = null;
+
+    if ($comentarioPadreTexto !== '') {
+        if (!preg_match('/^[a-f\d]{24}$/i', $comentarioPadreTexto)) {
+            responderJson([
+                'ok' => false,
+                'mensaje' => 'ID de comentario padre inválido.'
+            ], 400);
+        }
+
+        $comentarioPadreId = new MongoDB\BSON\ObjectId($comentarioPadreTexto);
     }
 
     if ($comentarioTexto === '') {
@@ -57,11 +70,13 @@ try {
         'reporte_id' => $reporteId,
         'usuario_id' => $usuarioId,
         'comentario' => $comentarioTexto,
+        'comentario_padre_id' => $comentarioPadreId,
         'fecha_comentario' => new MongoDB\BSON\UTCDateTime()
     ]);
 
     $totalComentarios = $comentarios->countDocuments([
-        'reporte_id' => $reporteId
+        'reporte_id' => $reporteId,
+        'comentario_padre_id' => null
     ]);
 
     responderJson([

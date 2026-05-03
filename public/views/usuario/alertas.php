@@ -126,6 +126,7 @@ try {
     <title>Alertas</title>
 
     <link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
+    <link rel="stylesheet" href="/views/components/CSS_usuario/comentarios-reportes.css">
 </head>
 <body class="body-alertas">
 

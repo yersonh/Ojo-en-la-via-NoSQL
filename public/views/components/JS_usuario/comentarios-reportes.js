@@ -8,6 +8,7 @@ const comentarioForm = document.getElementById('comentarioForm');
 const comentarioReporteId = document.getElementById('comentarioReporteId');
 const comentarioTexto = document.getElementById('comentarioTexto');
 
+let comentarioPadreActivo = null;
 let botonComentariosActivo = null;
 
 document.addEventListener('click', async (e) => {
@@ -25,8 +26,10 @@ document.addEventListener('click', async (e) => {
     }
 
     botonComentariosActivo = btn;
+    comentarioPadreActivo = null;
     comentarioReporteId.value = reporteId;
     comentarioTexto.value = '';
+    comentarioTexto.placeholder = 'Escribe un comentario...';
 
     comentariosOverlay.classList.add('activo');
 
@@ -35,11 +38,17 @@ document.addEventListener('click', async (e) => {
 
 cerrarComentarios.addEventListener('click', () => {
     comentariosOverlay.classList.remove('activo');
+    comentarioPadreActivo = null;
+    comentarioTexto.value = '';
+    comentarioTexto.placeholder = 'Escribe un comentario...';
 });
 
 comentariosOverlay.addEventListener('click', (e) => {
     if (e.target === comentariosOverlay) {
         comentariosOverlay.classList.remove('activo');
+        comentarioPadreActivo = null;
+        comentarioTexto.value = '';
+        comentarioTexto.placeholder = 'Escribe un comentario...';
     }
 });
 
@@ -62,6 +71,10 @@ comentarioForm.addEventListener('submit', async (e) => {
     formData.append('reporte_id', reporteId);
     formData.append('comentario', texto);
 
+    if (comentarioPadreActivo) {
+        formData.append('comentario_padre_id', comentarioPadreActivo);
+    }
+
     try {
         const respuesta = await fetch('/views/usuario/guardar_comentario.php', {
             method: 'POST',
@@ -80,6 +93,8 @@ comentarioForm.addEventListener('submit', async (e) => {
         }
 
         comentarioTexto.value = '';
+        comentarioPadreActivo = null;
+        comentarioTexto.placeholder = 'Escribe un comentario...';
 
         if (botonComentariosActivo) {
             const contador = botonComentariosActivo.querySelector('.comment-count');
@@ -128,39 +143,91 @@ async function cargarComentarios(reporteId) {
                 ? `<img src="${escapeHTML(comentario.foto_perfil)}" alt="Foto de perfil">`
                 : `<span>${escapeHTML(comentario.inicial)}</span>`;
 
+            const respuestasHTML = comentario.respuestas && comentario.respuestas.length > 0
+                ? `
+                    <div class="comentario-respuestas">
+                        ${comentario.respuestas.map((respuesta) => {
+                            const avatarRespuesta = respuesta.foto_perfil
+                                ? `<img src="${escapeHTML(respuesta.foto_perfil)}" alt="Foto de perfil">`
+                                : `<span>${escapeHTML(respuesta.inicial)}</span>`;
+
+                            return `
+                                <div class="comentario-item comentario-respuesta">
+                                    <div class="comentario-avatar comentario-avatar-respuesta">
+                                        ${avatarRespuesta}
+                                    </div>
+
+                                    <div class="comentario-contenido">
+                                        <div class="comentario-burbuja comentario-burbuja-respuesta">
+                                            <strong>${escapeHTML(respuesta.usuario)}</strong>
+                                            <p>${escapeHTML(respuesta.comentario)}</p>
+                                        </div>
+
+                                        <div class="comentario-meta">
+                                            <span>${escapeHTML(respuesta.fecha)}</span>
+
+                                            <button 
+                                                type="button" 
+                                                class="btn-responder-comentario"
+                                                data-comentario-id="${escapeHTML(comentario.id)}"
+                                                data-usuario="${escapeHTML(respuesta.usuario)}"
+                                            >
+                                                Responder
+                                            </button>
+
+                                            <button 
+                                                type="button" 
+                                                class="btn-like-comentario"
+                                                data-comentario-id="${escapeHTML(respuesta.id)}"
+                                            >
+                                                ♡ <span>${respuesta.likes ?? 0}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `
+                : '';
+
             return `
-                <div class="comentario-item">
-                    <div class="comentario-avatar">
-                        ${avatar}
-                    </div>
-
-                    <div class="comentario-contenido">
-                        <div class="comentario-burbuja">
-                            <strong>${escapeHTML(comentario.usuario)}</strong>
-                            <p>${escapeHTML(comentario.comentario)}</p>
+                <div class="comentario-bloque">
+                    <div class="comentario-item">
+                        <div class="comentario-avatar">
+                            ${avatar}
                         </div>
 
-                        <div class="comentario-meta">
-                            <span>${escapeHTML(comentario.fecha)}</span>
+                        <div class="comentario-contenido">
+                            <div class="comentario-burbuja">
+                                <strong>${escapeHTML(comentario.usuario)}</strong>
+                                <p>${escapeHTML(comentario.comentario)}</p>
+                            </div>
 
-                            <button 
-                                type="button" 
-                                class="btn-responder-comentario"
-                                data-comentario-id="${escapeHTML(comentario.id)}"
-                                data-usuario="${escapeHTML(comentario.usuario)}"
-                            >
-                                Responder
-                            </button>
+                            <div class="comentario-meta">
+                                <span>${escapeHTML(comentario.fecha)}</span>
 
-                            <button 
-                                type="button" 
-                                class="btn-like-comentario"
-                                data-comentario-id="${escapeHTML(comentario.id)}"
-                            >
-                                ♡ <span>${comentario.likes ?? 0}</span>
-                            </button>
+                                <button 
+                                    type="button" 
+                                    class="btn-responder-comentario"
+                                    data-comentario-id="${escapeHTML(comentario.id)}"
+                                    data-usuario="${escapeHTML(comentario.usuario)}"
+                                >
+                                    Responder
+                                </button>
+
+                                <button 
+                                    type="button" 
+                                    class="btn-like-comentario"
+                                    data-comentario-id="${escapeHTML(comentario.id)}"
+                                >
+                                    ♡ <span>${comentario.likes ?? 0}</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
+
+                    ${respuestasHTML}
                 </div>
             `;
         }).join('');
@@ -220,12 +287,16 @@ document.addEventListener('click', (e) => {
         return;
     }
 
+    const comentarioId = btn.dataset.comentarioId || '';
     const usuario = btn.dataset.usuario || '';
+
+    comentarioPadreActivo = comentarioId;
 
     comentarioTexto.focus();
 
     if (usuario) {
         comentarioTexto.value = `@${usuario} `;
+        comentarioTexto.placeholder = `Respondiendo a ${usuario}`;
     }
 });
 
