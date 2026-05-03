@@ -22,7 +22,7 @@ try {
     $db = conectarMongoDB();
 
     $reportes = $db->reportes;
-    $usuarios = $db->usuarios;
+    $usuario = $db->usuario;
 
     if (!empty($_SESSION['usuario_id'])) {
         try {
@@ -140,7 +140,7 @@ try {
         ],
         [
             '$lookup' => [
-                'from' => 'usuarios',
+                'from' => 'usuario',
                 'localField' => 'usuario_id',
                 'foreignField' => '_id',
                 'as' => 'usuario'
