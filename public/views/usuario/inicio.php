@@ -13,6 +13,7 @@ $mensaje = '';
 $tipoMensaje = '';
 
 $nombreMostrar = trim($_SESSION['usuario_nombre'] ?? '');
+
 if ($nombreMostrar === '') {
     $nombreMostrar = $_SESSION['usuario_email'] ?? 'Usuario';
 }
@@ -23,8 +24,6 @@ try {
     $reportes = $db->reportes;
     $usuarios = $db->usuarios;
 
-    $nombreUsuarioActual = 'Usuario sin nombre';
-
     if (!empty($_SESSION['usuario_id'])) {
         try {
             $usuarioActual = $usuarios->findOne([
@@ -32,13 +31,17 @@ try {
             ]);
 
             if ($usuarioActual && !empty($usuarioActual['nombre_completo'])) {
-                $nombreUsuarioActual = $usuarioActual['nombre_completo'];
-
-                $_SESSION['usuario_nombre'] = $nombreUsuarioActual;
-                $nombreMostrar = $nombreUsuarioActual;
+                $nombreMostrar = (string) $usuarioActual['nombre_completo'];
+                $_SESSION['usuario_nombre'] = $nombreMostrar;
+            } elseif ($usuarioActual && !empty($usuarioActual['nombre'])) {
+                $nombreMostrar = (string) $usuarioActual['nombre'];
+                $_SESSION['usuario_nombre'] = $nombreMostrar;
+            } elseif ($usuarioActual && !empty($usuarioActual['nombre_usuario'])) {
+                $nombreMostrar = (string) $usuarioActual['nombre_usuario'];
+                $_SESSION['usuario_nombre'] = $nombreMostrar;
             }
         } catch (Throwable $e) {
-            $nombreUsuarioActual = 'Usuario sin nombre';
+            // Mantiene el nombre que ya venga en sesión.
         }
     }
 
@@ -59,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $imagenes = [];
 
-                    if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+            if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
                 $directorioSubidas = rtrim($_SERVER['DOCUMENT_ROOT'], '/\\') . '/uploads/reportes/';
 
                 if (!is_dir($directorioSubidas)) {
@@ -86,8 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $imagenes[] = '/uploads/reportes/' . $nombreArchivo;
             }
 
-                $documento = [
-                'usuario_id' => new \MongoDB\BSON\ObjectId($_SESSION['usuario_id']),
+            $documento = [
+                'usuario_id' => new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']),
                 'tipo' => $tipo,
                 'descripcion' => $descripcion,
                 'ubicacion' => [
@@ -99,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'estado' => 'pendiente',
                 'fecha_reporte' => new \MongoDB\BSON\UTCDateTime()
             ];
+
             $resultado = $reportes->insertOne($documento);
 
             if ($resultado->getInsertedCount() > 0) {
@@ -108,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mensaje = 'No se pudo guardar el reporte.';
                 $tipoMensaje = 'error';
             }
+
         } catch (Throwable $e) {
             $mensaje = 'Error al guardar el reporte: ' . htmlspecialchars($e->getMessage());
             $tipoMensaje = 'error';
@@ -118,16 +123,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $reportesMapa = [];
 
 try {
-    $cursor = $reportes->find(
+    $cursor = $reportes->aggregate([
         [
-            'estado' => [
-                '$in' => ['pendiente', 'Pendiente', 'en_revision', 'En revisión', 'notificado', 'Notificado']
+            '$match' => [
+                'estado' => [
+                    '$in' => [
+                        'pendiente',
+                        'Pendiente',
+                        'en_revision',
+                        'En revisión',
+                        'notificado',
+                        'Notificado'
+                    ]
+                ]
             ]
         ],
         [
-            'sort' => ['fecha_reporte' => -1]
+            '$lookup' => [
+                'from' => 'usuarios',
+                'localField' => 'usuario_id',
+                'foreignField' => '_id',
+                'as' => 'usuario'
+            ]
+        ],
+        [
+            '$sort' => [
+                'fecha_reporte' => -1
+            ]
         ]
-    );
+    ]);
 
     foreach ($cursor as $reporte) {
         $lat = $reporte['ubicacion']['latitud']
@@ -140,45 +164,68 @@ try {
             ?? $reporte['longitud']
             ?? null;
 
-        if ($lat !== null && $lng !== null) {
-            $fechaFormateada = '';
-
-            if (
-                !empty($reporte['fecha_reporte']) &&
-                $reporte['fecha_reporte'] instanceof \MongoDB\BSON\UTCDateTime
-            ) {
-                $fechaFormateada = $reporte['fecha_reporte']
-                    ->toDateTime()
-                    ->setTimezone(new DateTimeZone('America/Bogota'))
-                    ->format('d/m/Y, H:i');
-            }
-
-            $imagenesReporte = $reporte['imagenes'] ?? [];
-            $primeraImagen = null;
-
-            if ($imagenesReporte instanceof \MongoDB\Model\BSONArray) {
-                $imagenesReporte = $imagenesReporte->getArrayCopy();
-            }
-
-            if (is_array($imagenesReporte) && isset($imagenesReporte[0])) {
-                $primeraImagen = $imagenesReporte[0];
-            }
-
-            $reportesMapa[] = [
-                'id' => (string) $reporte['_id'],
-                'tipo' => $reporte['tipo'] ?? 'Incidente',
-                'descripcion' => $reporte['descripcion'] ?? '',
-                'latitud' => (float) $lat,
-                'longitud' => (float) $lng,
-                'lat' => (float) $lat,
-                'lng' => (float) $lng,
-                'direccion_texto' => $reporte['direccion_texto'] ?? '',
-                'imagen' => $primeraImagen,
-                'fecha' => $fechaFormateada,
-                'estado' => $reporte['estado'] ?? 'pendiente'
-            ];
+        if ($lat === null || $lng === null) {
+            continue;
         }
+
+        $fechaFormateada = '';
+
+        if (
+            !empty($reporte['fecha_reporte']) &&
+            $reporte['fecha_reporte'] instanceof \MongoDB\BSON\UTCDateTime
+        ) {
+            $fechaFormateada = $reporte['fecha_reporte']
+                ->toDateTime()
+                ->setTimezone(new DateTimeZone('America/Bogota'))
+                ->format('d/m/Y, H:i');
+        }
+
+        $imagenesReporte = $reporte['imagenes'] ?? [];
+        $primeraImagen = null;
+
+        if ($imagenesReporte instanceof \MongoDB\Model\BSONArray) {
+            $imagenesReporte = $imagenesReporte->getArrayCopy();
+        }
+
+        if (is_array($imagenesReporte) && isset($imagenesReporte[0])) {
+            $primeraImagen = (string) $imagenesReporte[0];
+        }
+
+        $usuarioReporte = null;
+
+        if (!empty($reporte['usuario'])) {
+            foreach ($reporte['usuario'] as $usuarioEncontrado) {
+                $usuarioReporte = $usuarioEncontrado;
+                break;
+            }
+        }
+
+        $nombreReportante = 'No disponible';
+
+        if ($usuarioReporte && !empty($usuarioReporte['nombre_completo'])) {
+            $nombreReportante = (string) $usuarioReporte['nombre_completo'];
+        } elseif ($usuarioReporte && !empty($usuarioReporte['nombre'])) {
+            $nombreReportante = (string) $usuarioReporte['nombre'];
+        } elseif ($usuarioReporte && !empty($usuarioReporte['nombre_usuario'])) {
+            $nombreReportante = (string) $usuarioReporte['nombre_usuario'];
+        }
+
+        $reportesMapa[] = [
+            'id' => (string) $reporte['_id'],
+            'tipo' => $reporte['tipo'] ?? 'Incidente',
+            'descripcion' => $reporte['descripcion'] ?? '',
+            'latitud' => (float) $lat,
+            'longitud' => (float) $lng,
+            'lat' => (float) $lat,
+            'lng' => (float) $lng,
+            'direccion_texto' => $reporte['direccion_texto'] ?? '',
+            'imagen' => $primeraImagen,
+            'fecha' => $fechaFormateada,
+            'estado' => $reporte['estado'] ?? 'pendiente',
+            'usuario_nombre' => $nombreReportante
+        ];
     }
+
 } catch (Throwable $e) {
     $reportesMapa = [];
 }
@@ -191,11 +238,12 @@ try {
     <title>Inicio - Mapa</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
     <link rel="stylesheet" href="/views/components/Css_usuario/inicio-mapa.css">
 </head>
+
 <body>
     <div class="bottom-hover-zone" id="bottomHoverZone"></div>
+
     <nav class="bottom-nav" id="bottomNav">
         <a href="alertas.php">
             <span class="icon">🔔</span>
@@ -222,26 +270,30 @@ try {
                     <?php else: ?>
                         <?php
                             $inicial = 'U';
+
                             if (!empty($nombreMostrar)) {
                                 $inicial = strtoupper(substr(trim($nombreMostrar), 0, 1));
                             }
-                            echo $inicial;
+
+                            echo htmlspecialchars($inicial);
                         ?>
                     <?php endif; ?>
                 </div>
+
                 <h2>Bienvenida, <?php echo htmlspecialchars($nombreMostrar); ?></h2>
             </div>
 
             <a href="../../logout.php" class="logout-btn">Cerrar sesión</a>
         </div>
 
-            <div class="mapa">
+        <div class="mapa">
             <div id="map"></div>
 
             <button type="button" id="btnMiUbicacion" class="btn-mi-ubicacion">
                 📍 Mi ubicación
             </button>
         </div>
+
         <div class="panel oculto" id="panelRegistro">
             <h3>Registrar incidente</h3>
 
@@ -253,6 +305,7 @@ try {
 
             <form action="" method="POST" enctype="multipart/form-data">
                 <label for="tipo">Tipo de incidente:</label>
+
                 <select name="tipo" id="tipo" required>
                     <option value="">Seleccione un tipo</option>
                     <option value="Accidente">Accidente</option>
@@ -262,7 +315,13 @@ try {
                 </select>
 
                 <label for="descripcion">Descripción:</label>
-                <textarea name="descripcion" id="descripcion" placeholder="Describe el incidente" required></textarea>
+
+                <textarea 
+                    name="descripcion" 
+                    id="descripcion" 
+                    placeholder="Describe el incidente" 
+                    required
+                ></textarea>
 
                 <label for="foto">Fotografía (opcional):</label>
 
@@ -280,12 +339,27 @@ try {
 
                 <div id="archivoInfo" class="nombre-archivo vacio">
                     <span id="nombreArchivoTexto">Ningún archivo seleccionado</span>
-                    <button type="button" id="quitarArchivo" class="quitar-archivo" style="display:none;">✕</button>
+                    <button 
+                        type="button" 
+                        id="quitarArchivo" 
+                        class="quitar-archivo" 
+                        style="display:none;"
+                    >
+                        ✕
+                    </button>
                 </div>
 
                 <video id="video" autoplay playsinline style="display:none;"></video>
                 <canvas id="canvas" style="display:none;"></canvas>
-                <button type="button" id="tomarFoto" class="btn-foto" style="display:none;">Tomar foto</button>
+
+                <button 
+                    type="button" 
+                    id="tomarFoto" 
+                    class="btn-foto" 
+                    style="display:none;"
+                >
+                    Tomar foto
+                </button>
 
                 <div class="info-ubicacion oculto" id="infoUbicacion">
                     <strong>Ubicación seleccionada:</strong><br>
@@ -302,16 +376,17 @@ try {
     </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
     <?php include __DIR__ . '/../components/mapa/map-config.php'; ?>
+
     <script>
         window.reportesDB = <?php echo json_encode($reportesMapa, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
         console.log('Reportes enviados al mapa:', window.reportesDB);
     </script>
 
-        <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
-        <script src="/views/components/JS_usuario/menu-inferior.js"></script>
-        <script src="/views/components/JS_usuario/ubicacion-actual.js"></script>
-        <script src="/views/components/JS_usuario/foto-camara.js"></script>
-    
+    <script src="/views/components/JS_usuario/mapa-reportes.js"></script>
+    <script src="/views/components/JS_usuario/menu-inferior.js"></script>
+    <script src="/views/components/JS_usuario/ubicacion-actual.js"></script>
+    <script src="/views/components/JS_usuario/foto-camara.js"></script>
 </body>
 </html>

@@ -81,10 +81,10 @@ function crearPopupReporte(reporte) {
     const reporteId = escaparHtml(reporte.id || reporte._id || '');
     const tipo = escaparHtml(reporte.tipo || 'Incidente');
     const descripcion = escaparHtml(reporte.descripcion || 'Sin descripción');
-    const usuarioEmail = escaparHtml(reporte.usuario_email || 'No disponible');
+    const usuarioNombre = escaparHtml(reporte.usuario_nombre || 'No disponible');
     const fecha = escaparHtml(reporte.fecha || 'No disponible');
     const estado = escaparHtml(capitalizarEstado(reporte.estado || 'activo'));
-    const imagen = reporte.imagen ? `/${reporte.imagen}` : '';
+   const imagen = reporte.imagen ? reporte.imagen : '';
     const cantidadImagenes = reporte.imagen ? '1 imagen' : '0 imágenes';
 
     return `
@@ -114,7 +114,7 @@ function crearPopupReporte(reporte) {
 
                 <div class="popup-info-card">
                     <div class="popup-info-label">👤 Reportado por:</div>
-                    <div class="popup-info-value">${usuarioEmail}</div>
+                  <div class="popup-info-value">${usuarioNombre}</div>
                 </div>
 
                 <div class="popup-info-card">
