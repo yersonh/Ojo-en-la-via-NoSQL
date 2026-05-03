@@ -22,7 +22,7 @@ try {
     $db = conectarMongoDB();
 
     $reportes = $db->reportes;
-    $usuario = $db->usuario;
+    $usuarios = $db->usuario;
 
     if (!empty($_SESSION['usuario_id'])) {
         try {
