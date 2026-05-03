@@ -63,7 +63,7 @@ comentarioForm.addEventListener('submit', async (e) => {
     formData.append('comentario', texto);
 
     try {
-        const respuesta = await fetch('/views/usuario/guardar_comentario.php', {
+        const respuesta = await fetch('/views/components/usuario/guardar_comentario.php', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
