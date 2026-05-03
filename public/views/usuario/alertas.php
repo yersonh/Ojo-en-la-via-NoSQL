@@ -268,7 +268,7 @@ try {
                         class="btn-abrir-comentarios"
                         data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
                     >
-                        💬 Comentarios (<span class="comment-count"><?php echo $totalComentariosPublicacion; ?></span>)
+                       💬 Comentarios (<span class="comment-count"><?php echo $totalComentariosReporte; ?></span>)
                     </button>
 
                         <?php if ($latitud !== null && $longitud !== null): ?>
