@@ -184,14 +184,16 @@ function renderComentario(comentario, nivel = 0) {
                 </div>
 
                 <div class="comentario-contenido">
+                    <div class="comentario-autor">
+                        ${escapeHTML(comentario.usuario)}
+                    </div>
+
                     <div class="comentario-burbuja ${nivel > 0 ? 'comentario-burbuja-respuesta' : ''}">
-                        <strong>${escapeHTML(comentario.usuario)}</strong>
-                       <p class="comentario-texto" data-comentario-id="${escapeHTML(comentario.id)}">
+                        <p class="comentario-texto" data-comentario-id="${escapeHTML(comentario.id)}">
                             ${escapeHTML(comentario.comentario)}
                         </p>
                     </div>
-
-                    <div class="comentario-meta">
+                                        <div class="comentario-meta">
                         <span>${escapeHTML(comentario.fecha)}</span>
 
                         <button 
