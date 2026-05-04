@@ -138,104 +138,83 @@ async function cargarComentarios(reporteId) {
             return;
         }
 
-        comentariosLista.innerHTML = data.comentarios.map((comentario) => {
-            const avatar = comentario.foto_perfil
-                ? `<img src="${escapeHTML(comentario.foto_perfil)}" alt="Foto de perfil">`
-                : `<span>${escapeHTML(comentario.inicial)}</span>`;
-
-            const respuestasHTML = comentario.respuestas && comentario.respuestas.length > 0
-                ? `
-                    <div class="comentario-respuestas">
-                        ${comentario.respuestas.map((respuesta) => {
-                            const avatarRespuesta = respuesta.foto_perfil
-                                ? `<img src="${escapeHTML(respuesta.foto_perfil)}" alt="Foto de perfil">`
-                                : `<span>${escapeHTML(respuesta.inicial)}</span>`;
-
-                            return `
-                                <div class="comentario-item comentario-respuesta">
-                                    <div class="comentario-avatar comentario-avatar-respuesta">
-                                        ${avatarRespuesta}
-                                    </div>
-
-                                    <div class="comentario-contenido">
-                                        <div class="comentario-burbuja comentario-burbuja-respuesta">
-                                            <strong>${escapeHTML(respuesta.usuario)}</strong>
-                                            <p>${escapeHTML(respuesta.comentario)}</p>
-                                        </div>
-
-                                        <div class="comentario-meta">
-                                            <span>${escapeHTML(respuesta.fecha)}</span>
-
-                                            <button 
-                                                type="button" 
-                                                class="btn-responder-comentario"
-                                                data-comentario-id="${escapeHTML(comentario.id)}"
-                                                data-usuario="${escapeHTML(respuesta.usuario)}"
-                                            >
-                                                Responder
-                                            </button>
-
-                                            <button 
-                                                type="button" 
-                                                class="btn-like-comentario"
-                                                data-comentario-id="${escapeHTML(respuesta.id)}"
-                                            >
-                                                ♡ <span>${respuesta.likes ?? 0}</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `
-                : '';
-
-            return `
-                <div class="comentario-bloque">
-                    <div class="comentario-item">
-                        <div class="comentario-avatar">
-                            ${avatar}
-                        </div>
-
-                        <div class="comentario-contenido">
-                            <div class="comentario-burbuja">
-                                <strong>${escapeHTML(comentario.usuario)}</strong>
-                                <p>${escapeHTML(comentario.comentario)}</p>
-                            </div>
-
-                            <div class="comentario-meta">
-                                <span>${escapeHTML(comentario.fecha)}</span>
-
-                                <button 
-                                    type="button" 
-                                    class="btn-responder-comentario"
-                                    data-comentario-id="${escapeHTML(comentario.id)}"
-                                    data-usuario="${escapeHTML(comentario.usuario)}"
-                                >
-                                    Responder
-                                </button>
-
-                                <button 
-                                    type="button" 
-                                    class="btn-like-comentario"
-                                    data-comentario-id="${escapeHTML(comentario.id)}"
-                                >
-                                    ♡ <span>${comentario.likes ?? 0}</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    ${respuestasHTML}
-                </div>
-            `;
-        }).join('');
+        comentariosLista.innerHTML = data.comentarios
+            .map((comentario) => renderComentario(comentario, 0))
+            .join('');
 
     } catch (error) {
         console.error('Error al cargar comentarios:', error);
         comentariosLista.innerHTML = '<p class="comentarios-vacio">Error al cargar comentarios.</p>';
     }
+}
+
+function renderComentario(comentario, nivel = 0) {
+    const avatar = comentario.foto_perfil
+        ? `<img src="${escapeHTML(comentario.foto_perfil)}" alt="Foto de perfil">`
+        : `<span>${escapeHTML(comentario.inicial)}</span>`;
+
+    const totalRespuestas = comentario.respuestas ? comentario.respuestas.length : 0;
+
+    const respuestasHTML = totalRespuestas > 0
+        ? `
+            <button 
+                type="button"
+                class="btn-ver-respuestas"
+                data-comentario-id="${escapeHTML(comentario.id)}"
+                data-total-respuestas="${totalRespuestas}"
+            >
+                <span class="linea-respuestas"></span>
+                Ver ${totalRespuestas} ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}⌄
+            </button>
+
+            <div 
+                class="comentario-respuestas ocultar-respuestas"
+                id="respuestas-${escapeHTML(comentario.id)}"
+            >
+                ${comentario.respuestas.map((respuesta) => renderComentario(respuesta, nivel + 1)).join('')}
+            </div>
+        `
+        : '';
+
+    return `
+        <div class="comentario-bloque ${nivel > 0 ? 'comentario-bloque-respuesta' : ''}">
+            <div class="comentario-item">
+                <div class="comentario-avatar ${nivel > 0 ? 'comentario-avatar-respuesta' : ''}">
+                    ${avatar}
+                </div>
+
+                <div class="comentario-contenido">
+                    <div class="comentario-burbuja ${nivel > 0 ? 'comentario-burbuja-respuesta' : ''}">
+                        <strong>${escapeHTML(comentario.usuario)}</strong>
+                        <p>${escapeHTML(comentario.comentario)}</p>
+                    </div>
+
+                    <div class="comentario-meta">
+                        <span>${escapeHTML(comentario.fecha)}</span>
+
+                        <button 
+                            type="button" 
+                            class="btn-responder-comentario"
+                            data-comentario-id="${escapeHTML(comentario.id)}"
+                            data-usuario="${escapeHTML(comentario.usuario)}"
+                        >
+                            Responder
+                        </button>
+
+                        <button 
+                            type="button" 
+                            class="btn-like-comentario"
+                            data-comentario-id="${escapeHTML(comentario.id)}"
+                        >
+                            ♡ <span>${comentario.likes ?? 0}</span>
+                        </button>
+                    </div>
+
+                    ${respuestasHTML}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 document.addEventListener('click', async (e) => {
@@ -299,6 +278,41 @@ document.addEventListener('click', (e) => {
         comentarioTexto.placeholder = `Respondiendo a ${usuario}`;
     }
 });
+
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-ver-respuestas');
+
+    if (!btn) {
+        return;
+    }
+
+    const comentarioId = btn.dataset.comentarioId;
+    const totalRespuestas = Number(btn.dataset.totalRespuestas || 0);
+    const contenedor = document.getElementById(`respuestas-${comentarioId}`);
+
+    if (!contenedor) {
+        return;
+    }
+
+    const estaOculto = contenedor.classList.contains('ocultar-respuestas');
+
+    if (estaOculto) {
+        contenedor.classList.remove('ocultar-respuestas');
+
+        btn.innerHTML = `
+            <span class="linea-respuestas"></span>
+            Ocultar ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}⌃
+        `;
+    } else {
+        contenedor.classList.add('ocultar-respuestas');
+
+        btn.innerHTML = `
+            <span class="linea-respuestas"></span>
+            Ver ${totalRespuestas} ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}⌄
+        `;
+    }
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     const parametros = new URLSearchParams(window.location.search);
     const reporteIdDesdeUrl = parametros.get('comentarios');
@@ -306,6 +320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!reporteIdDesdeUrl || !/^[a-f\d]{24}$/i.test(reporteIdDesdeUrl)) {
         return;
     }
+
     const boton = document.querySelector(`.btn-abrir-comentarios[data-reporte-id="${reporteIdDesdeUrl}"]`);
 
     if (boton) {
@@ -329,6 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cargarComentarios(reporteIdDesdeUrl);
     }
 });
+
 function escapeHTML(texto) {
     return String(texto ?? '')
         .replaceAll('&', '&amp;')

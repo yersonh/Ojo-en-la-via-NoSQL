@@ -36,3 +36,57 @@
 .comentario-meta button:hover {
     color: #0b74de;
 }
+.btn-ver-respuestas {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 0;
+}
+
+.btn-ver-respuestas:hover {
+    color: #2563eb;
+}
+
+.linea-respuestas {
+    width: 28px;
+    height: 1px;
+    background: #d1d5db;
+    display: inline-block;
+}
+
+.comentario-respuestas {
+    margin-top: 10px;
+    margin-left: 10px;
+    padding-left: 14px;
+    border-left: 2px solid #e5e7eb;
+}
+
+.ocultar-respuestas {
+    display: none;
+}
+
+.comentario-bloque-respuesta {
+    margin-top: 10px;
+}
+
+.comentario-avatar-respuesta {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.comentario-burbuja-respuesta {
+    background: #f3f4f6;
+}
+
+.comentario-bloque-respuesta .comentario-contenido {
+    max-width: 100%;
+}

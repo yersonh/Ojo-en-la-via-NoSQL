@@ -178,27 +178,25 @@ try {
             'respuestas' => []
         ];
     }
+$comentariosPorId = [];
+$lista = [];
 
-    $principales = [];
-    $respuestas = [];
+foreach ($comentariosTemporales as $comentario) {
+    $comentario['respuestas'] = [];
+    $comentariosPorId[$comentario['id']] = $comentario;
+}
 
-    foreach ($comentariosTemporales as $comentario) {
-        if ($comentario['comentario_padre_id'] === null) {
-            $principales[$comentario['id']] = $comentario;
-        } else {
-            $respuestas[] = $comentario;
-        }
+foreach ($comentariosPorId as $id => &$comentario) {
+    $padreId = $comentario['comentario_padre_id'];
+
+    if ($padreId !== null && isset($comentariosPorId[$padreId])) {
+        $comentariosPorId[$padreId]['respuestas'][] = &$comentario;
+    } else {
+        $lista[] = &$comentario;
     }
+}
 
-    foreach ($respuestas as $respuesta) {
-        $padreId = $respuesta['comentario_padre_id'];
-
-        if (isset($principales[$padreId])) {
-            $principales[$padreId]['respuestas'][] = $respuesta;
-        }
-    }
-
-    $lista = array_values($principales);
+unset($comentario);
 
     responderJson([
         'ok' => true,
