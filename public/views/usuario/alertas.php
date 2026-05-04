@@ -188,6 +188,13 @@ $cursor = $reportes->aggregate($pipeline);
                         ?? 'Incidente';
 
                     $descripcion = $reporte['descripcion'] ?? 'Sin descripción';
+                    $fotoReporte = $reporte['foto']
+                    ?? $reporte['imagen']
+                    ?? $reporte['image']
+                    ?? $reporte['imagen_reporte']
+                    ?? $reporte['foto_reporte']
+                    ?? $reporte['evidencia']
+                    ?? null;
 
                     $estado = normalizarEstado($reporte['estado'] ?? 'pendiente');
 
@@ -254,9 +261,21 @@ $cursor = $reportes->aggregate($pipeline);
                         </div>
                     </div>
 
-                    <p class="alerta-descripcion">
-                        <?php echo htmlspecialchars($descripcion); ?>
-                    </p>
+                  <p class="alerta-descripcion">
+                    <?php echo htmlspecialchars($descripcion); ?>
+                </p>
+
+                <?php if (!empty($fotoReporte)): ?>
+                    <div class="alerta-foto-contenedor">
+                        <img 
+                            src="<?php echo htmlspecialchars($fotoReporte); ?>" 
+                            alt="Foto del reporte"
+                            class="alerta-foto-reporte"
+                        >
+                    </div>
+                <?php endif; ?>
+
+                <div class="alerta-detalles">
 
                     <div class="alerta-detalles">
                         <?php if ($latitud !== null && $longitud !== null): ?>
