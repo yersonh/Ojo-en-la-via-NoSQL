@@ -299,7 +299,36 @@ document.addEventListener('click', (e) => {
         comentarioTexto.placeholder = `Respondiendo a ${usuario}`;
     }
 });
+document.addEventListener('DOMContentLoaded', async () => {
+    const parametros = new URLSearchParams(window.location.search);
+    const reporteIdDesdeUrl = parametros.get('comentarios');
 
+    if (!reporteIdDesdeUrl || !/^[a-f\d]{24}$/i.test(reporteIdDesdeUrl)) {
+        return;
+    }
+    const boton = document.querySelector(`.btn-abrir-comentarios[data-reporte-id="${reporteIdDesdeUrl}"]`);
+
+    if (boton) {
+        setTimeout(() => {
+            boton.click();
+        }, 400);
+
+        return;
+    }
+
+    if (comentariosOverlay && comentarioReporteId && comentarioTexto) {
+        botonComentariosActivo = null;
+        comentarioPadreActivo = null;
+
+        comentarioReporteId.value = reporteIdDesdeUrl;
+        comentarioTexto.value = '';
+        comentarioTexto.placeholder = 'Escribe un comentario...';
+
+        comentariosOverlay.classList.add('activo');
+
+        await cargarComentarios(reporteIdDesdeUrl);
+    }
+});
 function escapeHTML(texto) {
     return String(texto ?? '')
         .replaceAll('&', '&amp;')

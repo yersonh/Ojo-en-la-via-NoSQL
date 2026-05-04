@@ -91,6 +91,7 @@ function normalizarEstado($estado)
     return 'pendiente';
 }
 
+
 try {
     $db = conectarMongoDB();
 
@@ -98,21 +99,36 @@ try {
     $likesReportes = $db->likes_reporte;
     $comentariosReporte = $db->comentarios_reporte;
 
-    $cursor = $reportes->aggregate([
-        [
-            '$lookup' => [
-                'from' => 'usuario',
-                'localField' => 'usuario_id',
-                'foreignField' => '_id',
-                'as' => 'usuario'
-            ]
-        ],
-        [
-            '$sort' => [
-                'fecha_reporte' => -1
-            ]
-        ]
-    ]);
+     $comentariosAutoIdTexto = $_GET['comentarios'] ?? '';
+    $filtroReportes = [];
+
+    if ($comentariosAutoIdTexto !== '' && preg_match('/^[a-f\d]{24}$/i', $comentariosAutoIdTexto)) {
+        $filtroReportes['_id'] = new \MongoDB\BSON\ObjectId($comentariosAutoIdTexto);
+    }
+    $pipeline = [];
+
+if (!empty($filtroReportes)) {
+    $pipeline[] = [
+        '$match' => $filtroReportes
+    ];
+}
+
+$pipeline[] = [
+    '$lookup' => [
+        'from' => 'usuario',
+        'localField' => 'usuario_id',
+        'foreignField' => '_id',
+        'as' => 'usuario'
+    ]
+];
+
+$pipeline[] = [
+    '$sort' => [
+        'fecha_reporte' => -1
+    ]
+];
+
+$cursor = $reportes->aggregate($pipeline);
 
 } catch (Throwable $e) {
     $cursor = [];
@@ -314,38 +330,8 @@ try {
         </form>
     </div>
 </div>
-<div class="comentarios-overlay" id="comentariosOverlay">
-    <div class="comentarios-modal">
-        <div class="comentarios-header">
-            <h3><span id="comentariosTotal">0</span> comentarios</h3>
-            <button type="button" id="cerrarComentarios" class="cerrar-comentarios">×</button>
-        </div>
-
-        <div class="comentarios-lista" id="comentariosLista">
-            <p class="comentarios-vacio">Cargando comentarios...</p>
-        </div>
-
-        <form class="comentario-form" id="comentarioForm">
-            <input type="hidden" id="comentarioReporteId" name="reporte_id">
-
-            <input 
-                type="text" 
-                id="comentarioTexto" 
-                name="comentario" 
-                placeholder="Escribe un comentario..." 
-                maxlength="500"
-                autocomplete="off"
-            >
-
-            <button type="submit">Enviar</button>
-        </form>
-    </div>
-</div>
-
-
  <script src="/views/components/JS_usuario/menu-inferior.js"></script>
 <script src="/views/components/JS_usuario/likes-reportes.js"></script>
-<script src="/views/components/JS_usuario/comentarios-reportes.js"></script>
 <script src="/views/components/JS_usuario/comentarios-reportes.js"></script>
 </body>
 </html>
