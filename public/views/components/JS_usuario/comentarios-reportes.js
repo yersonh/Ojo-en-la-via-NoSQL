@@ -186,7 +186,9 @@ function renderComentario(comentario, nivel = 0) {
                 <div class="comentario-contenido">
                     <div class="comentario-burbuja ${nivel > 0 ? 'comentario-burbuja-respuesta' : ''}">
                         <strong>${escapeHTML(comentario.usuario)}</strong>
-                        <p>${escapeHTML(comentario.comentario)}</p>
+                       <p class="comentario-texto" data-comentario-id="${escapeHTML(comentario.id)}">
+                            ${escapeHTML(comentario.comentario)}
+                        </p>
                     </div>
 
                     <div class="comentario-meta">
@@ -202,12 +204,31 @@ function renderComentario(comentario, nivel = 0) {
                         </button>
 
                         <button 
+                        type="button" 
+                        class="btn-like-comentario"
+                        data-comentario-id="${escapeHTML(comentario.id)}"
+                    >
+                        ♡ <span>${comentario.likes ?? 0}</span>
+                    </button>
+
+                    ${comentario.es_mio ? `
+                        <button 
                             type="button" 
-                            class="btn-like-comentario"
+                            class="btn-editar-comentario"
+                            data-comentario-id="${escapeHTML(comentario.id)}"
+                            data-comentario-texto="${escapeHTML(comentario.comentario)}"
+                        >
+                            Editar
+                        </button>
+
+                        <button 
+                            type="button" 
+                            class="btn-eliminar-comentario"
                             data-comentario-id="${escapeHTML(comentario.id)}"
                         >
-                            ♡ <span>${comentario.likes ?? 0}</span>
+                            Eliminar
                         </button>
+                    ` : ''}
                     </div>
 
                     ${respuestasHTML}
@@ -344,7 +365,104 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cargarComentarios(reporteIdDesdeUrl);
     }
 });
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-editar-comentario');
 
+    if (!btn) {
+        return;
+    }
+
+    const comentarioId = btn.dataset.comentarioId;
+    const textoActual = btn.dataset.comentarioTexto || '';
+
+    const nuevoTexto = prompt('Editar comentario:', textoActual);
+
+    if (nuevoTexto === null) {
+        return;
+    }
+
+    const textoLimpio = nuevoTexto.trim();
+
+    if (!textoLimpio) {
+        alert('El comentario no puede estar vacío.');
+        return;
+    }
+
+    if (textoLimpio.length > 500) {
+        alert('El comentario no puede superar 500 caracteres.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('comentario_id', comentarioId);
+    formData.append('comentario', textoLimpio);
+
+    try {
+        const respuesta = await fetch('/views/usuario/editar_comentario.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+
+        const textoRespuesta = await respuesta.text();
+        console.log('Respuesta editar comentario:', textoRespuesta);
+
+        const data = JSON.parse(textoRespuesta);
+
+        if (!data.ok) {
+            alert(data.mensaje || 'No se pudo editar el comentario.');
+            return;
+        }
+
+        await cargarComentarios(comentarioReporteId.value);
+
+    } catch (error) {
+        console.error('Error al editar comentario:', error);
+        alert('Error al conectar con el servidor.');
+    }
+});
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-eliminar-comentario');
+
+    if (!btn) {
+        return;
+    }
+
+    const comentarioId = btn.dataset.comentarioId;
+
+    const confirmar = confirm('¿Seguro que quieres eliminar este comentario?');
+
+    if (!confirmar) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('comentario_id', comentarioId);
+
+    try {
+        const respuesta = await fetch('/views/usuario/eliminar_comentario.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+
+        const textoRespuesta = await respuesta.text();
+        console.log('Respuesta eliminar comentario:', textoRespuesta);
+
+        const data = JSON.parse(textoRespuesta);
+
+        if (!data.ok) {
+            alert(data.mensaje || 'No se pudo eliminar el comentario.');
+            return;
+        }
+
+        await cargarComentarios(comentarioReporteId.value);
+
+    } catch (error) {
+        console.error('Error al eliminar comentario:', error);
+        alert('Error al conectar con el servidor.');
+    }
+});
 function escapeHTML(texto) {
     return String(texto ?? '')
         .replaceAll('&', '&amp;')

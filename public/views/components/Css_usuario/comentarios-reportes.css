@@ -90,3 +90,29 @@
 .comentario-bloque-respuesta .comentario-contenido {
     max-width: 100%;
 }
+.btn-editar-comentario,
+.btn-eliminar-comentario {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    padding: 0;
+}
+
+.btn-editar-comentario:hover {
+    color: #2563eb;
+}
+
+.btn-eliminar-comentario:hover {
+    color: #dc2626;
+}
+
+.comentario-texto {
+    margin: 0;
+}
+
+.comentario-burbuja .comentario-texto {
+    white-space: pre-wrap;
+}
