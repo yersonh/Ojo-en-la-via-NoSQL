@@ -227,8 +227,9 @@ $cursor = $reportes->aggregate($pipeline);
                         'usuario_id' => $usuarioIdActual
                     ]) > 0;
 
-               $totalComentariosReporte = $comentariosReporte->countDocuments([
-                    'reporte_id' => $reporte['_id']
+                 $totalComentariosReporte = $comentariosReporte->countDocuments([
+                    'reporte_id' => $reporteIdObj,
+                    'comentario_padre_id' => null
                 ]);
                 ?>
 
