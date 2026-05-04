@@ -44,33 +44,44 @@
 
 /* =========================================================
    BURBUJA DEL COMENTARIO
-   Estilo tipo red social para el texto del comentario.
+   Estilo compacto tipo red social.
    ========================================================= */
 
 .comentario-burbuja {
-    display: inline-block;
-    max-width: 92%;
-    padding: 10px 14px;
-    border-radius: 16px;
-    background: #f3f4f6;
+    width: fit-content;
+    max-width: min(520px, 100%);
+    padding: 9px 13px;
+    border-radius: 18px;
+    background: #f0f2f5;
 }
 
 .comentario-burbuja-respuesta {
-    background: #f3f4f6;
-    max-width: 88%;
+    width: fit-content;
+    max-width: min(480px, 100%);
+    background: #f0f2f5;
 }
 
 .comentario-burbuja strong {
     display: block;
     margin-bottom: 4px;
+    font-size: 13px;
+    color: #4b5563;
 }
 
 .comentario-texto {
     margin: 0;
     white-space: pre-wrap;
     line-height: 1.35;
+    color: #111827;
+    text-align: left;
 }
-
+.comentario-contenido {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
 
 /* =========================================================
    METADATOS DEL COMENTARIO
