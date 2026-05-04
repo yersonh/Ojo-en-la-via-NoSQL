@@ -373,9 +373,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="overlay"></div>
 
-
-
-
+<?php if (!empty($mensaje)): ?>
+    <div class="mensaje <?php echo htmlspecialchars($tipo); ?>">
+        <?php echo htmlspecialchars($mensaje); ?>
+    </div>
+<?php endif; ?>
 
 <div class="container">
     <div class="left-panel">

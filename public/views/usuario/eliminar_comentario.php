@@ -13,6 +13,32 @@ function responderJson($data, $status = 200)
     exit;
 }
 
+function obtenerIdsDescendientes($comentarios, MongoDB\BSON\ObjectId $comentarioId)
+{
+    $ids = [$comentarioId];
+    $pendientes = [$comentarioId];
+
+    while (!empty($pendientes)) {
+        $padreActual = array_shift($pendientes);
+
+        $hijos = $comentarios->find([
+            'comentario_padre_id' => $padreActual
+        ]);
+
+        foreach ($hijos as $hijo) {
+            if (!isset($hijo['_id'])) {
+                continue;
+            }
+
+            $hijoId = $hijo['_id'];
+            $ids[] = $hijoId;
+            $pendientes[] = $hijoId;
+        }
+    }
+
+    return $ids;
+}
+
 try {
     if (!isset($_SESSION['usuario_id'])) {
         responderJson([
@@ -56,32 +82,24 @@ try {
         ], 403);
     }
 
-    /*
-        Eliminación suave:
-        No borra el documento para no romper las respuestas anidadas.
-        Solo reemplaza el texto por "Comentario eliminado".
-    */
-    $comentarios->updateOne(
-        [
-            '_id' => $comentarioId,
-            'usuario_id' => $usuarioId
-        ],
-        [
-            '$set' => [
-                'comentario' => 'Comentario eliminado',
-                'eliminado' => true,
-                'fecha_eliminacion' => new MongoDB\BSON\UTCDateTime()
-            ]
+    $idsAEliminar = obtenerIdsDescendientes($comentarios, $comentarioId);
+
+    $comentarios->deleteMany([
+        '_id' => [
+            '$in' => $idsAEliminar
         ]
-    );
+    ]);
 
     $likesComentario->deleteMany([
-        'comentario_id' => $comentarioId
+        'comentario_id' => [
+            '$in' => $idsAEliminar
+        ]
     ]);
 
     responderJson([
         'ok' => true,
-        'mensaje' => 'Comentario eliminado.'
+        'mensaje' => 'Comentario eliminado.',
+        'comentarios_eliminados' => count($idsAEliminar)
     ]);
 
 } catch (Throwable $e) {
