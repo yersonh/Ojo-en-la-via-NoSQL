@@ -1,11 +1,10 @@
 /* =========================================================
-   COMENTARIOS - ESTRUCTURA GENERAL
-   Estos estilos organizan cada comentario como un bloque.
+   CONTENEDOR GENERAL DE COMENTARIOS
    ========================================================= */
 
 .comentario-bloque {
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .comentario-bloque-respuesta {
@@ -16,65 +15,10 @@
 .comentario-item {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
+    width: 100%;
 }
 
-.comentario-contenido {
-    flex: 1;
-    min-width: 0;
-}
-
-
-/* =========================================================
-   AVATAR DE COMENTARIOS
-   Controla el tamaño del avatar en comentarios y respuestas.
-   ========================================================= */
-
-.comentario-avatar {
-    flex-shrink: 0;
-}
-
-.comentario-avatar-respuesta {
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
-    flex-shrink: 0;
-}
-
-
-/* =========================================================
-   BURBUJA DEL COMENTARIO
-   Estilo compacto tipo red social.
-   ========================================================= */
-
-.comentario-burbuja {
-    width: fit-content;
-    max-width: min(520px, 100%);
-    padding: 9px 13px;
-    border-radius: 18px;
-    background: #f0f2f5;
-}
-
-.comentario-burbuja-respuesta {
-    width: fit-content;
-    max-width: min(480px, 100%);
-    background: #f0f2f5;
-}
-
-.comentario-burbuja strong {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 13px;
-    color: #4b5563;
-}
-
-.comentario-texto {
-    margin: 0;
-    white-space: pre-wrap;
-    line-height: 1.35;
-    color: #111827;
-    text-align: left;
-}
 .comentario-contenido {
     flex: 1;
     min-width: 0;
@@ -83,18 +27,94 @@
     align-items: flex-start;
 }
 
+
 /* =========================================================
-   METADATOS DEL COMENTARIO
-   Fecha, responder, likes, editar y eliminar.
+   AVATAR
+   ========================================================= */
+
+.comentario-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #d9d9d9;
+    color: #1f2937;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.comentario-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.comentario-avatar-respuesta {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   BURBUJA DEL COMENTARIO
+   Fondo oscuro suave para que combine con página negra.
+   ========================================================= */
+
+.comentario-burbuja {
+    display: inline-block;
+    width: auto;
+    max-width: min(560px, 100%);
+    padding: 10px 14px;
+    border-radius: 18px;
+    background: #1f2937;
+    color: #f9fafb;
+    text-align: left;
+}
+
+.comentario-burbuja-respuesta {
+    background: #273244;
+    max-width: min(520px, 100%);
+}
+
+.comentario-burbuja strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #dbeafe;
+    text-align: left;
+}
+
+.comentario-texto {
+    display: block;
+    margin: 0;
+    padding: 0;
+    color: #f9fafb;
+    font-size: 15px;
+    line-height: 1.35;
+    text-align: left !important;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+
+/* =========================================================
+   FECHA, RESPONDER, LIKE, EDITAR Y ELIMINAR
    ========================================================= */
 
 .comentario-meta {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 5px;
+    margin-top: 6px;
+    margin-left: 4px;
     font-size: 13px;
-    color: #6b7280;
+    color: #9ca3af;
+    flex-wrap: wrap;
 }
 
 .comentario-meta span {
@@ -106,31 +126,31 @@
     border: none;
     cursor: pointer;
     font-weight: 700;
-    color: #4b5563;
+    color: #d1d5db;
     padding: 0;
 }
 
 .comentario-meta button:hover {
-    color: #2563eb;
+    color: #60a5fa;
 }
 
 
 /* =========================================================
-   BOTÓN VER / OCULTAR RESPUESTAS
-   Botón estilo Facebook: línea + texto.
+   VER / OCULTAR RESPUESTAS
    ========================================================= */
 
 .btn-ver-respuestas {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin-top: 6px;
+    margin-top: 7px;
+    margin-left: 4px;
     padding: 0;
     border: none;
     background: transparent;
-    color: #2563eb;
+    color: #60a5fa;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
 }
 
@@ -141,21 +161,20 @@
 .linea-respuestas {
     width: 34px;
     height: 1px;
-    background: #d1d5db;
+    background: #4b5563;
     display: inline-block;
 }
 
 
 /* =========================================================
-   CONTENEDOR DE RESPUESTAS
-   Crea la línea vertical y sangría para los hilos.
+   RESPUESTAS ANIDADAS
    ========================================================= */
 
 .comentario-respuestas {
-    margin-top: 8px;
-    margin-left: 34px;
+    margin-top: 9px;
+    margin-left: 26px;
     padding-left: 14px;
-    border-left: 1px solid #e5e7eb;
+    border-left: 1px solid #374151;
 }
 
 .ocultar-respuestas {
@@ -164,8 +183,7 @@
 
 
 /* =========================================================
-   EDITAR Y ELIMINAR COMENTARIOS
-   Solo se muestran si el comentario pertenece al usuario.
+   EDITAR / ELIMINAR
    ========================================================= */
 
 .btn-editar-comentario,
@@ -174,23 +192,22 @@
     border: none;
     cursor: pointer;
     font-size: 12px;
-    font-weight: 700;
-    color: #6b7280;
+    font-weight: 800;
+    color: #9ca3af;
     padding: 0;
 }
 
 .btn-editar-comentario:hover {
-    color: #2563eb;
+    color: #60a5fa;
 }
 
 .btn-eliminar-comentario:hover {
-    color: #dc2626;
+    color: #f87171;
 }
 
 
 /* =========================================================
    RESPONSIVE
-   Ajustes para pantallas pequeñas.
    ========================================================= */
 
 @media (max-width: 480px) {
@@ -198,31 +215,32 @@
         gap: 8px;
     }
 
+    .comentario-avatar {
+        width: 38px;
+        height: 38px;
+    }
+
+    .comentario-avatar-respuesta {
+        width: 30px;
+        height: 30px;
+    }
+
     .comentario-burbuja {
         max-width: 100%;
         padding: 9px 12px;
     }
 
-    .comentario-burbuja-respuesta {
-        max-width: 100%;
-    }
-
     .comentario-meta {
         gap: 9px;
         font-size: 12px;
-        flex-wrap: wrap;
     }
 
     .comentario-respuestas {
-        margin-left: 20px;
+        margin-left: 18px;
         padding-left: 10px;
     }
 
     .linea-respuestas {
         width: 24px;
-    }
-
-    .btn-ver-respuestas {
-        font-size: 12px;
     }
 }
