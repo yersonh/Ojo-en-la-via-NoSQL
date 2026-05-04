@@ -189,9 +189,7 @@ function renderComentario(comentario, nivel = 0) {
                     </div>
 
                     <div class="comentario-burbuja ${nivel > 0 ? 'comentario-burbuja-respuesta' : ''}">
-                        <p class="comentario-texto" data-comentario-id="${escapeHTML(comentario.id)}">
-                            ${escapeHTML(comentario.comentario)}
-                        </p>
+                       <p class="comentario-texto" data-comentario-id="${escapeHTML(comentario.id)}">${escapeHTML(String(comentario.comentario ?? '').trim())}</p>
                     </div>
                          <div class="comentario-meta">
                         <span>${escapeHTML(comentario.fecha)}</span>
