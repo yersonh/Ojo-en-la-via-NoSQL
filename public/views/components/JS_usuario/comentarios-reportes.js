@@ -96,15 +96,9 @@ comentarioForm.addEventListener('submit', async (e) => {
         comentarioPadreActivo = null;
         comentarioTexto.placeholder = 'Escribe un comentario...';
 
-        if (botonComentariosActivo) {
-            const contador = botonComentariosActivo.querySelector('.comment-count');
+       actualizarContadorComentarios(data.total_comentarios);
 
-            if (contador) {
-                contador.textContent = data.total_comentarios;
-            }
-        }
-
-        await cargarComentarios(reporteId);
+       await cargarComentarios(reporteId);
 
     } catch (error) {
         console.error('Error al guardar comentario:', error);
@@ -131,7 +125,7 @@ async function cargarComentarios(reporteId) {
             return;
         }
 
-        comentariosTotal.textContent = data.total;
+        actualizarContadorComentarios(data.total);
 
         if (!data.comentarios || data.comentarios.length === 0) {
             comentariosLista.innerHTML = '<p class="comentarios-vacio">Sé el primero en comentar.</p>';
@@ -537,6 +531,18 @@ document.addEventListener('click', async (e) => {
 
     await cargarComentarios(comentarioReporteId.value);
 });
+
+function actualizarContadorComentarios(total) {
+    comentariosTotal.textContent = total;
+
+    if (botonComentariosActivo) {
+        const contador = botonComentariosActivo.querySelector('.comment-count');
+
+        if (contador) {
+            contador.textContent = total;
+        }
+    }
+}
 function escapeHTML(texto) {
     return String(texto ?? '')
         .replaceAll('&', '&amp;')
