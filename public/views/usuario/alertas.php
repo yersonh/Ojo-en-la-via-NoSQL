@@ -142,7 +142,7 @@ $cursor = $reportes->aggregate($pipeline);
     <title>Alertas</title>
 
     <link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
-    <link rel="stylesheet" href="/views/components/CSS_usuario/comentarios-reportes.css">
+    <link rel="stylesheet" href="/views/components/Css_usuario/comentarios-reportes.css">
 </head>
 <body class="body-alertas">
 
@@ -333,6 +333,6 @@ $cursor = $reportes->aggregate($pipeline);
  <script src="/views/components/JS_usuario/menu-inferior.js"></script>
 <script src="/views/components/JS_usuario/likes-reportes.js"></script>
 <script src="/views/components/JS_usuario/comentarios-reportes.js"></script>
-<link rel="stylesheet" href="/views/components/Css_usuario/comentarios-reportes.css">
+
 </body>
 </html>
