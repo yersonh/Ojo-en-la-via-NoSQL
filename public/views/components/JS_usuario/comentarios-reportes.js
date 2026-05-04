@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cargarComentarios(reporteIdDesdeUrl);
     }
 });
-document.addEventListener('click', async (e) => {
+document.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-editar-comentario');
 
     if (!btn) {
@@ -375,51 +375,53 @@ document.addEventListener('click', async (e) => {
     const comentarioId = btn.dataset.comentarioId;
     const textoActual = btn.dataset.comentarioTexto || '';
 
-    const nuevoTexto = prompt('Editar comentario:', textoActual);
+    const textoElemento = document.querySelector(`.comentario-texto[data-comentario-id="${comentarioId}"]`);
 
-    if (nuevoTexto === null) {
+    if (!textoElemento) {
+        alert('No se encontró el comentario.');
         return;
     }
 
-    const textoLimpio = nuevoTexto.trim();
+    const burbuja = textoElemento.closest('.comentario-burbuja');
 
-    if (!textoLimpio) {
-        alert('El comentario no puede estar vacío.');
+    if (!burbuja) {
+        alert('No se encontró el contenedor del comentario.');
         return;
     }
 
-    if (textoLimpio.length > 500) {
-        alert('El comentario no puede superar 500 caracteres.');
+    if (burbuja.querySelector('.editar-comentario-box')) {
         return;
     }
 
-    const formData = new FormData();
-    formData.append('comentario_id', comentarioId);
-    formData.append('comentario', textoLimpio);
+    burbuja.innerHTML = `
+        <div class="editar-comentario-box">
+            <textarea 
+                class="editar-comentario-textarea" 
+                maxlength="500"
+            >${textoActual}</textarea>
 
-    try {
-        const respuesta = await fetch('/views/usuario/editar_comentario.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-        });
+            <div class="editar-comentario-acciones">
+                <button 
+                    type="button" 
+                    class="btn-guardar-edicion"
+                    data-comentario-id="${escapeHTML(comentarioId)}"
+                >
+                    Guardar
+                </button>
 
-        const textoRespuesta = await respuesta.text();
-        console.log('Respuesta editar comentario:', textoRespuesta);
+                <button 
+                    type="button" 
+                    class="btn-cancelar-edicion"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    `;
 
-        const data = JSON.parse(textoRespuesta);
-
-        if (!data.ok) {
-            alert(data.mensaje || 'No se pudo editar el comentario.');
-            return;
-        }
-
-        await cargarComentarios(comentarioReporteId.value);
-
-    } catch (error) {
-        console.error('Error al editar comentario:', error);
-        alert('Error al conectar con el servidor.');
-    }
+    const textarea = burbuja.querySelector('.editar-comentario-textarea');
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
 });
 document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.btn-eliminar-comentario');
@@ -462,6 +464,78 @@ document.addEventListener('click', async (e) => {
         console.error('Error al eliminar comentario:', error);
         alert('Error al conectar con el servidor.');
     }
+});
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-guardar-edicion');
+
+    if (!btn) {
+        return;
+    }
+
+    const comentarioId = btn.dataset.comentarioId;
+    const cajaEdicion = btn.closest('.editar-comentario-box');
+    const textarea = cajaEdicion?.querySelector('.editar-comentario-textarea');
+
+    if (!comentarioId || !textarea) {
+        alert('No se pudo leer la edición.');
+        return;
+    }
+
+    const textoLimpio = textarea.value.trim();
+
+    if (!textoLimpio) {
+        alert('El comentario no puede estar vacío.');
+        return;
+    }
+
+    if (textoLimpio.length > 500) {
+        alert('El comentario no puede superar 500 caracteres.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('comentario_id', comentarioId);
+    formData.append('comentario', textoLimpio);
+
+    try {
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+
+        const respuesta = await fetch('/views/usuario/editar_comentario.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+
+        const textoRespuesta = await respuesta.text();
+        console.log('Respuesta editar comentario:', textoRespuesta);
+
+        const data = JSON.parse(textoRespuesta);
+
+        if (!data.ok) {
+            alert(data.mensaje || 'No se pudo editar el comentario.');
+            btn.disabled = false;
+            btn.textContent = 'Guardar';
+            return;
+        }
+
+        await cargarComentarios(comentarioReporteId.value);
+
+    } catch (error) {
+        console.error('Error al editar comentario:', error);
+        alert('Error al conectar con el servidor.');
+        btn.disabled = false;
+        btn.textContent = 'Guardar';
+    }
+});
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-cancelar-edicion');
+
+    if (!btn) {
+        return;
+    }
+
+    await cargarComentarios(comentarioReporteId.value);
 });
 function escapeHTML(texto) {
     return String(texto ?? '')

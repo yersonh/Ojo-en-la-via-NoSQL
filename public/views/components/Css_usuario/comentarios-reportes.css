@@ -296,3 +296,70 @@
         width: 24px;
     }
 }
+/* =========================================================
+   EDICIÓN INLINE DE COMENTARIOS
+   Reemplaza el prompt del navegador por un editor dentro del comentario.
+   ========================================================= */
+
+.editar-comentario-box {
+    width: min(420px, 100%);
+}
+
+.editar-comentario-textarea {
+    width: 100%;
+    min-height: 78px;
+    resize: vertical;
+    border: 1px solid #cfd6df;
+    border-radius: 14px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #111827;
+    background: #ffffff;
+    outline: none;
+}
+
+.editar-comentario-textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.editar-comentario-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-guardar-edicion,
+.btn-cancelar-edicion {
+    border: none;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-guardar-edicion {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.btn-guardar-edicion:hover {
+    background: #1d4ed8;
+}
+
+.btn-guardar-edicion:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-cancelar-edicion {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.btn-cancelar-edicion:hover {
+    background: #d1d5db;
+}
