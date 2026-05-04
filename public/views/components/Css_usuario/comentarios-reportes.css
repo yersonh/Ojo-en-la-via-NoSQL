@@ -1,95 +1,162 @@
+/* =========================================================
+   COMENTARIOS - ESTRUCTURA GENERAL
+   Estos estilos organizan cada comentario como un bloque.
+   ========================================================= */
+
 .comentario-bloque {
     width: 100%;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
-.comentario-respuestas {
-    margin-left: 54px;
+.comentario-bloque-respuesta {
     margin-top: 8px;
-    padding-left: 12px;
-    border-left: 2px solid #e5e5e5;
+    margin-bottom: 8px;
 }
 
-.comentario-respuesta {
-    margin-top: 10px;
+.comentario-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.comentario-contenido {
+    flex: 1;
+    min-width: 0;
+}
+
+
+/* =========================================================
+   AVATAR DE COMENTARIOS
+   Controla el tamaño del avatar en comentarios y respuestas.
+   ========================================================= */
+
+.comentario-avatar {
+    flex-shrink: 0;
 }
 
 .comentario-avatar-respuesta {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     font-size: 13px;
     flex-shrink: 0;
 }
 
+
+/* =========================================================
+   BURBUJA DEL COMENTARIO
+   Estilo tipo red social para el texto del comentario.
+   ========================================================= */
+
+.comentario-burbuja {
+    display: inline-block;
+    max-width: 92%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: #f3f4f6;
+}
+
 .comentario-burbuja-respuesta {
-    background: #f3f3f3;
+    background: #f3f4f6;
+    max-width: 88%;
+}
+
+.comentario-burbuja strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.comentario-texto {
+    margin: 0;
+    white-space: pre-wrap;
+    line-height: 1.35;
+}
+
+
+/* =========================================================
+   METADATOS DEL COMENTARIO
+   Fecha, responder, likes, editar y eliminar.
+   ========================================================= */
+
+.comentario-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 5px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.comentario-meta span {
+    color: #9ca3af;
 }
 
 .comentario-meta button {
     background: transparent;
     border: none;
     cursor: pointer;
-    font-weight: 600;
-    color: #666;
+    font-weight: 700;
+    color: #4b5563;
+    padding: 0;
 }
 
 .comentario-meta button:hover {
-    color: #0b74de;
+    color: #2563eb;
 }
+
+
+/* =========================================================
+   BOTÓN VER / OCULTAR RESPUESTAS
+   Botón estilo Facebook: línea + texto.
+   ========================================================= */
+
 .btn-ver-respuestas {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin-top: 8px;
+    margin-top: 6px;
+    padding: 0;
     border: none;
     background: transparent;
-    color: #6b7280;
-    font-size: 12px;
+    color: #2563eb;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    padding: 2px 0;
 }
 
 .btn-ver-respuestas:hover {
-    color: #2563eb;
+    text-decoration: underline;
 }
 
 .linea-respuestas {
-    width: 28px;
+    width: 34px;
     height: 1px;
     background: #d1d5db;
     display: inline-block;
 }
 
+
+/* =========================================================
+   CONTENEDOR DE RESPUESTAS
+   Crea la línea vertical y sangría para los hilos.
+   ========================================================= */
+
 .comentario-respuestas {
-    margin-top: 10px;
-    margin-left: 10px;
+    margin-top: 8px;
+    margin-left: 34px;
     padding-left: 14px;
-    border-left: 2px solid #e5e7eb;
+    border-left: 1px solid #e5e7eb;
 }
 
 .ocultar-respuestas {
-    display: none;
+    display: none !important;
 }
 
-.comentario-bloque-respuesta {
-    margin-top: 10px;
-}
 
-.comentario-avatar-respuesta {
-    width: 30px;
-    height: 30px;
-    font-size: 13px;
-    flex-shrink: 0;
-}
+/* =========================================================
+   EDITAR Y ELIMINAR COMENTARIOS
+   Solo se muestran si el comentario pertenece al usuario.
+   ========================================================= */
 
-.comentario-burbuja-respuesta {
-    background: #f3f4f6;
-}
-
-.comentario-bloque-respuesta .comentario-contenido {
-    max-width: 100%;
-}
 .btn-editar-comentario,
 .btn-eliminar-comentario {
     background: transparent;
@@ -109,10 +176,42 @@
     color: #dc2626;
 }
 
-.comentario-texto {
-    margin: 0;
-}
 
-.comentario-burbuja .comentario-texto {
-    white-space: pre-wrap;
+/* =========================================================
+   RESPONSIVE
+   Ajustes para pantallas pequeñas.
+   ========================================================= */
+
+@media (max-width: 480px) {
+    .comentario-item {
+        gap: 8px;
+    }
+
+    .comentario-burbuja {
+        max-width: 100%;
+        padding: 9px 12px;
+    }
+
+    .comentario-burbuja-respuesta {
+        max-width: 100%;
+    }
+
+    .comentario-meta {
+        gap: 9px;
+        font-size: 12px;
+        flex-wrap: wrap;
+    }
+
+    .comentario-respuestas {
+        margin-left: 20px;
+        padding-left: 10px;
+    }
+
+    .linea-respuestas {
+        width: 24px;
+    }
+
+    .btn-ver-respuestas {
+        font-size: 12px;
+    }
 }

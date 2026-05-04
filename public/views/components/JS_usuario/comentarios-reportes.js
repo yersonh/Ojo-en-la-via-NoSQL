@@ -164,7 +164,7 @@ function renderComentario(comentario, nivel = 0) {
                 data-total-respuestas="${totalRespuestas}"
             >
                 <span class="linea-respuestas"></span>
-                Ver ${totalRespuestas} ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}⌄
+                Ver ${totalRespuestas} ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}
             </button>
 
             <div 
@@ -322,14 +322,14 @@ document.addEventListener('click', (e) => {
 
         btn.innerHTML = `
             <span class="linea-respuestas"></span>
-            Ocultar ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}⌃
+            Ocultar ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}
         `;
     } else {
         contenedor.classList.add('ocultar-respuestas');
 
         btn.innerHTML = `
             <span class="linea-respuestas"></span>
-            Ver ${totalRespuestas} ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}⌄
+            Ver ${totalRespuestas} ${totalRespuestas === 1 ? 'respuesta' : 'respuestas'}
         `;
     }
 });
