@@ -188,14 +188,14 @@ $cursor = $reportes->aggregate($pipeline);
                         ?? 'Incidente';
 
                     $descripcion = $reporte['descripcion'] ?? 'Sin descripción';
-                    $fotoReporte = $reporte['foto']
+                   $fotoReporte = $reporte['foto']
                     ?? $reporte['imagen']
                     ?? $reporte['image']
                     ?? $reporte['imagen_reporte']
                     ?? $reporte['foto_reporte']
                     ?? $reporte['evidencia']
+                    ?? $reporte['archivo']
                     ?? null;
-
                     $estado = normalizarEstado($reporte['estado'] ?? 'pendiente');
 
                     $latitud = $reporte['latitud']
@@ -261,21 +261,19 @@ $cursor = $reportes->aggregate($pipeline);
                         </div>
                     </div>
 
-                  <p class="alerta-descripcion">
-                    <?php echo htmlspecialchars($descripcion); ?>
-                </p>
 
-                <?php if (!empty($fotoReporte)): ?>
-                    <div class="alerta-foto-contenedor">
-                        <img 
-                            src="<?php echo htmlspecialchars($fotoReporte); ?>" 
-                            alt="Foto del reporte"
-                            class="alerta-foto-reporte"
-                        >
-                    </div>
-                <?php endif; ?>
+                      <p class="alerta-descripcion">
+                        <?php echo htmlspecialchars($descripcion); ?>
+                    </p>                                  
 
-                <div class="alerta-detalles">
+           <?php if (!empty($fotoReporte)): ?>
+                <img 
+                    src="<?php echo htmlspecialchars($fotoReporte); ?>" 
+                    alt="Foto del reporte"
+                    class="alerta-foto-reporte"
+                >
+            <?php endif; ?>
+
 
                     <div class="alerta-detalles">
                         <?php if ($latitud !== null && $longitud !== null): ?>
@@ -290,7 +288,7 @@ $cursor = $reportes->aggregate($pipeline);
 
                         <div>🗓️ <?php echo htmlspecialchars($fechaFormateada); ?></div>
                     </div>
-
+                    
                     <div class="alerta-acciones">
                         <button 
                             type="button"

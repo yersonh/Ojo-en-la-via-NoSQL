@@ -114,6 +114,7 @@ try {
     $likesComentario = $db->likes_comentario;
 
     $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
+    $usuarioSesionId = (string) $_SESSION['usuario_id'];
 
     $cursor = $comentarios->aggregate([
         [
@@ -153,6 +154,12 @@ try {
 
         $comentarioId = $comentario['_id'];
 
+        $usuarioComentarioId = isset($comentario['usuario_id'])
+            ? (string) $comentario['usuario_id']
+            : '';
+
+        $esMio = $usuarioSesionId === $usuarioComentarioId;
+
         $totalLikes = $likesComentario->countDocuments([
             'comentario_id' => $comentarioId
         ]);
@@ -175,28 +182,32 @@ try {
             'fecha' => tiempoComentario($comentario['fecha_comentario'] ?? null),
             'likes' => $totalLikes,
             'comentario_padre_id' => $comentarioPadreId,
-            'respuestas' => []
+            'respuestas' => [],
+            'es_mio' => $esMio,
+            'eliminado' => !empty($comentario['eliminado']),
+            'editado' => !empty($comentario['editado'])
         ];
     }
-$comentariosPorId = [];
-$lista = [];
 
-foreach ($comentariosTemporales as $comentario) {
-    $comentario['respuestas'] = [];
-    $comentariosPorId[$comentario['id']] = $comentario;
-}
+    $comentariosPorId = [];
+    $lista = [];
 
-foreach ($comentariosPorId as $id => &$comentario) {
-    $padreId = $comentario['comentario_padre_id'];
-
-    if ($padreId !== null && isset($comentariosPorId[$padreId])) {
-        $comentariosPorId[$padreId]['respuestas'][] = &$comentario;
-    } else {
-        $lista[] = &$comentario;
+    foreach ($comentariosTemporales as $comentario) {
+        $comentario['respuestas'] = [];
+        $comentariosPorId[$comentario['id']] = $comentario;
     }
-}
 
-unset($comentario);
+    foreach ($comentariosPorId as $id => &$comentario) {
+        $padreId = $comentario['comentario_padre_id'];
+
+        if ($padreId !== null && isset($comentariosPorId[$padreId])) {
+            $comentariosPorId[$padreId]['respuestas'][] = &$comentario;
+        } else {
+            $lista[] = &$comentario;
+        }
+    }
+
+    unset($comentario);
 
     responderJson([
         'ok' => true,
