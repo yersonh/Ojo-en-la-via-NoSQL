@@ -1,4 +1,51 @@
 /* =========================================================
+   MODAL DE COMENTARIOS
+   Fondo suave para que combine con la página oscura.
+   ========================================================= */
+
+.comentarios-modal {
+    background: #f5f6f8;
+    color: #1f2937;
+    border-radius: 26px;
+    overflow: hidden;
+}
+
+.comentarios-header {
+    background: #f5f6f8;
+    border-bottom: 1px solid #e1e4e8;
+}
+
+.comentarios-header h3,
+.comentarios-header span {
+    color: #111827;
+}
+
+.cerrar-comentarios {
+    color: #374151;
+}
+
+.comentarios-lista {
+    background: #f5f6f8;
+}
+
+.comentario-form {
+    background: #f5f6f8;
+    border-top: 1px solid #e1e4e8;
+}
+
+.comentario-input-wrap input,
+#comentarioTexto {
+    background: #e9ebef;
+    color: #111827;
+}
+
+.comentario-input-wrap input::placeholder,
+#comentarioTexto::placeholder {
+    color: #6b7280;
+}
+
+
+/* =========================================================
    ESTRUCTURA GENERAL
    ========================================================= */
 
@@ -36,7 +83,7 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: #d9d9d9;
+    background: #d8dce2;
     color: #1f2937;
     font-weight: 800;
     display: flex;
@@ -69,29 +116,29 @@
     margin-bottom: 4px;
     font-size: 13px;
     font-weight: 800;
-    color: #4b5563;
+    color: #374151;
 }
 
 
 /* =========================================================
    BURBUJA
-   Solo contiene el texto del comentario.
+   Solo contiene el texto y queda pegada al autor.
    ========================================================= */
 
 .comentario-burbuja {
-    display: inline-block;
+    display: block;
     width: fit-content;
-    max-width: min(520px, 100%);
+    max-width: min(520px, 92%);
     padding: 9px 13px;
     border-radius: 16px;
-    background: #f1f2f4;
+    background: #e8ebf0;
     color: #111827;
     text-align: left;
 }
 
 .comentario-burbuja-respuesta {
-    background: #f6f7f8;
-    max-width: min(480px, 100%);
+    background: #eceff3;
+    max-width: min(480px, 92%);
 }
 
 .comentario-texto {
@@ -123,7 +170,7 @@
 }
 
 .comentario-meta span {
-    color: #9ca3af;
+    color: #7b8494;
 }
 
 .comentario-meta button {
@@ -166,7 +213,7 @@
 .linea-respuestas {
     width: 34px;
     height: 1px;
-    background: #d1d5db;
+    background: #c4cad3;
     display: inline-block;
 }
 
@@ -179,7 +226,7 @@
     margin-top: 9px;
     margin-left: 24px;
     padding-left: 14px;
-    border-left: 1px solid #e5e7eb;
+    border-left: 1px solid #d5dae2;
 }
 
 .ocultar-respuestas {

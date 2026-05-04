@@ -193,7 +193,7 @@ function renderComentario(comentario, nivel = 0) {
                             ${escapeHTML(comentario.comentario)}
                         </p>
                     </div>
-                                        <div class="comentario-meta">
+                         <div class="comentario-meta">
                         <span>${escapeHTML(comentario.fecha)}</span>
 
                         <button 
