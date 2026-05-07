@@ -324,7 +324,26 @@ function formatearFechaNotificacion($fecha)
             </aside>
         </section>
     </main>
+<div class="bottom-hover-zone" id="bottomHoverZone"></div>
 
-    <script src="../components/JS_usuario/perfil.js"></script>
+<nav class="bottom-nav" id="bottomNav">
+    <a href="alertas.php">
+        <span class="icon">🔔</span>
+        <span>Alertas</span>
+    </a>
+
+    <a href="inicio.php">
+        <span class="icon">🗺️</span>
+        <span>Mapa</span>
+    </a>
+
+    <a href="perfil.php" class="active">
+        <span class="icon">👤</span>
+        <span>Perfil</span>
+    </a>
+</nav>
+
+<script src="/views/components/JS_usuario/menu-inferior.js"></script>
+<script src="/views/components/JS_usuario/perfil.js"></script>
 </body>
 </html>
