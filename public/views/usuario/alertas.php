@@ -188,14 +188,17 @@ $cursor = $reportes->aggregate($pipeline);
                         ?? 'Incidente';
 
                     $descripcion = $reporte['descripcion'] ?? 'Sin descripción';
-                   $fotoReporte = $reporte['foto']
-                    ?? $reporte['imagen']
-                    ?? $reporte['image']
-                    ?? $reporte['imagen_reporte']
-                    ?? $reporte['foto_reporte']
-                    ?? $reporte['evidencia']
-                    ?? $reporte['archivo']
-                    ?? null;
+                  $fotoReporte = null;
+
+                $imagenesReporte = $reporte['imagenes'] ?? [];
+
+                if ($imagenesReporte instanceof \MongoDB\Model\BSONArray) {
+                    $imagenesReporte = $imagenesReporte->getArrayCopy();
+                }
+
+                if (is_array($imagenesReporte) && !empty($imagenesReporte[0])) {
+                    $fotoReporte = (string) $imagenesReporte[0];
+                }
                     $estado = normalizarEstado($reporte['estado'] ?? 'pendiente');
 
                     $latitud = $reporte['latitud']
@@ -267,14 +270,14 @@ $cursor = $reportes->aggregate($pipeline);
                         <?php echo htmlspecialchars($descripcion); ?>
                     </p>                                  
 
-           <?php if (!empty($fotoReporte)): ?>
-                <img 
-                    src="<?php echo htmlspecialchars($fotoReporte); ?>" 
-                    alt="Foto del reporte"
-                    class="alerta-foto-reporte"
-                >
-            <?php endif; ?>
-
+           
+                <?php if (!empty($fotoReporte)): ?>
+                    <img 
+                        src="<?php echo htmlspecialchars($fotoReporte); ?>" 
+                        alt="Foto del reporte"
+                        class="alerta-foto-reporte"
+                    >
+                <?php endif; ?>
 
                     <div class="alerta-detalles">
                         <?php if ($latitud !== null && $longitud !== null): ?>
