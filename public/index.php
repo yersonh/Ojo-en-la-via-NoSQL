@@ -27,10 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mensaje = 'Todos los campos son obligatorios.';
             $tipo = 'error';
         } else {
-            $existe = $usuarios->findOne(['email' => $email]);
+             $existeEmail = $usuarios->findOne(['email' => $email]);
+            $existeTelefono = $usuarios->findOne(['telefono' => $telefono]);
 
-            if ($existe) {
+            if ($existeEmail) {
                 $mensaje = 'Ese correo ya está registrado.';
+                $tipo = 'error';
+            } elseif ($existeTelefono) {
+                $mensaje = 'Ese número de teléfono ya está registrado.';
                 $tipo = 'error';
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
