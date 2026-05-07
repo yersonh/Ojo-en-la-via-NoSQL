@@ -1,5 +1,6 @@
 <?php
 session_start();
+
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -16,89 +17,89 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';
 
-    // esta parte se encarga de registrar, iniciar sesión o cerrar sesión dependiendo del valor de 'accion' enviado desde el formulario
-  if ($accion === 'registro') {
-    $nombre_completo = trim($_POST['nombre_completo'] ?? '');
-    $telefono = trim($_POST['telefono'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = trim($_POST['password'] ?? '');
+    if ($accion === 'registro') {
+        $nombre_completo = trim($_POST['nombre_completo'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $password = trim($_POST['password'] ?? '');
 
-    if ($nombre_completo === '' || $telefono === '' || $email === '' || $password === '') {
-        $mensaje = 'Todos los campos son obligatorios.';
-        $tipo = 'error';
-    } else {
-        $existe = $usuarios->findOne(['email' => $email]);
-
-        if ($existe) {
-            $mensaje = 'Ese correo ya está registrado.';
+        if ($nombre_completo === '' || $telefono === '' || $email === '' || $password === '') {
+            $mensaje = 'Todos los campos son obligatorios.';
             $tipo = 'error';
         } else {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $existe = $usuarios->findOne(['email' => $email]);
 
-            $resultado = $usuarios->insertOne([
-                'nombre_completo' => $nombre_completo,
-                'telefono' => $telefono,
-                'email' => $email,
-                'password' => $hash,
-                'estado' => true,
-                'fecha_creacion' => date('Y-m-d H:i:s'),
-                'foto_perfil' => '',
-                'rol' => 'ciudadano'
-            ]);
-
-            if ($resultado->getInsertedCount() > 0) {
-                $mensaje = 'Usuario registrado correctamente.';
-                $tipo = 'ok';
-            } else {
-                $mensaje = 'No se pudo registrar el usuario.';
+            if ($existe) {
+                $mensaje = 'Ese correo ya está registrado.';
                 $tipo = 'error';
+            } else {
+                $hash = password_hash($password, PASSWORD_DEFAULT);
+
+                $resultado = $usuarios->insertOne([
+                    'nombre_completo' => $nombre_completo,
+                    'telefono' => $telefono,
+                    'email' => $email,
+                    'password' => $hash,
+                    'estado' => true,
+                    'fecha_creacion' => date('Y-m-d H:i:s'),
+                    'foto_perfil' => '',
+                    'rol' => 'ciudadano'
+                ]);
+
+                if ($resultado->getInsertedCount() > 0) {
+                    $mensaje = 'Usuario registrado correctamente.';
+                    $tipo = 'ok';
+                } else {
+                    $mensaje = 'No se pudo registrar el usuario.';
+                    $tipo = 'error';
+                }
             }
         }
     }
-}
-  // esta parte se encarga de iniciar sesión
-        if ($accion === 'login') {
-            $email = trim($_POST['email'] ?? '');
-            $password = trim($_POST['password'] ?? '');
 
-            if ($email === '' || $password === '') {
-                $mensaje = 'Correo y contraseña son obligatorios.';
+    if ($accion === 'login') {
+        $email = trim($_POST['email'] ?? '');
+        $password = trim($_POST['password'] ?? '');
+
+        if ($email === '' || $password === '') {
+            $mensaje = 'Correo y contraseña son obligatorios.';
+            $tipo = 'error';
+        } else {
+            $usuario = $usuarios->findOne(['email' => $email]);
+
+            if (!$usuario) {
+                $mensaje = 'Usuario no encontrado.';
+                $tipo = 'error';
+            } elseif (!($usuario['estado'] ?? false)) {
+                $mensaje = 'Usuario inactivo.';
+                $tipo = 'error';
+            } elseif (!password_verify($password, $usuario['password'] ?? '')) {
+                $mensaje = 'Contraseña incorrecta.';
                 $tipo = 'error';
             } else {
-                $usuario = $usuarios->findOne(['email' => $email]);
+                $nombreSesion = trim($usuario['nombre_completo'] ?? '');
 
-                if (!$usuario) {
-                    $mensaje = 'Usuario no encontrado.';
-                    $tipo = 'error';
-                } elseif (!($usuario['estado'] ?? false)) {
-                    $mensaje = 'Usuario inactivo.';
-                    $tipo = 'error';
-                } elseif (!password_verify($password, $usuario['password'] ?? '')) {
-                    $mensaje = 'Contraseña incorrecta.';
-                    $tipo = 'error';
-                } else {
-                    $nombreSesion = trim($usuario['nombre_completo'] ?? '');
-                    if ($nombreSesion === '') {
-                        $nombreSesion = $usuario['email'] ?? 'Usuario';
-                    }
-                    // esta parte se encarga de guardar los datos del usuario en la sesión para usarlos en otras partes de la aplicación
-                    $_SESSION['usuario_id'] = (string) $usuario['_id'];
-                    $_SESSION['usuario_nombre'] = $nombreSesion;
-                    $_SESSION['usuario_email'] = $usuario['email'] ?? '';
-                    $_SESSION['foto_perfil'] = $usuario['foto_perfil'] ?? '';
-                    $_SESSION['usuario_rol'] = $usuario['rol'] ?? 'ciudadano';
+                if ($nombreSesion === '') {
+                    $nombreSesion = $usuario['email'] ?? 'Usuario';
+                }
 
-                    if ($_SESSION['usuario_rol'] === 'admin') {
-                        header('Location: views/admin/panel.php');
-                        exit;
-                    }
+                $_SESSION['usuario_id'] = (string) $usuario['_id'];
+                $_SESSION['usuario_nombre'] = $nombreSesion;
+                $_SESSION['usuario_email'] = $usuario['email'] ?? '';
+                $_SESSION['foto_perfil'] = $usuario['foto_perfil'] ?? '';
+                $_SESSION['usuario_rol'] = $usuario['rol'] ?? 'ciudadano';
 
-                    header('Location: views/usuario/inicio.php');
+                if ($_SESSION['usuario_rol'] === 'admin') {
+                    header('Location: views/admin/panel.php');
                     exit;
+                }
+
+                header('Location: views/usuario/inicio.php');
+                exit;
             }
         }
+    }
 
-        // esta parte se encarga de cerrar sesión
     if ($accion === 'logout') {
         session_destroy();
         header('Location: index.php');
