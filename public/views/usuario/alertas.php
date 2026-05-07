@@ -271,13 +271,13 @@ $cursor = $reportes->aggregate($pipeline);
                     </p>                                  
 
            
-                <?php if (!empty($fotoReporte)): ?>
-                    <img 
-                        src="<?php echo htmlspecialchars($fotoReporte); ?>" 
-                        alt="Foto del reporte"
-                        class="alerta-foto-reporte"
-                    >
-                <?php endif; ?>
+              <?php if (!empty($fotoReporte)): ?>
+                <img 
+                    src="/<?php echo htmlspecialchars(ltrim($fotoReporte, '/')); ?>" 
+                    alt="Foto del reporte"
+                    class="alerta-foto-reporte"
+                >
+            <?php endif; ?>
 
                     <div class="alerta-detalles">
                         <?php if ($latitud !== null && $longitud !== null): ?>
