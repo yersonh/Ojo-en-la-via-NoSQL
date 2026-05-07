@@ -41,7 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'email' => $email,
                 'password' => $hash,
                 'estado' => true,
-                'fecha_creacion' => date('Y-m-d H:i:s')
+                'fecha_creacion' => date('Y-m-d H:i:s'),
+                'foto_perfil' => '',
+                'rol' => 'ciudadano'
             ]);
 
             if ($resultado->getInsertedCount() > 0) {
@@ -79,15 +81,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($nombreSesion === '') {
                         $nombreSesion = $usuario['email'] ?? 'Usuario';
                     }
-
+                    // esta parte se encarga de guardar los datos del usuario en la sesión para usarlos en otras partes de la aplicación
                     $_SESSION['usuario_id'] = (string) $usuario['_id'];
                     $_SESSION['usuario_nombre'] = $nombreSesion;
                     $_SESSION['usuario_email'] = $usuario['email'] ?? '';
-                     $_SESSION['foto_perfil'] = $usuario['foto_perfil'] ?? '';
+                    $_SESSION['foto_perfil'] = $usuario['foto_perfil'] ?? '';
+                    $_SESSION['usuario_rol'] = $usuario['rol'] ?? 'ciudadano';
+
+                    if ($_SESSION['usuario_rol'] === 'admin') {
+                        header('Location: views/admin/panel.php');
+                        exit;
+                    }
 
                     header('Location: views/usuario/inicio.php');
                     exit;
-                }
             }
         }
 

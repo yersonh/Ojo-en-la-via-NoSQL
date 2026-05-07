@@ -1,11 +1,58 @@
 const map = crearMapa('map');
 let marcador = null;
 
-function crearIconoReporte(emoji = '🚨') {
+/* ========= ESTADOS Y COLORES ========= */
+
+function normalizarEstado(estado) {
+    return String(estado || 'pendiente')
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '_');
+}
+
+function obtenerColorPorEstado(estado) {
+    const estadoNormalizado = normalizarEstado(estado);
+
+    if (estadoNormalizado === 'pendiente') {
+        return '#e53935'; // rojo
+    }
+
+    if (
+        estadoNormalizado === 'en_revision' ||
+        estadoNormalizado === 'revisado' ||
+        estadoNormalizado === 'revision'
+    ) {
+        return '#f39c12'; // naranja
+    }
+
+    if (
+        estadoNormalizado === 'notificado' ||
+        estadoNormalizado === 'informado'
+    ) {
+        return '#f1c40f'; // amarillo
+    }
+
+    if (
+        estadoNormalizado === 'resuelto' ||
+        estadoNormalizado === 'solucionado'
+    ) {
+        return '#2ecc71'; // verde
+    }
+
+    return '#e53935'; // rojo por defecto
+}
+
+/* ========= ICONOS DEL MAPA ========= */
+
+function crearIconoReporte(emoji = '🚨', estado = 'pendiente') {
+    const color = obtenerColorPorEstado(estado);
+
     return L.divIcon({
         className: 'icono-reporte-personalizado',
         html: `
-            <div class="marker-circle">
+            <div class="marker-circle" style="background:${color};">
                 <span class="marker-emoji">${emoji}</span>
             </div>
         `,
@@ -16,19 +63,33 @@ function crearIconoReporte(emoji = '🚨') {
 }
 
 function obtenerEmojiPorTipo(tipo) {
-    switch ((tipo || '').toLowerCase()) {
+    const tipoNormalizado = String(tipo || '').toLowerCase().trim();
+
+    switch (tipoNormalizado) {
         case 'accidente':
             return '🚨';
+
         case 'hueco':
             return '🕳️';
+
         case 'tráfico':
+        case 'trafico':
             return '🚗';
+
         case 'obstrucción':
+        case 'obstruccion':
             return '🚧';
+
+        case 'inundación':
+        case 'inundacion':
+            return '🌊';
+
         default:
             return '📍';
     }
 }
+
+/* ========= CREAR REPORTE AL HACER CLICK ========= */
 
 map.on('click', function (e) {
     const lat = e.latlng.lat;
@@ -39,7 +100,7 @@ map.on('click', function (e) {
     }
 
     marcador = L.marker([lat, lng], {
-        icon: crearIconoReporte('📍')
+        icon: crearIconoReporte('📍', 'pendiente')
     }).addTo(map);
 
     const panelRegistro = document.getElementById('panelRegistro');
@@ -63,8 +124,11 @@ map.on('click', function (e) {
     if (lngInput) lngInput.value = lng;
 });
 
+/* ========= UTILIDADES ========= */
+
 function escaparHtml(texto) {
     if (texto === null || texto === undefined) return '';
+
     return String(texto)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -74,23 +138,42 @@ function escaparHtml(texto) {
 }
 
 function capitalizarEstado(estado) {
-    if (!estado) return 'Activo';
-    return estado.charAt(0).toUpperCase() + estado.slice(1);
+    const estadoTexto = String(estado || 'pendiente').replace(/_/g, ' ');
+    return estadoTexto.charAt(0).toUpperCase() + estadoTexto.slice(1);
 }
+
+/* ========= POPUP DEL REPORTE ========= */
+
+function obtenerImagenReporte(reporte) {
+    if (reporte.imagen) {
+        return reporte.imagen;
+    }
+
+    if (Array.isArray(reporte.imagenes) && reporte.imagenes.length > 0) {
+        return reporte.imagenes[0];
+    }
+
+    return '';
+}
+
 function crearPopupReporte(reporte) {
     const reporteId = escaparHtml(reporte.id || reporte._id || '');
     const tipo = escaparHtml(reporte.tipo || 'Incidente');
     const descripcion = escaparHtml(reporte.descripcion || 'Sin descripción');
     const usuarioNombre = escaparHtml(reporte.usuario_nombre || 'No disponible');
     const fecha = escaparHtml(reporte.fecha || 'No disponible');
-    const estado = escaparHtml(capitalizarEstado(reporte.estado || 'activo'));
-   const imagen = reporte.imagen ? reporte.imagen : '';
-    const cantidadImagenes = reporte.imagen ? '1 imagen' : '0 imágenes';
+    const estadoOriginal = reporte.estado || 'pendiente';
+    const estado = escaparHtml(capitalizarEstado(estadoOriginal));
+
+    const imagenOriginal = obtenerImagenReporte(reporte);
+    const imagen = escaparHtml(imagenOriginal);
+    const cantidadImagenes = imagen ? '1 imagen' : '0 imágenes';
+    const colorEstado = obtenerColorPorEstado(estadoOriginal);
 
     return `
         <div class="popup-reporte">
             <div class="popup-header">
-                <span class="popup-icon">🚨</span>
+                <span class="popup-icon">${obtenerEmojiPorTipo(tipo)}</span>
                 <span class="popup-title">${tipo}</span>
             </div>
 
@@ -104,7 +187,7 @@ function crearPopupReporte(reporte) {
                     <div class="popup-image-box">
                         ${
                             imagen
-                                ? `<img src="${imagen}" alt="Imagen del reporte" class="popup-image">`
+                                ? `<img src="/${imagen.replace(/^\/+/, '')}" alt="Imagen del reporte" class="popup-image">`
                                 : `<div class="popup-image-empty">Sin imagen</div>`
                         }
                     </div>
@@ -114,7 +197,7 @@ function crearPopupReporte(reporte) {
 
                 <div class="popup-info-card">
                     <div class="popup-info-label">👤 Reportado por:</div>
-                  <div class="popup-info-value">${usuarioNombre}</div>
+                    <div class="popup-info-value">${usuarioNombre}</div>
                 </div>
 
                 <div class="popup-info-card">
@@ -124,7 +207,12 @@ function crearPopupReporte(reporte) {
 
                 <div class="popup-info-card">
                     <div class="popup-info-label">📌 Estado:</div>
-                    <div class="popup-status">${estado}</div>
+                    <div 
+                        class="popup-status" 
+                        style="background:${colorEstado}; color:#ffffff;"
+                    >
+                        ${estado}
+                    </div>
                 </div>
 
                 <a 
@@ -138,6 +226,8 @@ function crearPopupReporte(reporte) {
     `;
 }
 
+/* ========= PINTAR REPORTES EXISTENTES ========= */
+
 if (Array.isArray(window.reportesDB)) {
     window.reportesDB.forEach(reporte => {
         if (
@@ -150,7 +240,7 @@ if (Array.isArray(window.reportesDB)) {
         const emoji = obtenerEmojiPorTipo(reporte.tipo);
 
         L.marker([reporte.latitud, reporte.longitud], {
-            icon: crearIconoReporte(emoji)
+            icon: crearIconoReporte(emoji, reporte.estado)
         })
             .addTo(map)
             .bindPopup(crearPopupReporte(reporte), {

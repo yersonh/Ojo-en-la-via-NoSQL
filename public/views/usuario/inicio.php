@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $imagenes = [];
 
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-                $directorioSubidas = rtrim($_SERVER['DOCUMENT_ROOT'], '/\\') . '/uploads/reportes/';
+                $directorioSubidas = __DIR__ . '/../../uploads/reportes/';
 
                 if (!is_dir($directorioSubidas)) {
                     mkdir($directorioSubidas, 0777, true);
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception('No se pudo guardar la imagen.');
                 }
 
-                $imagenes[] = '/uploads/reportes/' . $nombreArchivo;
+                $imagenes[] = 'uploads/reportes/' . $nombreArchivo;
             }
 
             $documento = [
@@ -225,6 +225,8 @@ try {
             'usuario_nombre' => $nombreReportante
         ];
     }
+
+    
 
 } catch (Throwable $e) {
     $reportesMapa = [];
