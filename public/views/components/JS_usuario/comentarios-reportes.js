@@ -206,22 +206,34 @@ function renderComentario(comentario, nivel = 0) {
                     </button>
 
                     ${comentario.es_mio ? `
-                        <button 
-                            type="button" 
-                            class="btn-editar-comentario"
-                            data-comentario-id="${escapeHTML(comentario.id)}"
-                            data-comentario-texto="${escapeHTML(comentario.comentario)}"
-                        >
-                            Editar
-                        </button>
+                        <div class="comentario-menu">
+                            <button 
+                                type="button" 
+                                class="btn-comentario-menu"
+                                aria-label="Opciones del comentario"
+                            >
+                                ...
+                            </button>
 
-                        <button 
-                            type="button" 
-                            class="btn-eliminar-comentario"
-                            data-comentario-id="${escapeHTML(comentario.id)}"
-                        >
-                            Eliminar
-                        </button>
+                            <div class="comentario-menu-opciones">
+                                <button 
+                                    type="button" 
+                                    class="btn-editar-comentario"
+                                    data-comentario-id="${escapeHTML(comentario.id)}"
+                                    data-comentario-texto="${escapeHTML(comentario.comentario)}"
+                                >
+                                    Editar
+                                </button>
+
+                                <button 
+                                    type="button" 
+                                    class="btn-eliminar-comentario"
+                                    data-comentario-id="${escapeHTML(comentario.id)}"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
                     ` : ''}
                     </div>
 
@@ -232,12 +244,38 @@ function renderComentario(comentario, nivel = 0) {
     `;
 }
 
+document.addEventListener('click', (e) => {
+    const btnMenu = e.target.closest('.btn-comentario-menu');
+
+    if (!e.target.closest('.comentario-menu')) {
+        cerrarMenusComentario();
+    }
+
+    if (!btnMenu) {
+        return;
+    }
+
+    const menu = btnMenu.closest('.comentario-menu');
+    const estabaAbierto = menu.classList.contains('abierto');
+
+    cerrarMenusComentario();
+    menu.classList.toggle('abierto', !estabaAbierto);
+});
+
+function cerrarMenusComentario() {
+    document.querySelectorAll('.comentario-menu.abierto').forEach((menu) => {
+        menu.classList.remove('abierto');
+    });
+}
+
 document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.btn-like-comentario');
 
     if (!btn) {
         return;
     }
+
+    cerrarMenusComentario();
 
     const comentarioId = btn.dataset.comentarioId;
 
@@ -300,6 +338,8 @@ document.addEventListener('click', (e) => {
     if (!btn) {
         return;
     }
+
+    cerrarMenusComentario();
 
     const comentarioId = btn.dataset.comentarioId;
     const totalRespuestas = Number(btn.dataset.totalRespuestas || 0);
