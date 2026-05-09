@@ -620,21 +620,54 @@ body.body-alertas {
     background: #202020;
 }
 
+.editar-reporte-ubicacion-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+}
+
+.editar-reporte-ubicacion-head label {
+    margin: 0;
+}
+
 .btn-ubicacion-actual-editar {
-    min-height: 38px;
-    border: 1px solid #2f9bff;
+    min-height: 34px;
+    border: 1px solid rgba(47, 155, 255, 0.55);
     border-radius: 999px;
-    background: rgba(47, 155, 255, 0.14);
-    color: #dff0ff;
+    background: linear-gradient(135deg, rgba(47, 155, 255, 0.24), rgba(47, 155, 255, 0.09));
+    color: #eef7ff;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
     font-family: inherit;
     font-weight: 800;
-    margin: 0 0 10px;
-    padding: 0 14px;
+    font-size: 12px;
+    margin: 0;
+    padding: 0 13px;
+    box-shadow: 0 8px 18px rgba(47, 155, 255, 0.12);
+    white-space: nowrap;
 }
 
 .btn-ubicacion-actual-editar:hover {
-    background: rgba(47, 155, 255, 0.24);
+    background: linear-gradient(135deg, rgba(47, 155, 255, 0.34), rgba(47, 155, 255, 0.16));
+    border-color: rgba(117, 190, 255, 0.75);
+    transform: translateY(-1px);
+}
+
+.btn-ubicacion-actual-editar span {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
 }
 
 .btn-ubicacion-actual-editar:disabled {
@@ -768,6 +801,15 @@ body.body-alertas {
     .editar-reporte-coordenadas,
     .editar-reporte-foto {
         grid-template-columns: 1fr;
+    }
+
+    .editar-reporte-ubicacion-head {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .btn-ubicacion-actual-editar {
+        width: 100%;
     }
 
     .editar-reporte-foto img {

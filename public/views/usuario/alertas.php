@@ -415,10 +415,13 @@ $cursor = $reportes->aggregate($pipeline);
             <label for="editarReporteDescripcion">Descripcion</label>
             <textarea name="descripcion" id="editarReporteDescripcion" maxlength="800" required></textarea>
 
-            <label>Ubicacion</label>
-            <button type="button" id="usarUbicacionActualEditar" class="btn-ubicacion-actual-editar">
-                Usar mi ubicacion actual
-            </button>
+            <div class="editar-reporte-ubicacion-head">
+                <label>Ubicacion</label>
+                <button type="button" id="usarUbicacionActualEditar" class="btn-ubicacion-actual-editar">
+                    <span>📍</span>
+                    Usar mi ubicacion
+                </button>
+            </div>
             <div class="editar-reporte-mapa" id="editarReporteMapa"></div>
             <p class="editar-reporte-ayuda">
                 Haz clic en el mapa para mover el punto del reporte.
