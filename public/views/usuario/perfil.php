@@ -186,8 +186,7 @@ $misReportes = $db->reportes->find(
     <meta charset="UTF-8">
     <title>Perfil - Ojo en la Vía</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" href="/imagenes/fiveicon.png">
 
     <link rel="stylesheet" href="../components/Css_usuario/perfil.css">
 </head>
