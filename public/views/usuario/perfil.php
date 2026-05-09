@@ -69,17 +69,6 @@ $totalLikesReportes = $db->likes_reporte->countDocuments([
     ]
 ]);
 
-$totalLikesComentarios = $db->likes_comentario->countDocuments([
-    '$or' => [
-        ['usuario_id' => $usuarioId],
-        ['usuario_id' => $usuarioObjectId],
-        ['usuario_origen_id' => $usuarioId],
-        ['usuario_origen_id' => $usuarioObjectId],
-    ]
-]);
-
-$totalLikes = $totalLikesReportes + $totalLikesComentarios;
-
 /* ========= NOTIFICACIONES ========= */
 
 $notificaciones = $db->notificaciones->find(
@@ -276,7 +265,7 @@ function formatearFechaNotificacion($fecha)
                         <div class="estadistica-box">
                             <div class="estadistica-icon">❤️</div>
                             <span class="estadistica-numero">
-                                <?php echo (int) $totalLikes; ?>
+                                <?php echo (int) $totalLikesReportes; ?>
                             </span>
                             <span class="estadistica-label">Likes</span>
                         </div>
