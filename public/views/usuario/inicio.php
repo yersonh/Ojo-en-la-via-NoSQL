@@ -287,7 +287,6 @@ try {
                 <h2>Bienvenida, <?php echo htmlspecialchars($nombreMostrar); ?></h2>
             </div>
 
-            <a href="../../logout.php" class="logout-btn">Cerrar sesión</a>
         </div>
 
         <div class="mapa">
