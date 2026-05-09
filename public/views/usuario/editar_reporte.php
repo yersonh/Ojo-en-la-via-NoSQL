@@ -1,0 +1,132 @@
+<?php
+session_start();
+
+require_once __DIR__ . '/../../../config/conexion.php';
+require_once __DIR__ . '/../../../vendor/autoload.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+function responderJson($data, $status = 200)
+{
+    http_response_code($status);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function filtroPropietarioReporte(MongoDB\BSON\ObjectId $reporteId, $usuarioIdTexto, MongoDB\BSON\ObjectId $usuarioId)
+{
+    return [
+        '_id' => $reporteId,
+        '$or' => [
+            ['usuario_id' => $usuarioIdTexto],
+            ['usuario_id' => $usuarioId],
+            ['usuario_creador_id' => $usuarioIdTexto],
+            ['usuario_creador_id' => $usuarioId],
+        ]
+    ];
+}
+
+try {
+    if (!isset($_SESSION['usuario_id'])) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'No has iniciado sesion.'
+        ], 401);
+    }
+
+    $reporteIdTexto = $_POST['reporte_id'] ?? '';
+    $tipo = trim($_POST['tipo'] ?? '');
+    $descripcion = trim($_POST['descripcion'] ?? '');
+    $latitudTexto = trim($_POST['latitud'] ?? '');
+    $longitudTexto = trim($_POST['longitud'] ?? '');
+
+    if (!preg_match('/^[a-f\d]{24}$/i', $reporteIdTexto)) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'ID de reporte invalido.'
+        ], 400);
+    }
+
+    if ($tipo === '' || $descripcion === '' || $latitudTexto === '' || $longitudTexto === '') {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'Completa el tipo, la descripcion y la ubicacion.'
+        ], 400);
+    }
+
+    if (mb_strlen($descripcion) > 800) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'La descripcion no puede superar 800 caracteres.'
+        ], 400);
+    }
+
+    if (!is_numeric($latitudTexto) || !is_numeric($longitudTexto)) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'La ubicacion debe tener coordenadas validas.'
+        ], 400);
+    }
+
+    $latitud = (float) $latitudTexto;
+    $longitud = (float) $longitudTexto;
+
+    if ($latitud < -90 || $latitud > 90 || $longitud < -180 || $longitud > 180) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'Las coordenadas estan fuera del rango permitido.'
+        ], 400);
+    }
+
+    $db = conectarMongoDB();
+    $reportes = $db->reportes;
+
+    $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
+    $usuarioIdTexto = (string) $_SESSION['usuario_id'];
+    $usuarioId = new MongoDB\BSON\ObjectId($usuarioIdTexto);
+    $filtro = filtroPropietarioReporte($reporteId, $usuarioIdTexto, $usuarioId);
+
+    $reporte = $reportes->findOne($filtro);
+
+    if (!$reporte) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'Reporte no encontrado o no tienes permiso para editarlo.'
+        ], 404);
+    }
+
+    $reportes->updateOne(
+        $filtro,
+        [
+            '$set' => [
+                'tipo' => $tipo,
+                'descripcion' => $descripcion,
+                'ubicacion' => [
+                    'latitud' => $latitud,
+                    'longitud' => $longitud
+                ],
+                'latitud' => $latitud,
+                'longitud' => $longitud,
+                'editado' => true,
+                'fecha_edicion' => new MongoDB\BSON\UTCDateTime()
+            ]
+        ]
+    );
+
+    responderJson([
+        'ok' => true,
+        'mensaje' => 'Reporte actualizado.',
+        'reporte' => [
+            'id' => $reporteIdTexto,
+            'tipo' => $tipo,
+            'descripcion' => $descripcion,
+            'latitud' => $latitud,
+            'longitud' => $longitud
+        ]
+    ]);
+} catch (Throwable $e) {
+    responderJson([
+        'ok' => false,
+        'mensaje' => $e->getMessage()
+    ], 500);
+}

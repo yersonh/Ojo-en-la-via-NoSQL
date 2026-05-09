@@ -281,6 +281,200 @@ body {
     border-radius: 12px;
 }
 
+/* ========= MIS REPORTES ========= */
+
+.mis-reportes-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mi-reporte-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.mi-reporte-contenido {
+    flex: 1;
+    min-width: 0;
+}
+
+.mi-reporte-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.mi-reporte-top strong {
+    color: #111827;
+    font-size: 15px;
+}
+
+.mi-reporte-top span {
+    color: #0878e8;
+    background: #eff6ff;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mi-reporte-contenido p {
+    margin: 0 0 8px;
+    color: #4b5563;
+    font-size: 13px;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.mi-reporte-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.mi-reporte-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.mi-reporte-acciones button,
+.reporte-modal-acciones button {
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+}
+
+.btn-editar-reporte {
+    background: #0878e8;
+    color: #ffffff;
+    padding: 9px 12px;
+}
+
+.btn-eliminar-reporte {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 9px 12px;
+}
+
+.reporte-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    background: rgba(17, 24, 39, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.reporte-modal.activo {
+    display: flex;
+}
+
+.reporte-modal-contenido {
+    width: min(520px, 100%);
+    max-height: 90vh;
+    overflow: auto;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+.reporte-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.reporte-modal-header h3 {
+    margin: 0;
+    color: #111827;
+}
+
+.cerrar-reporte-modal {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #111827;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.reporte-modal label {
+    display: block;
+    margin: 12px 0 6px;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.reporte-modal input,
+.reporte-modal select,
+.reporte-modal textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #111827;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.reporte-modal textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.reporte-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.reporte-modal-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.btn-cancelar-reporte {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 11px 14px;
+}
+
+.btn-guardar-reporte {
+    background: #0878e8;
+    color: #ffffff;
+    padding: 11px 16px;
+}
+
+.btn-guardar-reporte:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
 /* ========= BOTONES ========= */
 
 .perfil-btn {
@@ -370,6 +564,25 @@ body {
     .perfil-card-title-row {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .mi-reporte-item,
+    .mi-reporte-top,
+    .reporte-modal-acciones {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .mi-reporte-acciones {
+        flex-direction: row;
+    }
+
+    .mi-reporte-acciones button {
+        flex: 1;
+    }
+
+    .reporte-modal-grid {
+        grid-template-columns: 1fr;
     }
 }
 /* ========= NAVEGACIÓN INFERIOR ========= */
