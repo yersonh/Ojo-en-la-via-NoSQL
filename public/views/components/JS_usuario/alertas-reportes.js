@@ -1,0 +1,216 @@
+document.addEventListener('DOMContentLoaded', function () {
+    inicializarAccionesReportesAlertas();
+});
+
+function inicializarAccionesReportesAlertas() {
+    const overlay = document.getElementById('editarReporteOverlay');
+    const form = document.getElementById('editarReporteForm');
+    const cerrar = document.getElementById('cerrarEditarReporte');
+    const cancelar = document.getElementById('cancelarEditarReporte');
+
+    if (!overlay || !form) {
+        return;
+    }
+
+    document.addEventListener('click', async function (event) {
+        const botonMenu = event.target.closest('.btn-reporte-menu');
+        const botonEditar = event.target.closest('.btn-alerta-editar-reporte');
+        const botonEliminar = event.target.closest('.btn-alerta-eliminar-reporte');
+
+        if (!event.target.closest('.reporte-menu')) {
+            cerrarMenusReporte();
+        }
+
+        if (botonMenu) {
+            const menu = botonMenu.closest('.reporte-menu');
+            const estabaAbierto = menu.classList.contains('abierto');
+            cerrarMenusReporte();
+            menu.classList.toggle('abierto', !estabaAbierto);
+            return;
+        }
+
+        if (botonEditar) {
+            const tarjeta = botonEditar.closest('.alerta-card-red');
+            cerrarMenusReporte();
+            abrirModalEditarReporte(tarjeta);
+            return;
+        }
+
+        if (botonEliminar) {
+            const tarjeta = botonEliminar.closest('.alerta-card-red');
+            cerrarMenusReporte();
+            await eliminarReporteAlerta(tarjeta);
+        }
+    });
+
+    form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        await guardarReporteEditado(form);
+    });
+
+    [cerrar, cancelar].forEach(function (boton) {
+        if (boton) {
+            boton.addEventListener('click', cerrarModalEditarReporte);
+        }
+    });
+
+    overlay.addEventListener('click', function (event) {
+        if (event.target === overlay) {
+            cerrarModalEditarReporte();
+        }
+    });
+}
+
+function cerrarMenusReporte() {
+    document.querySelectorAll('.reporte-menu.abierto').forEach(function (menu) {
+        menu.classList.remove('abierto');
+    });
+}
+
+function abrirModalEditarReporte(tarjeta) {
+    if (!tarjeta) {
+        return;
+    }
+
+    const tipoSelect = document.getElementById('editarReporteTipo');
+    const tipoActual = tarjeta.dataset.tipo || '';
+
+    document.getElementById('editarReporteId').value = tarjeta.dataset.reporteId || '';
+    tipoSelect.value = tipoActual;
+
+    if (tipoActual && tipoSelect.value !== tipoActual) {
+        const opcionActual = document.createElement('option');
+        opcionActual.value = tipoActual;
+        opcionActual.textContent = tipoActual;
+        tipoSelect.appendChild(opcionActual);
+        tipoSelect.value = tipoActual;
+    }
+
+    document.getElementById('editarReporteDescripcion').value = tarjeta.dataset.descripcion || '';
+    document.getElementById('editarReporteLatitud').value = tarjeta.dataset.latitud || '';
+    document.getElementById('editarReporteLongitud').value = tarjeta.dataset.longitud || '';
+
+    const overlay = document.getElementById('editarReporteOverlay');
+    overlay.classList.add('activo');
+    overlay.setAttribute('aria-hidden', 'false');
+}
+
+function cerrarModalEditarReporte() {
+    const overlay = document.getElementById('editarReporteOverlay');
+
+    if (!overlay) {
+        return;
+    }
+
+    overlay.classList.remove('activo');
+    overlay.setAttribute('aria-hidden', 'true');
+}
+
+async function guardarReporteEditado(form) {
+    const botonGuardar = form.querySelector('.btn-guardar-editar');
+    const textoOriginal = botonGuardar ? botonGuardar.textContent : '';
+
+    if (botonGuardar) {
+        botonGuardar.disabled = true;
+        botonGuardar.textContent = 'Guardando...';
+    }
+
+    try {
+        const respuesta = await fetch('/views/usuario/editar_reporte.php', {
+            method: 'POST',
+            body: new FormData(form)
+        });
+
+        const data = await respuesta.json();
+
+        if (!data.ok) {
+            alert(data.mensaje || 'No se pudo editar el reporte.');
+            return;
+        }
+
+        actualizarTarjetaReporte(data.reporte);
+        cerrarModalEditarReporte();
+    } catch (error) {
+        console.error('Error al editar reporte:', error);
+        alert('No se pudo editar el reporte.');
+    } finally {
+        if (botonGuardar) {
+            botonGuardar.disabled = false;
+            botonGuardar.textContent = textoOriginal;
+        }
+    }
+}
+
+function actualizarTarjetaReporte(reporte) {
+    const tarjeta = document.querySelector(`.alerta-card-red[data-reporte-id="${reporte.id}"]`);
+
+    if (!tarjeta) {
+        return;
+    }
+
+    tarjeta.dataset.tipo = reporte.tipo;
+    tarjeta.dataset.descripcion = reporte.descripcion;
+    tarjeta.dataset.latitud = reporte.latitud;
+    tarjeta.dataset.longitud = reporte.longitud;
+
+    const tipo = tarjeta.querySelector('.alerta-tipo-texto');
+    const descripcion = tarjeta.querySelector('.alerta-descripcion');
+    const latitud = tarjeta.querySelector('.alerta-latitud');
+    const longitud = tarjeta.querySelector('.alerta-longitud');
+    const linkMapa = tarjeta.querySelector('.alerta-link-mapa');
+
+    if (tipo) {
+        tipo.textContent = reporte.tipo;
+    }
+
+    if (descripcion) {
+        descripcion.textContent = reporte.descripcion || 'Sin descripcion';
+    }
+
+    if (latitud) {
+        latitud.textContent = reporte.latitud;
+    }
+
+    if (longitud) {
+        longitud.textContent = reporte.longitud;
+    }
+
+    if (linkMapa) {
+        linkMapa.href = `inicio.php?lat=${encodeURIComponent(reporte.latitud)}&lng=${encodeURIComponent(reporte.longitud)}`;
+    }
+}
+
+async function eliminarReporteAlerta(tarjeta) {
+    const reporteId = tarjeta?.dataset.reporteId;
+
+    if (!reporteId) {
+        alert('No se encontro el reporte.');
+        return;
+    }
+
+    if (!confirm('Seguro que quieres eliminar este reporte?')) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('reporte_id', reporteId);
+
+    try {
+        const respuesta = await fetch('/views/usuario/eliminar_reporte.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await respuesta.json();
+
+        if (!data.ok) {
+            alert(data.mensaje || 'No se pudo eliminar el reporte.');
+            return;
+        }
+
+        tarjeta.remove();
+    } catch (error) {
+        console.error('Error al eliminar reporte:', error);
+        alert('No se pudo eliminar el reporte.');
+    }
+}

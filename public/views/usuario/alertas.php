@@ -91,6 +91,23 @@ function normalizarEstado($estado)
     return 'pendiente';
 }
 
+function reportePerteneceUsuario($reporte, \MongoDB\BSON\ObjectId $usuarioIdActual)
+{
+    $usuarioIdTexto = (string) $usuarioIdActual;
+    $posiblesCampos = [
+        $reporte['usuario_id'] ?? null,
+        $reporte['usuario_creador_id'] ?? null,
+    ];
+
+    foreach ($posiblesCampos as $campo) {
+        if ($campo !== null && (string) $campo === $usuarioIdTexto) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 try {
     $db = conectarMongoDB();
@@ -235,9 +252,18 @@ $cursor = $reportes->aggregate($pipeline);
                     'reporte_id' => $reporteIdObj,
                     'comentario_padre_id' => null
                 ]);
+
+                    $esReportePropio = reportePerteneceUsuario($reporte, $usuarioIdActual);
                 ?>
 
-                <article class="alerta-card-red">
+                <article
+                    class="alerta-card-red"
+                    data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
+                    data-tipo="<?php echo htmlspecialchars((string) $tipo); ?>"
+                    data-descripcion="<?php echo htmlspecialchars((string) $descripcion); ?>"
+                    data-latitud="<?php echo htmlspecialchars((string) ($latitud ?? '')); ?>"
+                    data-longitud="<?php echo htmlspecialchars((string) ($longitud ?? '')); ?>"
+                >
                     <div class="alerta-header">
                         <div class="alerta-avatar">
                             <?php echo htmlspecialchars($inicial); ?>
@@ -255,7 +281,7 @@ $cursor = $reportes->aggregate($pipeline);
                                     <span>⏱ <?php echo htmlspecialchars($tiempo); ?></span>
                                 <?php endif; ?>
 
-                                <span class="chip-tipo">
+                                <span class="chip-tipo alerta-tipo-texto">
                                     <?php echo htmlspecialchars($tipo); ?>
                                 </span>
                             </div>
@@ -264,6 +290,19 @@ $cursor = $reportes->aggregate($pipeline);
                                 <?php echo htmlspecialchars(textoEstado($estado)); ?>
                             </span>
                         </div>
+
+                        <?php if ($esReportePropio): ?>
+                            <div class="reporte-menu">
+                                <button type="button" class="btn-reporte-menu" aria-label="Opciones del reporte">
+                                    ...
+                                </button>
+
+                                <div class="reporte-menu-opciones">
+                                    <button type="button" class="btn-alerta-editar-reporte">Editar</button>
+                                    <button type="button" class="btn-alerta-eliminar-reporte">Eliminar</button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
 
@@ -282,10 +321,10 @@ $cursor = $reportes->aggregate($pipeline);
 
                     <div class="alerta-detalles">
                         <?php if ($latitud !== null && $longitud !== null): ?>
-                            <div>
+                            <div class="alerta-coordenadas">
                                 🛣️ Coordenadas:
-                                <?php echo htmlspecialchars($latitud); ?>,
-                                <?php echo htmlspecialchars($longitud); ?>
+                                <span class="alerta-latitud"><?php echo htmlspecialchars($latitud); ?></span>,
+                                <span class="alerta-longitud"><?php echo htmlspecialchars($longitud); ?></span>
                             </div>
                         <?php else: ?>
                             <div>🛣️ Coordenadas no disponibles</div>
@@ -312,11 +351,11 @@ $cursor = $reportes->aggregate($pipeline);
                     </button>
 
                         <?php if ($latitud !== null && $longitud !== null): ?>
-                            <a href="inicio.php?lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
+                            <a class="alerta-link-mapa" href="inicio.php?lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
                                 📍 Ver en Mapa
                             </a>
                         <?php else: ?>
-                            <a href="inicio.php">📍 Ver en Mapa</a>
+                            <a class="alerta-link-mapa" href="inicio.php">📍 Ver en Mapa</a>
                         <?php endif; ?>
                     </div>
                 </article>
@@ -352,8 +391,50 @@ $cursor = $reportes->aggregate($pipeline);
         </form>
     </div>
 </div>
+<div class="editar-reporte-overlay" id="editarReporteOverlay" aria-hidden="true">
+    <div class="editar-reporte-modal">
+        <div class="editar-reporte-header">
+            <h3>Editar reporte</h3>
+            <button type="button" id="cerrarEditarReporte" class="cerrar-editar-reporte">×</button>
+        </div>
+
+        <form id="editarReporteForm" class="editar-reporte-form">
+            <input type="hidden" name="reporte_id" id="editarReporteId">
+
+            <label for="editarReporteTipo">Tipo de incidente</label>
+            <select name="tipo" id="editarReporteTipo" required>
+                <option value="">Seleccione un tipo</option>
+                <option value="Accidente">Accidente</option>
+                <option value="Hueco">Hueco</option>
+                <option value="Trafico">Trafico</option>
+                <option value="Obstruccion">Obstruccion</option>
+            </select>
+
+            <label for="editarReporteDescripcion">Descripcion</label>
+            <textarea name="descripcion" id="editarReporteDescripcion" maxlength="800" required></textarea>
+
+            <div class="editar-reporte-grid">
+                <div>
+                    <label for="editarReporteLatitud">Latitud</label>
+                    <input type="number" step="any" name="latitud" id="editarReporteLatitud" required>
+                </div>
+
+                <div>
+                    <label for="editarReporteLongitud">Longitud</label>
+                    <input type="number" step="any" name="longitud" id="editarReporteLongitud" required>
+                </div>
+            </div>
+
+            <div class="editar-reporte-acciones">
+                <button type="button" id="cancelarEditarReporte" class="btn-cancelar-editar">Cancelar</button>
+                <button type="submit" class="btn-guardar-editar">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
  <script src="/views/components/JS_usuario/menu-inferior.js"></script>
 <script src="/views/components/JS_usuario/likes-reportes.js"></script>
+<script src="/views/components/JS_usuario/alertas-reportes.js"></script>
 <script src="/views/components/JS_usuario/comentarios-reportes.js"></script>
 
 </body>

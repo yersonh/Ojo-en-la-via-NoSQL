@@ -127,57 +127,6 @@ function formatearFechaNotificacion($fecha)
 
     return '';
 }
-
-function formatearFechaReporte($fecha)
-{
-    if ($fecha instanceof UTCDateTime) {
-        return $fecha
-            ->toDateTime()
-            ->setTimezone(new DateTimeZone('America/Bogota'))
-            ->format('d/m/Y H:i');
-    }
-
-    if (is_string($fecha)) {
-        return $fecha;
-    }
-
-    return 'Fecha no disponible';
-}
-
-function obtenerFiltroReportesUsuario($usuarioId, ObjectId $usuarioObjectId)
-{
-    return [
-        '$or' => [
-            ['usuario_id' => $usuarioId],
-            ['usuario_id' => $usuarioObjectId],
-            ['usuario_creador_id' => $usuarioId],
-            ['usuario_creador_id' => $usuarioObjectId],
-        ]
-    ];
-}
-
-function obtenerCoordenadaReporte($reporte, $tipo)
-{
-    if ($tipo === 'latitud') {
-        return $reporte['latitud']
-            ?? $reporte['ubicacion']['latitud']
-            ?? $reporte['ubicacion']['lat']
-            ?? '';
-    }
-
-    return $reporte['longitud']
-        ?? $reporte['ubicacion']['longitud']
-        ?? $reporte['ubicacion']['lng']
-        ?? '';
-}
-
-$misReportes = $db->reportes->find(
-    obtenerFiltroReportesUsuario($usuarioId, $usuarioObjectId),
-    [
-        'sort' => ['fecha_reporte' => -1],
-        'limit' => 20
-    ]
-);
 ?>
 
 <!DOCTYPE html>
@@ -309,71 +258,6 @@ $misReportes = $db->reportes->find(
                         <?php endif; ?>
                     </div>
                 </article>
-                <article class="perfil-card">
-                    <div class="perfil-card-title-row">
-                        <h3>Mis reportes</h3>
-                        <span class="notificaciones-count" id="contadorMisReportes">
-                            <?php echo (int) $totalReportes; ?> total
-                        </span>
-                    </div>
-
-                    <div class="mis-reportes-lista" id="misReportesLista">
-                        <?php
-                        $hayReportes = false;
-
-                        foreach ($misReportes as $reporte):
-                            $hayReportes = true;
-
-                            $reporteId = (string) $reporte['_id'];
-                            $tipoReporte = (string) ($reporte['tipo'] ?? $reporte['tipo_incidente'] ?? 'Incidente');
-                            $descripcionReporte = (string) ($reporte['descripcion'] ?? '');
-                            $estadoReporte = (string) ($reporte['estado'] ?? 'pendiente');
-                            $fechaReporte = formatearFechaReporte($reporte['fecha_reporte'] ?? null);
-                            $latitudReporte = obtenerCoordenadaReporte($reporte, 'latitud');
-                            $longitudReporte = obtenerCoordenadaReporte($reporte, 'longitud');
-                        ?>
-                            <article
-                                class="mi-reporte-item"
-                                data-reporte-id="<?php echo htmlspecialchars($reporteId); ?>"
-                                data-tipo="<?php echo htmlspecialchars($tipoReporte); ?>"
-                                data-descripcion="<?php echo htmlspecialchars($descripcionReporte); ?>"
-                                data-latitud="<?php echo htmlspecialchars((string) $latitudReporte); ?>"
-                                data-longitud="<?php echo htmlspecialchars((string) $longitudReporte); ?>"
-                            >
-                                <div class="mi-reporte-contenido">
-                                    <div class="mi-reporte-top">
-                                        <strong><?php echo htmlspecialchars($tipoReporte); ?></strong>
-                                        <span><?php echo htmlspecialchars($estadoReporte); ?></span>
-                                    </div>
-
-                                    <p><?php echo htmlspecialchars($descripcionReporte ?: 'Sin descripcion'); ?></p>
-
-                                    <div class="mi-reporte-meta">
-                                        <span><?php echo htmlspecialchars($fechaReporte); ?></span>
-
-                                        <?php if ($latitudReporte !== '' && $longitudReporte !== ''): ?>
-                                            <span>
-                                                <?php echo htmlspecialchars((string) $latitudReporte); ?>,
-                                                <?php echo htmlspecialchars((string) $longitudReporte); ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-
-                                <div class="mi-reporte-acciones">
-                                    <button type="button" class="btn-editar-reporte">Editar</button>
-                                    <button type="button" class="btn-eliminar-reporte">Eliminar</button>
-                                </div>
-                            </article>
-                        <?php endforeach; ?>
-
-                        <?php if (!$hayReportes): ?>
-                            <div class="notificaciones-vacio">
-                                Todavia no has creado reportes.
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </article>
             </div>
 
             <aside class="perfil-side">
@@ -459,53 +343,6 @@ $misReportes = $db->reportes->find(
         <span>Perfil</span>
     </a>
 </nav>
-
-<div class="reporte-modal" id="editarReporteModal" aria-hidden="true">
-    <div class="reporte-modal-contenido">
-        <div class="reporte-modal-header">
-            <h3>Editar reporte</h3>
-            <button type="button" class="cerrar-reporte-modal" id="cerrarEditarReporte">x</button>
-        </div>
-
-        <form id="editarReporteForm">
-            <input type="hidden" name="reporte_id" id="editarReporteId">
-
-            <label for="editarReporteTipo">Tipo de incidente</label>
-            <select name="tipo" id="editarReporteTipo" required>
-                <option value="">Seleccione un tipo</option>
-                <option value="Accidente">Accidente</option>
-                <option value="Hueco">Hueco</option>
-                <option value="Trafico">Trafico</option>
-                <option value="Obstruccion">Obstruccion</option>
-            </select>
-
-            <label for="editarReporteDescripcion">Descripcion</label>
-            <textarea
-                name="descripcion"
-                id="editarReporteDescripcion"
-                maxlength="800"
-                required
-            ></textarea>
-
-            <div class="reporte-modal-grid">
-                <div>
-                    <label for="editarReporteLatitud">Latitud</label>
-                    <input type="number" step="any" name="latitud" id="editarReporteLatitud" required>
-                </div>
-
-                <div>
-                    <label for="editarReporteLongitud">Longitud</label>
-                    <input type="number" step="any" name="longitud" id="editarReporteLongitud" required>
-                </div>
-            </div>
-
-            <div class="reporte-modal-acciones">
-                <button type="button" class="btn-cancelar-reporte" id="cancelarEditarReporte">Cancelar</button>
-                <button type="submit" class="btn-guardar-reporte">Guardar cambios</button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <script src="/views/components/JS_usuario/menu-inferior.js"></script>
 <script src="/views/components/JS_usuario/perfil.js"></script>
