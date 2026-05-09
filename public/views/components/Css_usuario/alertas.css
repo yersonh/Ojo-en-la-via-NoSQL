@@ -117,8 +117,9 @@ body.body-alertas {
     right: 0;
     top: 40px;
     width: 140px;
-    background: #ffffff;
-    color: #111111;
+    background: #171717;
+    color: #f4f4f4;
+    border: 1px solid #3d3d3d;
     border-radius: 10px;
     padding: 6px;
     box-shadow: 0 16px 35px rgba(0, 0, 0, 0.35);
@@ -136,7 +137,7 @@ body.body-alertas {
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: #111111;
+    color: #f4f4f4;
     cursor: pointer;
     font-family: inherit;
     font-size: 13px;
@@ -146,11 +147,11 @@ body.body-alertas {
 }
 
 .reporte-menu-opciones button:hover {
-    background: #f3f4f6;
+    background: #2f2f2f;
 }
 
 .reporte-menu-opciones .btn-alerta-eliminar-reporte {
-    color: #dc2626;
+    color: #ff6b7d;
 }
 
 .alerta-linea-superior strong {
