@@ -163,6 +163,10 @@
     word-break: break-word;
 }
 
+.comentario-burbuja .comentario-texto {
+    color: #ffffff;
+}
+
 
 /* =========================================================
    META: fecha, responder, likes, editar, eliminar
