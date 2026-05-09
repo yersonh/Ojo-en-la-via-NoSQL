@@ -297,7 +297,9 @@ try {
         </div>
 
         <div class="panel oculto" id="panelRegistro">
-            <h3>Registrar incidente</h3>
+        <button type="button" class="cerrar-panel" id="cerrarPanel">×</button>
+
+        <h3>Registrar incidente</h3>
 
             <?php if ($mensaje !== ''): ?>
                 <div class="alerta <?php echo htmlspecialchars($tipoMensaje); ?>">

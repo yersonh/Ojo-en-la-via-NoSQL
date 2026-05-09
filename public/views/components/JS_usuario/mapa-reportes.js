@@ -249,3 +249,18 @@ if (Array.isArray(window.reportesDB)) {
             });
     });
 }
+/* ========= CERRAR PANEL DE REGISTRO ========= */
+
+const cerrarPanel = document.getElementById('cerrarPanel');
+const panelRegistro = document.getElementById('panelRegistro');
+
+if (cerrarPanel && panelRegistro) {
+    cerrarPanel.addEventListener('click', function () {
+        panelRegistro.classList.add('oculto');
+
+        if (marcador) {
+            map.removeLayer(marcador);
+            marcador = null;
+        }
+    });
+}
