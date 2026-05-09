@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
+require_once __DIR__ . '/notificaciones_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -23,6 +24,7 @@ try {
 
     $db = conectarMongoDB();
     $likesReportes = $db->likes_reporte;
+    $reportes = $db->reportes;
 
     $likesReportes->createIndex(
         [
@@ -57,6 +59,24 @@ try {
         ]);
 
         $liked = true;
+
+        $reporte = $reportes->findOne([
+            '_id' => $reporteId
+        ]);
+
+        $usuarioDestino = $reporte['usuario_id'] ?? $reporte['usuario_creador_id'] ?? null;
+
+        if ($reporte && $usuarioDestino) {
+            crearNotificacionUsuario(
+                $db,
+                $usuarioDestino,
+                $usuarioId,
+                'like_reporte',
+                'Nuevo like',
+                obtenerNombreNotificador() . ' le dio like a tu reporte.',
+                $reporteId
+            );
+        }
     }
 
     $totalLikes = $likesReportes->countDocuments([

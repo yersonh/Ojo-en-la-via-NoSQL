@@ -206,6 +206,22 @@ body {
 
 /* ========= NOTIFICACIONES ========= */
 
+.notificaciones-card {
+    background: linear-gradient(145deg, #101216, #171a20);
+    border: 1px solid #2b313b;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+}
+
+.notificaciones-card h3 {
+    color: #f8fafc;
+}
+
+.notificaciones-card .notificaciones-count {
+    background: rgba(47, 155, 255, 0.18);
+    border: 1px solid rgba(47, 155, 255, 0.45);
+    color: #dff0ff;
+}
+
 .notificaciones-lista {
     display: flex;
     flex-direction: column;
@@ -216,32 +232,33 @@ body {
     display: flex;
     gap: 12px;
     padding: 13px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #2f3540;
     border-radius: 12px;
-    background: #ffffff;
+    background: rgba(31, 36, 44, 0.92);
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
 .notificacion-item:hover {
-    background: #f9fafb;
+    background: rgba(42, 48, 58, 0.98);
+    border-color: #475569;
     transform: translateY(-1px);
 }
 
 .notificacion-item.no-leida {
-    background: #eff6ff;
-    border-color: #93c5fd;
+    background: linear-gradient(145deg, rgba(47, 155, 255, 0.16), rgba(31, 36, 44, 0.96));
+    border-color: rgba(47, 155, 255, 0.55);
 }
 
 .notificacion-item.no-leida:hover {
-    background: #dbeafe;
+    background: linear-gradient(145deg, rgba(47, 155, 255, 0.22), rgba(42, 48, 58, 0.98));
 }
 
 .notificacion-icono {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: #2f9bff;
+    background: radial-gradient(circle at 30% 20%, #60a5fa, #2563eb);
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -257,27 +274,28 @@ body {
 .notificacion-contenido strong {
     display: block;
     font-size: 14px;
-    color: #111827;
+    color: #f8fafc;
     margin-bottom: 2px;
 }
 
 .notificacion-contenido p {
     margin: 4px 0;
     font-size: 13px;
-    color: #4b5563;
+    color: #cbd5e1;
     line-height: 1.4;
 }
 
 .notificacion-contenido span {
     font-size: 11px;
-    color: #9ca3af;
+    color: #94a3b8;
 }
 
 .notificaciones-vacio {
     padding: 18px;
     text-align: center;
-    color: #777777;
-    background: #f9fafb;
+    color: #94a3b8;
+    background: rgba(31, 36, 44, 0.92);
+    border: 1px solid #2f3540;
     border-radius: 12px;
 }
 

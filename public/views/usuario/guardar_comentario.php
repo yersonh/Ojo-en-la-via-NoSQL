@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
+require_once __DIR__ . '/notificaciones_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -62,17 +63,65 @@ try {
     $db = conectarMongoDB();
 
     $comentarios = $db->comentarios_reporte;
+    $reportes = $db->reportes;
 
     $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
     $usuarioId = new MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
 
-    $comentarios->insertOne([
+    $resultadoComentario = $comentarios->insertOne([
         'reporte_id' => $reporteId,
         'usuario_id' => $usuarioId,
         'comentario' => $comentarioTexto,
         'comentario_padre_id' => $comentarioPadreId,
         'fecha_comentario' => new MongoDB\BSON\UTCDateTime()
     ]);
+
+    $comentarioId = $resultadoComentario->getInsertedId();
+    $reporte = $reportes->findOne([
+        '_id' => $reporteId
+    ]);
+    $nombreOrigen = obtenerNombreNotificador();
+    $usuarioRespuestaNotificado = null;
+
+    if ($comentarioPadreId !== null) {
+        $comentarioPadre = $comentarios->findOne([
+            '_id' => $comentarioPadreId
+        ]);
+
+        if ($comentarioPadre && isset($comentarioPadre['usuario_id'])) {
+            $usuarioRespuestaNotificado = (string) $comentarioPadre['usuario_id'];
+
+            crearNotificacionUsuario(
+                $db,
+                $comentarioPadre['usuario_id'],
+                $usuarioId,
+                'respuesta_comentario',
+                'Nueva respuesta',
+                $nombreOrigen . ' respondió tu comentario.',
+                $reporteId,
+                $comentarioId
+            );
+        }
+    }
+
+    $usuarioDestinoReporte = $reporte['usuario_id'] ?? $reporte['usuario_creador_id'] ?? null;
+
+    if (
+        $reporte &&
+        $usuarioDestinoReporte &&
+        (string) $usuarioDestinoReporte !== (string) $usuarioRespuestaNotificado
+    ) {
+        crearNotificacionUsuario(
+            $db,
+            $usuarioDestinoReporte,
+            $usuarioId,
+            'comentario',
+            'Nuevo comentario',
+            $nombreOrigen . ' comentó tu reporte.',
+            $reporteId,
+            $comentarioId
+        );
+    }
 
     $totalComentarios = $comentarios->countDocuments([
         'reporte_id' => $reporteId,

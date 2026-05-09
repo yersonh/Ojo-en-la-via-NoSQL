@@ -189,7 +189,7 @@ function formatearFechaNotificacion($fecha)
                     </div>
                 </article>
 
-                <article class="perfil-card">
+                <article class="perfil-card notificaciones-card">
                     <div class="perfil-card-title-row">
                         <h3>🔔 Notificaciones</h3>
 
