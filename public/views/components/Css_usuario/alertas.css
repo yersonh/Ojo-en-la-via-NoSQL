@@ -46,7 +46,7 @@ body.body-alertas {
 /* ========= TARJETA DE ALERTA ========= */
 
 .alerta-card-red {
-    background: rgba(17, 17, 17, 0.94);
+    background: rgba(17, 17, 17, 0.84);
     border: 1px solid #3d3d3d;
     border-radius: 14px;
     padding: 20px 22px;
