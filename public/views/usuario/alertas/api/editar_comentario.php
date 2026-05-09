@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-require_once __DIR__ . '/../../../config/conexion.php';
-require_once __DIR__ . '/../../../vendor/autoload.php';
+require_once __DIR__ . '/../../../../../config/conexion.php';
+require_once __DIR__ . '/../../../../../vendor/autoload.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -11,32 +11,6 @@ function responderJson($data, $status = 200)
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
-}
-
-function obtenerIdsDescendientes($comentarios, MongoDB\BSON\ObjectId $comentarioId)
-{
-    $ids = [$comentarioId];
-    $pendientes = [$comentarioId];
-
-    while (!empty($pendientes)) {
-        $padreActual = array_shift($pendientes);
-
-        $hijos = $comentarios->find([
-            'comentario_padre_id' => $padreActual
-        ]);
-
-        foreach ($hijos as $hijo) {
-            if (!isset($hijo['_id'])) {
-                continue;
-            }
-
-            $hijoId = $hijo['_id'];
-            $ids[] = $hijoId;
-            $pendientes[] = $hijoId;
-        }
-    }
-
-    return $ids;
 }
 
 try {
@@ -48,6 +22,7 @@ try {
     }
 
     $comentarioIdTexto = $_POST['comentario_id'] ?? '';
+    $nuevoTexto = trim($_POST['comentario'] ?? '');
 
     if (!preg_match('/^[a-f\d]{24}$/i', $comentarioIdTexto)) {
         responderJson([
@@ -56,10 +31,23 @@ try {
         ], 400);
     }
 
+    if ($nuevoTexto === '') {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'El comentario no puede estar vacío.'
+        ], 400);
+    }
+
+    if (mb_strlen($nuevoTexto) > 500) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'El comentario no puede superar 500 caracteres.'
+        ], 400);
+    }
+
     $db = conectarMongoDB();
 
     $comentarios = $db->comentarios_reporte;
-    $likesComentario = $db->likes_comentario;
 
     $comentarioId = new MongoDB\BSON\ObjectId($comentarioIdTexto);
     $usuarioId = new MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
@@ -78,28 +66,27 @@ try {
     if (!isset($comentario['usuario_id']) || (string) $comentario['usuario_id'] !== (string) $usuarioId) {
         responderJson([
             'ok' => false,
-            'mensaje' => 'No puedes eliminar comentarios de otros usuarios.'
+            'mensaje' => 'No puedes editar comentarios de otros usuarios.'
         ], 403);
     }
 
-    $idsAEliminar = obtenerIdsDescendientes($comentarios, $comentarioId);
-
-    $comentarios->deleteMany([
-        '_id' => [
-            '$in' => $idsAEliminar
+    $comentarios->updateOne(
+        [
+            '_id' => $comentarioId,
+            'usuario_id' => $usuarioId
+        ],
+        [
+            '$set' => [
+                'comentario' => $nuevoTexto,
+                'editado' => true,
+                'fecha_edicion' => new MongoDB\BSON\UTCDateTime()
+            ]
         ]
-    ]);
-
-    $likesComentario->deleteMany([
-        'comentario_id' => [
-            '$in' => $idsAEliminar
-        ]
-    ]);
+    );
 
     responderJson([
         'ok' => true,
-        'mensaje' => 'Comentario eliminado.',
-        'comentarios_eliminados' => count($idsAEliminar)
+        'mensaje' => 'Comentario actualizado.'
     ]);
 
 } catch (Throwable $e) {

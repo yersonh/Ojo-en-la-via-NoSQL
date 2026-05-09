@@ -126,7 +126,7 @@ function formatearFechaNotificacion($fecha)
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/imagenes/fiveicon.png">
 
-    <link rel="stylesheet" href="../components/Css_usuario/perfil.css">
+    <link rel="stylesheet" href="/views/usuario/perfil/perfil.css">
 </head>
 
 <body>
@@ -343,7 +343,7 @@ function formatearFechaNotificacion($fecha)
     </a>
 </nav>
 
-<script src="/views/components/JS_usuario/menu-inferior.js"></script>
-<script src="/views/components/JS_usuario/perfil.js"></script>
+<script src="/views/usuario/shared/menu-inferior.js"></script>
+<script src="/views/usuario/perfil/perfil.js"></script>
 </body>
 </html>

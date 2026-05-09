@@ -24,7 +24,7 @@ document.addEventListener('click', async (e) => {
     formData.append('reporte_id', reporteId);
 
     try {
-        const respuesta = await fetch('/views/usuario/like_reporte.php', {
+        const respuesta = await fetch('/views/usuario/alertas/api/like_reporte.php', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'

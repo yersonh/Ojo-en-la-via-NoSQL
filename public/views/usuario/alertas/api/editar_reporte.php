@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-require_once __DIR__ . '/../../../config/conexion.php';
-require_once __DIR__ . '/../../../vendor/autoload.php';
+require_once __DIR__ . '/../../../../../config/conexion.php';
+require_once __DIR__ . '/../../../../../vendor/autoload.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -72,7 +72,7 @@ function guardarFotoReporteEditada()
         ], 400);
     }
 
-    $directorioSubidas = __DIR__ . '/../../uploads/reportes/';
+    $directorioSubidas = __DIR__ . '/../../../../uploads/reportes/';
 
     if (!is_dir($directorioSubidas)) {
         mkdir($directorioSubidas, 0777, true);

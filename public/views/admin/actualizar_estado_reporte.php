@@ -3,7 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
-require_once __DIR__ . '/../usuario/notificaciones_helper.php';
+require_once __DIR__ . '/../usuario/alertas/api/notificaciones_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 

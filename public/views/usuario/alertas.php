@@ -163,8 +163,8 @@ $cursor = $reportes->aggregate($pipeline);
     <title>Alertas</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-    <link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
-    <link rel="stylesheet" href="/views/components/Css_usuario/comentarios-reportes.css">
+    <link rel="stylesheet" href="/views/usuario/alertas/alertas.css">
+    <link rel="stylesheet" href="/views/usuario/alertas/comentarios-reportes.css">
 </head>
 <body class="body-alertas">
 
@@ -455,10 +455,10 @@ $cursor = $reportes->aggregate($pipeline);
     </div>
 </div>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
- <script src="/views/components/JS_usuario/menu-inferior.js"></script>
-<script src="/views/components/JS_usuario/likes-reportes.js"></script>
-<script src="/views/components/JS_usuario/alertas-reportes.js"></script>
-<script src="/views/components/JS_usuario/comentarios-reportes.js"></script>
+ <script src="/views/usuario/shared/menu-inferior.js"></script>
+<script src="/views/usuario/alertas/likes-reportes.js"></script>
+<script src="/views/usuario/alertas/alertas-reportes.js"></script>
+<script src="/views/usuario/alertas/comentarios-reportes.js"></script>
 
 </body>
 </html>

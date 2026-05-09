@@ -263,7 +263,7 @@ async function guardarReporteEditado(form) {
     try {
         const formData = await construirFormDataReporte(form);
 
-        const respuesta = await fetch('/views/usuario/editar_reporte.php', {
+        const respuesta = await fetch('/views/usuario/alertas/api/editar_reporte.php', {
             method: 'POST',
             body: formData
         });
@@ -417,7 +417,7 @@ async function eliminarReporteAlerta(tarjeta) {
     formData.append('reporte_id', reporteId);
 
     try {
-        const respuesta = await fetch('/views/usuario/eliminar_reporte.php', {
+        const respuesta = await fetch('/views/usuario/alertas/api/eliminar_reporte.php', {
             method: 'POST',
             body: formData
         });
