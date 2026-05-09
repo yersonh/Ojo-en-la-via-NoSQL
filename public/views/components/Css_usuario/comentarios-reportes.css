@@ -140,13 +140,13 @@
     max-width: min(520px, 92%);
     padding: 9px 13px;
     border-radius: 16px;
-    background: #2a303a;
-    color: #f8fafc;
+    background: #374151;
+    color: #ffffff;
     text-align: left;
 }
 
 .comentario-burbuja-respuesta {
-    background: #242a33;
+    background: #313946;
     max-width: min(480px, 92%);
 }
 
@@ -154,7 +154,8 @@
     display: block;
     margin: 0;
     padding: 0;
-    color: #f8fafc;
+    color: #ffffff;
+    font-weight: 500;
     font-size: 15px;
     line-height: 1.35;
     text-align: left !important;
