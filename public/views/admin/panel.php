@@ -16,6 +16,8 @@ if (($_SESSION['usuario_rol'] ?? 'ciudadano') !== 'admin') {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
     <title>Panel Administrador</title>
 </head>
 <body>
