@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', function () {
     inicializarAccionesReportesAlertas();
 });
 
+let editarReporteMapa = null;
+let editarReporteMarcador = null;
+
 function inicializarAccionesReportesAlertas() {
     const overlay = document.getElementById('editarReporteOverlay');
     const form = document.getElementById('editarReporteForm');
@@ -87,12 +90,16 @@ function abrirModalEditarReporte(tarjeta) {
     }
 
     document.getElementById('editarReporteDescripcion').value = tarjeta.dataset.descripcion || '';
-    document.getElementById('editarReporteLatitud').value = tarjeta.dataset.latitud || '';
-    document.getElementById('editarReporteLongitud').value = tarjeta.dataset.longitud || '';
+    actualizarUbicacionEdicion(tarjeta.dataset.latitud || '', tarjeta.dataset.longitud || '');
+    prepararPreviewFoto(tarjeta.dataset.imagen || '');
 
     const overlay = document.getElementById('editarReporteOverlay');
     overlay.classList.add('activo');
     overlay.setAttribute('aria-hidden', 'false');
+
+    setTimeout(function () {
+        inicializarMapaEdicion(tarjeta.dataset.latitud, tarjeta.dataset.longitud);
+    }, 80);
 }
 
 function cerrarModalEditarReporte() {
@@ -104,6 +111,91 @@ function cerrarModalEditarReporte() {
 
     overlay.classList.remove('activo');
     overlay.setAttribute('aria-hidden', 'true');
+}
+
+function inicializarMapaEdicion(latitudInicial, longitudInicial) {
+    if (typeof L === 'undefined') {
+        return;
+    }
+
+    const lat = parseFloat(latitudInicial);
+    const lng = parseFloat(longitudInicial);
+    const coordenadas = [
+        Number.isFinite(lat) ? lat : 4.142,
+        Number.isFinite(lng) ? lng : -73.626
+    ];
+
+    if (!editarReporteMapa) {
+        editarReporteMapa = L.map('editarReporteMapa', {
+            zoomControl: true
+        }).setView(coordenadas, 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(editarReporteMapa);
+
+        editarReporteMarcador = L.marker(coordenadas, {
+            draggable: true
+        }).addTo(editarReporteMapa);
+
+        editarReporteMapa.on('click', function (event) {
+            moverMarcadorEdicion(event.latlng.lat, event.latlng.lng);
+        });
+
+        editarReporteMarcador.on('dragend', function () {
+            const posicion = editarReporteMarcador.getLatLng();
+            actualizarUbicacionEdicion(posicion.lat, posicion.lng);
+        });
+    } else {
+        editarReporteMapa.setView(coordenadas, 15);
+        editarReporteMarcador.setLatLng(coordenadas);
+    }
+
+    editarReporteMapa.invalidateSize();
+}
+
+function moverMarcadorEdicion(latitud, longitud) {
+    if (editarReporteMarcador) {
+        editarReporteMarcador.setLatLng([latitud, longitud]);
+    }
+
+    actualizarUbicacionEdicion(latitud, longitud);
+}
+
+function actualizarUbicacionEdicion(latitud, longitud) {
+    const lat = parseFloat(latitud);
+    const lng = parseFloat(longitud);
+    const latTexto = Number.isFinite(lat) ? lat.toFixed(12).replace(/0+$/, '').replace(/\.$/, '') : '';
+    const lngTexto = Number.isFinite(lng) ? lng.toFixed(12).replace(/0+$/, '').replace(/\.$/, '') : '';
+
+    document.getElementById('editarReporteLatitud').value = latTexto;
+    document.getElementById('editarReporteLongitud').value = lngTexto;
+    document.getElementById('editarReporteLatitudTexto').textContent = latTexto || '-';
+    document.getElementById('editarReporteLongitudTexto').textContent = lngTexto || '-';
+}
+
+function prepararPreviewFoto(imagen) {
+    const preview = document.getElementById('editarReporteFotoPreview');
+    const input = document.getElementById('editarReporteFoto');
+
+    if (input) {
+        input.value = '';
+        input.onchange = function () {
+            const archivo = input.files && input.files[0];
+
+            if (!archivo) {
+                preview.src = imagen ? `/${imagen.replace(/^\/+/, '')}` : '';
+                return;
+            }
+
+            preview.src = URL.createObjectURL(archivo);
+        };
+    }
+
+    if (preview) {
+        preview.src = imagen ? `/${imagen.replace(/^\/+/, '')}` : '';
+    }
 }
 
 async function guardarReporteEditado(form) {
@@ -152,12 +244,14 @@ function actualizarTarjetaReporte(reporte) {
     tarjeta.dataset.descripcion = reporte.descripcion;
     tarjeta.dataset.latitud = reporte.latitud;
     tarjeta.dataset.longitud = reporte.longitud;
+    tarjeta.dataset.imagen = reporte.imagen || tarjeta.dataset.imagen || '';
 
     const tipo = tarjeta.querySelector('.alerta-tipo-texto');
     const descripcion = tarjeta.querySelector('.alerta-descripcion');
     const latitud = tarjeta.querySelector('.alerta-latitud');
     const longitud = tarjeta.querySelector('.alerta-longitud');
     const linkMapa = tarjeta.querySelector('.alerta-link-mapa');
+    let imagen = tarjeta.querySelector('.alerta-foto-reporte');
 
     if (tipo) {
         tipo.textContent = reporte.tipo;
@@ -177,6 +271,17 @@ function actualizarTarjetaReporte(reporte) {
 
     if (linkMapa) {
         linkMapa.href = `inicio.php?lat=${encodeURIComponent(reporte.latitud)}&lng=${encodeURIComponent(reporte.longitud)}`;
+    }
+
+    if (reporte.imagen) {
+        if (!imagen) {
+            imagen = document.createElement('img');
+            imagen.className = 'alerta-foto-reporte';
+            imagen.alt = 'Foto del reporte';
+            descripcion.insertAdjacentElement('afterend', imagen);
+        }
+
+        imagen.src = `/${String(reporte.imagen).replace(/^\/+/, '')}`;
     }
 }
 

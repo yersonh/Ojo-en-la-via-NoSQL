@@ -159,6 +159,7 @@ $cursor = $reportes->aggregate($pipeline);
     <link rel="icon" type="image/png" href="/imagenes/fiveicon.png">
     <title>Alertas</title>
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="/views/components/Css_usuario/alertas.css">
     <link rel="stylesheet" href="/views/components/Css_usuario/comentarios-reportes.css">
 </head>
@@ -263,6 +264,7 @@ $cursor = $reportes->aggregate($pipeline);
                     data-descripcion="<?php echo htmlspecialchars((string) $descripcion); ?>"
                     data-latitud="<?php echo htmlspecialchars((string) ($latitud ?? '')); ?>"
                     data-longitud="<?php echo htmlspecialchars((string) ($longitud ?? '')); ?>"
+                    data-imagen="<?php echo htmlspecialchars((string) ($fotoReporte ?? '')); ?>"
                 >
                     <div class="alerta-header">
                         <div class="alerta-avatar">
@@ -413,15 +415,26 @@ $cursor = $reportes->aggregate($pipeline);
             <label for="editarReporteDescripcion">Descripcion</label>
             <textarea name="descripcion" id="editarReporteDescripcion" maxlength="800" required></textarea>
 
-            <div class="editar-reporte-grid">
-                <div>
-                    <label for="editarReporteLatitud">Latitud</label>
-                    <input type="number" step="any" name="latitud" id="editarReporteLatitud" required>
-                </div>
+            <label>Ubicacion</label>
+            <div class="editar-reporte-mapa" id="editarReporteMapa"></div>
+            <p class="editar-reporte-ayuda">
+                Haz clic en el mapa para mover el punto del reporte.
+            </p>
 
+            <div class="editar-reporte-coordenadas">
+                <span>Latitud: <strong id="editarReporteLatitudTexto">-</strong></span>
+                <span>Longitud: <strong id="editarReporteLongitudTexto">-</strong></span>
+            </div>
+
+            <input type="hidden" name="latitud" id="editarReporteLatitud" required>
+            <input type="hidden" name="longitud" id="editarReporteLongitud" required>
+
+            <label for="editarReporteFoto">Foto del reporte</label>
+            <div class="editar-reporte-foto">
+                <img id="editarReporteFotoPreview" alt="Foto actual del reporte">
                 <div>
-                    <label for="editarReporteLongitud">Longitud</label>
-                    <input type="number" step="any" name="longitud" id="editarReporteLongitud" required>
+                    <input type="file" name="foto" id="editarReporteFoto" accept="image/*">
+                    <small>Si seleccionas una imagen nueva, reemplaza la foto actual.</small>
                 </div>
             </div>
 
@@ -432,6 +445,7 @@ $cursor = $reportes->aggregate($pipeline);
         </form>
     </div>
 </div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
  <script src="/views/components/JS_usuario/menu-inferior.js"></script>
 <script src="/views/components/JS_usuario/likes-reportes.js"></script>
 <script src="/views/components/JS_usuario/alertas-reportes.js"></script>

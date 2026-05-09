@@ -26,6 +26,50 @@ function filtroPropietarioReporte(MongoDB\BSON\ObjectId $reporteId, $usuarioIdTe
     ];
 }
 
+function guardarFotoReporteEditada()
+{
+    if (!isset($_FILES['foto']) || $_FILES['foto']['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+
+    if ($_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'No se pudo cargar la foto del reporte.'
+        ], 400);
+    }
+
+    $nombreOriginal = $_FILES['foto']['name'] ?? '';
+    $tmp = $_FILES['foto']['tmp_name'] ?? '';
+    $extension = strtolower(pathinfo($nombreOriginal, PATHINFO_EXTENSION));
+    $extPermitidas = ['jpg', 'jpeg', 'png', 'webp'];
+
+    if (!in_array($extension, $extPermitidas, true)) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'La imagen debe ser jpg, jpeg, png o webp.'
+        ], 400);
+    }
+
+    $directorioSubidas = __DIR__ . '/../../uploads/reportes/';
+
+    if (!is_dir($directorioSubidas)) {
+        mkdir($directorioSubidas, 0777, true);
+    }
+
+    $nombreArchivo = uniqid('reporte_editado_', true) . '.' . $extension;
+    $rutaFinal = $directorioSubidas . $nombreArchivo;
+
+    if (!move_uploaded_file($tmp, $rutaFinal)) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'No se pudo guardar la nueva foto.'
+        ], 500);
+    }
+
+    return 'uploads/reportes/' . $nombreArchivo;
+}
+
 try {
     if (!isset($_SESSION['usuario_id'])) {
         responderJson([
@@ -95,21 +139,29 @@ try {
         ], 404);
     }
 
+    $nuevaImagen = guardarFotoReporteEditada();
+
+    $camposActualizar = [
+        'tipo' => $tipo,
+        'descripcion' => $descripcion,
+        'ubicacion' => [
+            'latitud' => $latitud,
+            'longitud' => $longitud
+        ],
+        'latitud' => $latitud,
+        'longitud' => $longitud,
+        'editado' => true,
+        'fecha_edicion' => new MongoDB\BSON\UTCDateTime()
+    ];
+
+    if ($nuevaImagen !== null) {
+        $camposActualizar['imagenes'] = [$nuevaImagen];
+    }
+
     $reportes->updateOne(
         $filtro,
         [
-            '$set' => [
-                'tipo' => $tipo,
-                'descripcion' => $descripcion,
-                'ubicacion' => [
-                    'latitud' => $latitud,
-                    'longitud' => $longitud
-                ],
-                'latitud' => $latitud,
-                'longitud' => $longitud,
-                'editado' => true,
-                'fecha_edicion' => new MongoDB\BSON\UTCDateTime()
-            ]
+            '$set' => $camposActualizar
         ]
     );
 
@@ -121,7 +173,8 @@ try {
             'tipo' => $tipo,
             'descripcion' => $descripcion,
             'latitud' => $latitud,
-            'longitud' => $longitud
+            'longitud' => $longitud,
+            'imagen' => $nuevaImagen
         ]
     ]);
 } catch (Throwable $e) {
