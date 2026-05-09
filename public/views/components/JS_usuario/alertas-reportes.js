@@ -10,6 +10,7 @@ function inicializarAccionesReportesAlertas() {
     const form = document.getElementById('editarReporteForm');
     const cerrar = document.getElementById('cerrarEditarReporte');
     const cancelar = document.getElementById('cancelarEditarReporte');
+    const btnUbicacionActual = document.getElementById('usarUbicacionActualEditar');
 
     if (!overlay || !form) {
         return;
@@ -57,11 +58,63 @@ function inicializarAccionesReportesAlertas() {
         }
     });
 
+    if (btnUbicacionActual) {
+        btnUbicacionActual.addEventListener('click', usarUbicacionActualEnEdicion);
+    }
+
     overlay.addEventListener('click', function (event) {
         if (event.target === overlay) {
             cerrarModalEditarReporte();
         }
     });
+}
+
+function usarUbicacionActualEnEdicion() {
+    const boton = document.getElementById('usarUbicacionActualEditar');
+
+    if (!navigator.geolocation) {
+        alert('Tu navegador no permite obtener la ubicacion actual.');
+        return;
+    }
+
+    const textoOriginal = boton ? boton.textContent : '';
+
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = 'Buscando ubicacion...';
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function (posicion) {
+            const lat = posicion.coords.latitude;
+            const lng = posicion.coords.longitude;
+
+            moverMarcadorEdicion(lat, lng);
+
+            if (editarReporteMapa) {
+                editarReporteMapa.setView([lat, lng], 17);
+                editarReporteMapa.invalidateSize();
+            }
+
+            if (boton) {
+                boton.disabled = false;
+                boton.textContent = textoOriginal;
+            }
+        },
+        function () {
+            alert('No se pudo obtener tu ubicacion. Revisa los permisos del navegador.');
+
+            if (boton) {
+                boton.disabled = false;
+                boton.textContent = textoOriginal;
+            }
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 12000,
+            maximumAge: 0
+        }
+    );
 }
 
 function cerrarMenusReporte() {
@@ -208,9 +261,11 @@ async function guardarReporteEditado(form) {
     }
 
     try {
+        const formData = await construirFormDataReporte(form);
+
         const respuesta = await fetch('/views/usuario/editar_reporte.php', {
             method: 'POST',
-            body: new FormData(form)
+            body: formData
         });
 
         const data = await respuesta.json();
@@ -224,13 +279,74 @@ async function guardarReporteEditado(form) {
         cerrarModalEditarReporte();
     } catch (error) {
         console.error('Error al editar reporte:', error);
-        alert('No se pudo editar el reporte.');
+        alert(error.message || 'No se pudo editar el reporte.');
     } finally {
         if (botonGuardar) {
             botonGuardar.disabled = false;
             botonGuardar.textContent = textoOriginal;
         }
     }
+}
+
+async function construirFormDataReporte(form) {
+    const formData = new FormData(form);
+    const inputFoto = document.getElementById('editarReporteFoto');
+    const archivo = inputFoto?.files?.[0];
+
+    if (!archivo) {
+        formData.delete('foto');
+        return formData;
+    }
+
+    if (!archivo.type.startsWith('image/')) {
+        throw new Error('La foto debe ser una imagen.');
+    }
+
+    const imagenComprimida = await comprimirImagen(archivo);
+    formData.set('foto', imagenComprimida, imagenComprimida.name);
+
+    return formData;
+}
+
+function comprimirImagen(archivo) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(archivo);
+
+        img.onload = function () {
+            URL.revokeObjectURL(url);
+
+            const maxDimension = 1400;
+            const escala = Math.min(1, maxDimension / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+
+            canvas.width = Math.max(1, Math.round(img.width * escala));
+            canvas.height = Math.max(1, Math.round(img.height * escala));
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    resolve(archivo);
+                    return;
+                }
+
+                const nombre = archivo.name.replace(/\.[^.]+$/, '') || 'reporte';
+                resolve(new File([blob], `${nombre}.jpg`, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                }));
+            }, 'image/jpeg', 0.82);
+        };
+
+        img.onerror = function () {
+            URL.revokeObjectURL(url);
+            resolve(archivo);
+        };
+
+        img.src = url;
+    });
 }
 
 function actualizarTarjetaReporte(reporte) {

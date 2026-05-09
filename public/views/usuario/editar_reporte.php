@@ -26,6 +26,19 @@ function filtroPropietarioReporte(MongoDB\BSON\ObjectId $reporteId, $usuarioIdTe
     ];
 }
 
+function mensajeErrorSubida($codigo)
+{
+    return match ($codigo) {
+        UPLOAD_ERR_INI_SIZE,
+        UPLOAD_ERR_FORM_SIZE => 'La foto es demasiado pesada. Intenta con una imagen mas liviana.',
+        UPLOAD_ERR_PARTIAL => 'La foto se cargo incompleta. Intenta nuevamente.',
+        UPLOAD_ERR_NO_TMP_DIR => 'El servidor no tiene carpeta temporal para subir imagenes.',
+        UPLOAD_ERR_CANT_WRITE => 'El servidor no pudo guardar la foto temporalmente.',
+        UPLOAD_ERR_EXTENSION => 'Una extension del servidor bloqueo la carga de la foto.',
+        default => 'No se pudo cargar la foto del reporte. Codigo: ' . (int) $codigo
+    };
+}
+
 function guardarFotoReporteEditada()
 {
     if (!isset($_FILES['foto']) || $_FILES['foto']['error'] === UPLOAD_ERR_NO_FILE) {
@@ -35,14 +48,22 @@ function guardarFotoReporteEditada()
     if ($_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
         responderJson([
             'ok' => false,
-            'mensaje' => 'No se pudo cargar la foto del reporte.'
+            'mensaje' => mensajeErrorSubida($_FILES['foto']['error'])
         ], 400);
     }
 
     $nombreOriginal = $_FILES['foto']['name'] ?? '';
     $tmp = $_FILES['foto']['tmp_name'] ?? '';
+    $tamano = (int) ($_FILES['foto']['size'] ?? 0);
     $extension = strtolower(pathinfo($nombreOriginal, PATHINFO_EXTENSION));
     $extPermitidas = ['jpg', 'jpeg', 'png', 'webp'];
+
+    if ($tamano > 5 * 1024 * 1024) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'La foto no puede pesar mas de 5 MB.'
+        ], 400);
+    }
 
     if (!in_array($extension, $extPermitidas, true)) {
         responderJson([

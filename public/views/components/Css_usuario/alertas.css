@@ -620,6 +620,28 @@ body.body-alertas {
     background: #202020;
 }
 
+.btn-ubicacion-actual-editar {
+    min-height: 38px;
+    border: 1px solid #2f9bff;
+    border-radius: 999px;
+    background: rgba(47, 155, 255, 0.14);
+    color: #dff0ff;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 800;
+    margin: 0 0 10px;
+    padding: 0 14px;
+}
+
+.btn-ubicacion-actual-editar:hover {
+    background: rgba(47, 155, 255, 0.24);
+}
+
+.btn-ubicacion-actual-editar:disabled {
+    cursor: wait;
+    opacity: 0.75;
+}
+
 .editar-reporte-ayuda {
     margin: 8px 0 0;
     color: #a7b0bd;
