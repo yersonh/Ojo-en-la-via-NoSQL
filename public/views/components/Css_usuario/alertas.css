@@ -44,12 +44,31 @@ body.body-alertas {
 /* ========= TARJETA DE ALERTA ========= */
 
 .alerta-card-red {
-    background: #171717;
+    background:
+        linear-gradient(rgba(17, 17, 17, 0.88), rgba(17, 17, 17, 0.9)),
+        url('/imagenes/fundadoresfinal.png') center/cover no-repeat;
     border: 1px solid #3d3d3d;
     border-radius: 14px;
     padding: 20px 22px;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
     position: relative;
+    overflow: hidden;
+}
+
+.alerta-card-red::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.12), transparent 28%),
+        linear-gradient(135deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.45));
+    pointer-events: none;
+    z-index: 0;
+}
+
+.alerta-card-red > * {
+    position: relative;
+    z-index: 1;
 }
 
 /* ========= HEADER ALERTA ========= */
