@@ -213,10 +213,20 @@ function formatearFechaNotificacion($fecha)
                             $mensajeNotificacion = $notificacion['mensaje'] ?? 'Tienes una nueva notificación.';
                             $leida = $notificacion['leida'] ?? false;
                             $fechaNotificacion = formatearFechaNotificacion($notificacion['fecha'] ?? null);
+                            $reporteNotificacionId = isset($notificacion['reporte_id']) ? (string) $notificacion['reporte_id'] : '';
+                            $comentarioNotificacionId = isset($notificacion['comentario_id']) ? (string) $notificacion['comentario_id'] : '';
+                            $urlNotificacion = '';
+
+                            if ($reporteNotificacionId !== '' && $comentarioNotificacionId !== '') {
+                                $urlNotificacion = 'alertas.php?comentarios=' . urlencode($reporteNotificacionId) . '&comentario=' . urlencode($comentarioNotificacionId);
+                            } elseif ($reporteNotificacionId !== '') {
+                                $urlNotificacion = 'alertas.php?reporte=' . urlencode($reporteNotificacionId);
+                            }
                         ?>
                             <div 
                                 class="notificacion-item <?php echo empty($leida) ? 'no-leida' : ''; ?>"
                                 data-notificacion-id="<?php echo htmlspecialchars($notificacionId); ?>"
+                                data-url="<?php echo htmlspecialchars($urlNotificacion); ?>"
                             >
                                 <div class="notificacion-icono">
                                     <?php echo obtenerIconoNotificacion($tipoNotificacion); ?>

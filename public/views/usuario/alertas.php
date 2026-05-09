@@ -116,11 +116,14 @@ try {
     $likesReportes = $db->likes_reporte;
     $comentariosReporte = $db->comentarios_reporte;
 
-     $comentariosAutoIdTexto = $_GET['comentarios'] ?? '';
+    $comentariosAutoIdTexto = $_GET['comentarios'] ?? '';
+    $reporteAutoIdTexto = $_GET['reporte'] ?? '';
     $filtroReportes = [];
 
     if ($comentariosAutoIdTexto !== '' && preg_match('/^[a-f\d]{24}$/i', $comentariosAutoIdTexto)) {
         $filtroReportes['_id'] = new \MongoDB\BSON\ObjectId($comentariosAutoIdTexto);
+    } elseif ($reporteAutoIdTexto !== '' && preg_match('/^[a-f\d]{24}$/i', $reporteAutoIdTexto)) {
+        $filtroReportes['_id'] = new \MongoDB\BSON\ObjectId($reporteAutoIdTexto);
     }
     $pipeline = [];
 

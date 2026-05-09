@@ -97,7 +97,7 @@ try {
                 $usuarioId,
                 'respuesta_comentario',
                 'Nueva respuesta',
-                $nombreOrigen . ' respondió tu comentario.',
+                $nombreOrigen . ' respondió: "' . mb_substr($comentarioTexto, 0, 80) . '"',
                 $reporteId,
                 $comentarioId
             );
@@ -117,7 +117,7 @@ try {
             $usuarioId,
             'comentario',
             'Nuevo comentario',
-            $nombreOrigen . ' comentó tu reporte.',
+            $nombreOrigen . ' comentó: "' . mb_substr($comentarioTexto, 0, 80) . '"',
             $reporteId,
             $comentarioId
         );

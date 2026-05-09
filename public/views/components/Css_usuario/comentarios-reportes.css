@@ -61,6 +61,13 @@
 .comentario-bloque {
     width: 100%;
     margin-bottom: 14px;
+    border-radius: 14px;
+    transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.comentario-bloque.comentario-destacado {
+    background: rgba(47, 155, 255, 0.16);
+    box-shadow: 0 0 0 2px rgba(47, 155, 255, 0.42);
 }
 
 .comentario-bloque-respuesta {

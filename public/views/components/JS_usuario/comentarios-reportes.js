@@ -10,6 +10,7 @@ const comentarioTexto = document.getElementById('comentarioTexto');
 
 let comentarioPadreActivo = null;
 let botonComentariosActivo = null;
+let comentarioObjetivoActivo = null;
 
 document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.btn-abrir-comentarios');
@@ -136,6 +137,10 @@ async function cargarComentarios(reporteId) {
             .map((comentario) => renderComentario(comentario, 0))
             .join('');
 
+        if (comentarioObjetivoActivo) {
+            resaltarComentarioObjetivo(comentarioObjetivoActivo);
+        }
+
     } catch (error) {
         console.error('Error al cargar comentarios:', error);
         comentariosLista.innerHTML = '<p class="comentarios-vacio">Error al cargar comentarios.</p>';
@@ -171,7 +176,7 @@ function renderComentario(comentario, nivel = 0) {
         : '';
 
     return `
-        <div class="comentario-bloque ${nivel > 0 ? 'comentario-bloque-respuesta' : ''}">
+        <div class="comentario-bloque ${nivel > 0 ? 'comentario-bloque-respuesta' : ''}" data-comentario-bloque-id="${escapeHTML(comentario.id)}">
             <div class="comentario-item">
                 <div class="comentario-avatar ${nivel > 0 ? 'comentario-avatar-respuesta' : ''}">
                     ${avatar}
@@ -371,9 +376,14 @@ document.addEventListener('click', (e) => {
 document.addEventListener('DOMContentLoaded', async () => {
     const parametros = new URLSearchParams(window.location.search);
     const reporteIdDesdeUrl = parametros.get('comentarios');
+    const comentarioIdDesdeUrl = parametros.get('comentario');
 
     if (!reporteIdDesdeUrl || !/^[a-f\d]{24}$/i.test(reporteIdDesdeUrl)) {
         return;
+    }
+
+    if (comentarioIdDesdeUrl && /^[a-f\d]{24}$/i.test(comentarioIdDesdeUrl)) {
+        comentarioObjetivoActivo = comentarioIdDesdeUrl;
     }
 
     const boton = document.querySelector(`.btn-abrir-comentarios[data-reporte-id="${reporteIdDesdeUrl}"]`);
@@ -399,6 +409,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cargarComentarios(reporteIdDesdeUrl);
     }
 });
+
+function resaltarComentarioObjetivo(comentarioId) {
+    document.querySelectorAll('.comentario-respuestas.ocultar-respuestas').forEach((respuestas) => {
+        respuestas.classList.remove('ocultar-respuestas');
+    });
+
+    document.querySelectorAll('.btn-ver-respuestas').forEach((btn) => {
+        btn.innerHTML = `
+            <span class="linea-respuestas"></span>
+            Ocultar respuestas
+        `;
+    });
+
+    requestAnimationFrame(() => {
+        const bloque = document.querySelector(`.comentario-bloque[data-comentario-bloque-id="${comentarioId}"]`);
+
+        if (!bloque) {
+            return;
+        }
+
+        bloque.classList.add('comentario-destacado');
+        bloque.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        setTimeout(() => {
+            bloque.classList.remove('comentario-destacado');
+        }, 3000);
+    });
+}
 document.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-editar-comentario');
 

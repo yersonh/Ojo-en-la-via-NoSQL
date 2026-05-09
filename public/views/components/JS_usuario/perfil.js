@@ -8,6 +8,10 @@ function inicializarNotificacionesPerfil() {
     notificaciones.forEach(function (notificacion) {
         notificacion.addEventListener('click', function () {
             marcarNotificacionComoLeidaVisual(notificacion);
+
+            if (notificacion.dataset.url) {
+                window.location.href = notificacion.dataset.url;
+            }
         });
     });
 }
