@@ -353,7 +353,7 @@ $cursor = $reportes->aggregate($pipeline);
                     </button>
 
                         <?php if ($latitud !== null && $longitud !== null): ?>
-                            <a class="alerta-link-mapa" href="inicio.php?lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
+                            <a class="alerta-link-mapa" href="inicio.php?reporte=<?php echo urlencode((string) $reporte['_id']); ?>&lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
                                 📍 Ver en Mapa
                             </a>
                         <?php else: ?>

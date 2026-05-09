@@ -386,7 +386,7 @@ function actualizarTarjetaReporte(reporte) {
     }
 
     if (linkMapa) {
-        linkMapa.href = `inicio.php?lat=${encodeURIComponent(reporte.latitud)}&lng=${encodeURIComponent(reporte.longitud)}`;
+        linkMapa.href = `inicio.php?reporte=${encodeURIComponent(reporte.id)}&lat=${encodeURIComponent(reporte.latitud)}&lng=${encodeURIComponent(reporte.longitud)}`;
     }
 
     if (reporte.imagen) {

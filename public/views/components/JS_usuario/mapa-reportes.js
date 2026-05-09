@@ -1,5 +1,6 @@
 const map = crearMapa('map');
 let marcador = null;
+const marcadoresReportes = new Map();
 
 /* ========= ESTADOS Y COLORES ========= */
 
@@ -239,7 +240,7 @@ if (Array.isArray(window.reportesDB)) {
 
         const emoji = obtenerEmojiPorTipo(reporte.tipo);
 
-        L.marker([reporte.latitud, reporte.longitud], {
+        const marker = L.marker([reporte.latitud, reporte.longitud], {
             icon: crearIconoReporte(emoji, reporte.estado)
         })
             .addTo(map)
@@ -247,7 +248,35 @@ if (Array.isArray(window.reportesDB)) {
                 maxWidth: 320,
                 className: 'popup-reporte-wrapper'
             });
+
+        const reporteId = String(reporte.id || reporte._id || '');
+
+        if (reporteId) {
+            marcadoresReportes.set(reporteId, {
+                marker,
+                reporte
+            });
+        }
     });
+}
+
+/* ========= ABRIR REPORTE DESDE ALERTAS ========= */
+
+const parametrosMapa = new URLSearchParams(window.location.search);
+const reporteDestino = parametrosMapa.get('reporte');
+const latDestino = parseFloat(parametrosMapa.get('lat'));
+const lngDestino = parseFloat(parametrosMapa.get('lng'));
+
+if (reporteDestino && marcadoresReportes.has(reporteDestino)) {
+    const destino = marcadoresReportes.get(reporteDestino);
+
+    map.setView([destino.reporte.latitud, destino.reporte.longitud], 17);
+
+    setTimeout(() => {
+        destino.marker.openPopup();
+    }, 350);
+} else if (Number.isFinite(latDestino) && Number.isFinite(lngDestino)) {
+    map.setView([latDestino, lngDestino], 17);
 }
 /* ========= CERRAR PANEL DE REGISTRO ========= */
 
