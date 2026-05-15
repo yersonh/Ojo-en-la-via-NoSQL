@@ -339,6 +339,6 @@ function formatearFechaNotificacion($fecha)
 <script src="/views/usuario/compartido/js/menu-inferior.js"></script>
 <script src="/views/usuario/perfil/js/perfil.js"></script>
 
-<?php $logoutUrl = '../../index.php'; include __DIR__ . '/../../components/modal-logout.php'; ?>
+<?php $logoutUrl = '../../index.php'; include __DIR__ . '/../components/modal-logout.php'; ?>
 </body>
 </html>
