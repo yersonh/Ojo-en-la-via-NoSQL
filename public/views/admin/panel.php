@@ -166,6 +166,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#2c3e50;di
 .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);}
 .sidebar-footer a{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.6);text-decoration:none;font-size:.88rem;transition:.2s;}
 .sidebar-footer a:hover{color:#e74c3c;}
+.sidebar-logout-btn{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.6);background:transparent;border:none;font-size:.88rem;cursor:pointer;width:100%;padding:0;transition:.2s;}
+.sidebar-logout-btn:hover{color:#e74c3c;}
 
 /* ── MAIN LAYOUT ── */
 .main-wrap{margin-left:250px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
@@ -353,9 +355,9 @@ textarea.form-control{resize:vertical;min-height:100px;}
     </nav>
 
     <div class="sidebar-footer">
-        <a href="../../index.php?accion=logout" onclick="return confirm('¿Cerrar sesión?')">
+        <button class="sidebar-logout-btn" onclick="abrirModalLogout()">
             <i class="fas fa-sign-out-alt"></i><span>Cerrar sesión</span>
-        </a>
+        </button>
     </div>
 </aside>
 
@@ -1273,5 +1275,7 @@ function showToast(msg, type = '') {
     toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 </script>
+
+<?php $logoutUrl = '../../index.php'; include __DIR__ . '/../components/modal-logout.php'; ?>
 </body>
 </html>

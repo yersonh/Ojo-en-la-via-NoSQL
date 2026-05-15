@@ -306,18 +306,13 @@ function formatearFechaNotificacion($fecha)
                         </span>
                     </a>
 
-                    <form action="../../index.php" method="POST">
-                        <input type="hidden" name="accion" value="logout">
-
-                        <button type="submit" class="perfil-btn logout">
-                            <span class="perfil-btn-icon">🚪</span>
-
-                            <span>
-                                Cerrar Sesión
-                                <small>Salir de tu cuenta</small>
-                            </span>
-                        </button>
-                    </form>
+                    <button type="button" class="perfil-btn logout" onclick="abrirModalLogout()">
+                        <span class="perfil-btn-icon">🚪</span>
+                        <span>
+                            Cerrar Sesión
+                            <small>Salir de tu cuenta</small>
+                        </span>
+                    </button>
                 </article>
             </aside>
         </section>
@@ -343,5 +338,7 @@ function formatearFechaNotificacion($fecha)
 
 <script src="/views/usuario/compartido/js/menu-inferior.js"></script>
 <script src="/views/usuario/perfil/js/perfil.js"></script>
+
+<?php $logoutUrl = '../../index.php'; include __DIR__ . '/../../components/modal-logout.php'; ?>
 </body>
 </html>

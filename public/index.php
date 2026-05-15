@@ -15,6 +15,16 @@ try {
     die("Error de conexión: " . htmlspecialchars($e->getMessage()));
 }
 
+// Logout ANTES de cualquier redirección (acepta GET y POST)
+$_accionTemprana = $_POST['accion'] ?? $_GET['accion'] ?? '';
+if ($_accionTemprana === 'logout') {
+    eliminar_token_recordar($db);
+    session_unset();
+    session_destroy();
+    header('Location: index.php');
+    exit;
+}
+
 // Si ya tiene sesión activa, redirigir al panel correspondiente
 if (isset($_SESSION['usuario_id'])) {
     $destino = ($_SESSION['usuario_rol'] ?? 'ciudadano') === 'admin'
@@ -143,6 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($accion === 'logout') {
         eliminar_token_recordar($db);
+        session_unset();
         session_destroy();
         header('Location: index.php');
         exit;
