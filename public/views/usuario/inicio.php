@@ -241,7 +241,7 @@ try {
     <title>Inicio - Mapa</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-    <link rel="stylesheet" href="/views/usuario/inicio/inicio-mapa.css">
+    <link rel="stylesheet" href="/views/usuario/inicio/css/inicio-mapa.css">
 </head>
 
 <body>
@@ -381,16 +381,16 @@ try {
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-    <?php include __DIR__ . '/inicio/mapa/map-config.php'; ?>
+    <?php include __DIR__ . '/inicio/parciales/map-config.php'; ?>
 
     <script>
         window.reportesDB = <?php echo json_encode($reportesMapa, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
         console.log('Reportes enviados al mapa:', window.reportesDB);
     </script>
 
-    <script src="/views/usuario/inicio/mapa-reportes.js"></script>
-    <script src="/views/usuario/shared/menu-inferior.js"></script>
-    <script src="/views/usuario/inicio/ubicacion-actual.js"></script>
-    <script src="/views/usuario/inicio/foto-camara.js"></script>
+    <script src="/views/usuario/inicio/js/mapa-reportes.js"></script>
+    <script src="/views/usuario/compartido/js/menu-inferior.js"></script>
+    <script src="/views/usuario/inicio/js/ubicacion-actual.js"></script>
+    <script src="/views/usuario/inicio/js/foto-camara.js"></script>
 </body>
 </html>

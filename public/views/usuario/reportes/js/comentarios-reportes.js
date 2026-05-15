@@ -77,7 +77,7 @@ comentarioForm.addEventListener('submit', async (e) => {
     }
 
     try {
-        const respuesta = await fetch('/views/usuario/alertas/api/guardar_comentario.php', {
+        const respuesta = await fetch('/views/usuario/reportes/controladores/guardar_comentario.php', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
@@ -111,7 +111,7 @@ async function cargarComentarios(reporteId) {
     comentariosLista.innerHTML = '<p class="comentarios-vacio">Cargando comentarios...</p>';
 
     try {
-        const respuesta = await fetch(`/views/usuario/alertas/api/listar_comentario.php?reporte_id=${encodeURIComponent(reporteId)}`, {
+        const respuesta = await fetch(`/views/usuario/reportes/controladores/listar_comentario.php?reporte_id=${encodeURIComponent(reporteId)}`, {
             method: 'GET',
             credentials: 'same-origin'
         });
@@ -293,7 +293,7 @@ document.addEventListener('click', async (e) => {
     formData.append('comentario_id', comentarioId);
 
     try {
-        const respuesta = await fetch('/views/usuario/alertas/api/like_comentario.php', {
+        const respuesta = await fetch('/views/usuario/reportes/controladores/like_comentario.php', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
@@ -517,7 +517,7 @@ document.addEventListener('click', async (e) => {
     formData.append('comentario_id', comentarioId);
 
     try {
-        const respuesta = await fetch('/views/usuario/alertas/api/eliminar_comentario.php', {
+        const respuesta = await fetch('/views/usuario/reportes/controladores/eliminar_comentario.php', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
@@ -576,7 +576,7 @@ document.addEventListener('click', async (e) => {
         btn.disabled = true;
         btn.textContent = 'Guardando...';
 
-        const respuesta = await fetch('/views/usuario/alertas/api/editar_comentario.php', {
+        const respuesta = await fetch('/views/usuario/reportes/controladores/editar_comentario.php', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
