@@ -337,6 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .input-box .toggle-password {
             position: absolute;
+            left: auto;
             right: 0;
             top: 14px;
             cursor: pointer;
