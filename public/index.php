@@ -128,9 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['foto_perfil'] = $usuario['foto_perfil'] ?? '';
                 $_SESSION['usuario_rol'] = $usuario['rol'] ?? 'ciudadano';
 
-                if (!empty($_POST['recordar'])) {
-                    guardar_token_recordar($db, $_SESSION['usuario_id']);
-                }
+                guardar_token_recordar($db, $_SESSION['usuario_id']);
 
                 if ($_SESSION['usuario_rol'] === 'admin') {
                     header('Location: views/admin/panel.php');
@@ -482,9 +480,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="extra-options">
-                <label>
-                    <input type="checkbox" name="recordar" value="1"> Recuérdame
-                </label>
                 <a href="forgot_password.php">¿Olvidaste tu contraseña?</a>
             </div>
 
