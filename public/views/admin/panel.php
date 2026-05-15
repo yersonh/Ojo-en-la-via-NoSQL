@@ -83,15 +83,17 @@ foreach ($db->reportes->find([], ['sort' => ['_id' => -1], 'limit' => 400]) as $
     }
 
     $reportesList[] = [
-        'id'          => (string)$r['_id'],
-        'tipo'        => (string)($r['tipo'] ?? $r['tipo_incidente'] ?? 'Sin tipo'),
-        'descripcion' => (string)($r['descripcion'] ?? ''),
-        'estado'      => (string)($r['estado'] ?? 'pendiente'),
-        'fecha'       => $fecha,
-        'usuario'     => $autor,
-        'lat'         => $lat,
-        'lng'         => $lng,
-        'foto'        => $foto,
+        'id'            => (string)$r['_id'],
+        'tipo'          => (string)($r['tipo'] ?? $r['tipo_incidente'] ?? 'Sin tipo'),
+        'descripcion'   => (string)($r['descripcion'] ?? ''),
+        'estado'        => (string)($r['estado'] ?? 'pendiente'),
+        'fecha'         => $fecha,
+        'usuario'       => $autor,
+        'usuario_nombre'=> $autor,   // alias que usa crearPopupReporte
+        'lat'           => $lat,
+        'lng'           => $lng,
+        'imagen'        => $foto,    // alias que usa crearPopupReporte
+        'foto'          => $foto,
     ];
 }
 
@@ -144,6 +146,7 @@ $adminInicial = strtoupper(substr(strip_tags($adminNombre), 0, 1));
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/views/compartido/js/popup-reporte.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 /* ── RESET & BASE ── */
@@ -1185,16 +1188,10 @@ function agregarNotifTimeline(n) {
 }
 
 /* ════════════════════════════════════════════════════════
-   MAPA (Leaflet)
+   MAPA ADMIN — usa el componente compartido popup-reporte.js
 ════════════════════════════════════════════════════════ */
-let mapaInst = null;
+let mapaInst    = null;
 let mapaMarkers = [];
-const mapaColors = {
-    pendiente:   '#f39c12',
-    en_revision: '#3498db',
-    notificado:  '#9b59b6',
-    resuelto:    '#27ae60'
-};
 
 function initMapa() {
     if (mapaInst) { mapaInst.invalidateSize(); return; }
@@ -1220,22 +1217,20 @@ function cargarMarcadores(data) {
 
     const filtro = document.getElementById('mapa-filtro-estado')?.value || '';
 
-    const validos = data.filter(r =>
+    data.filter(r =>
         r.lat && r.lng &&
         !isNaN(parseFloat(r.lat)) && !isNaN(parseFloat(r.lng)) &&
         (filtro === '' || r.estado === filtro)
-    );
-
-    validos.forEach(r => {
-        const color = mapaColors[r.estado] || '#95a5a6';
-        const icon  = L.divIcon({
-            className: '',
-            html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>`,
-            iconSize: [14, 14],
-            iconAnchor: [7, 7]
+    ).forEach(r => {
+        const emoji  = obtenerEmojiPorTipo(r.tipo);
+        const icon   = crearIconoReporte(emoji, r.estado);
+        const popup  = crearPopupReporte(r, {
+            btnTexto: '💬 Ver Comentarios',
+            btnHref:  `/views/usuario/alertas.php?comentarios=${r.id}`
         });
+
         const m = L.marker([parseFloat(r.lat), parseFloat(r.lng)], { icon })
-            .bindPopup(`<b>${r.tipo}</b><br><small>${r.descripcion.substring(0,100)}</small><br><small>Estado: <b style="color:${color}">${r.estado.replace('_',' ')}</b></small><br><small>${r.fecha}</small>`);
+            .bindPopup(popup, { maxWidth: 320, className: 'popup-reporte-wrapper' });
         m.addTo(mapaInst);
         mapaMarkers.push(m);
     });
@@ -1246,7 +1241,7 @@ function cargarMarcadores(data) {
     }
 }
 
-function filtrarMapa() { if (mapaInst) cargarMarcadores(REPORTES_DATA); }
+function filtrarMapa()  { if (mapaInst) cargarMarcadores(REPORTES_DATA); }
 function recargarMapa() { if (mapaInst) { cargarMarcadores(REPORTES_DATA); showToast('Mapa actualizado', 'success'); } }
 
 /* ════════════════════════════════════════════════════════

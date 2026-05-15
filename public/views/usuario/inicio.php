@@ -388,6 +388,7 @@ try {
         console.log('Reportes enviados al mapa:', window.reportesDB);
     </script>
 
+    <script src="/views/compartido/js/popup-reporte.js"></script>
     <script src="/views/usuario/inicio/js/mapa-reportes.js"></script>
     <script src="/views/usuario/compartido/js/menu-inferior.js"></script>
     <script src="/views/usuario/inicio/js/ubicacion-actual.js"></script>
