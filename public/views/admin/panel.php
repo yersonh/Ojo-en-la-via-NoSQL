@@ -28,7 +28,7 @@ $notificados    = $db->reportes->countDocuments(['estado' => 'notificado']);
 // ── TIPOS DE INCIDENTE (doughnut chart) ───────────────────────────────────
 $tiposData = [];
 foreach ($db->reportes->aggregate([
-    ['$group' => ['_id' => '$tipo_incidente', 'total' => ['$sum' => 1]]],
+    ['$group' => ['_id' => '$tipo', 'total' => ['$sum' => 1]]],
     ['$sort'  => ['total' => -1]],
     ['$limit' => 7]
 ]) as $t) {
@@ -50,13 +50,16 @@ foreach ($db->reportes->aggregate([
 $mesesData = array_reverse($mesesData);
 
 // ── LISTA DE REPORTES (tabla) ──────────────────────────────────────────────
+// Pre-cargamos todos los usuarios en un mapa para resolver autor sin depender del tipo de usuario_id
+$usuariosMap = [];
+foreach ($db->usuario->find([], ['projection' => ['_id' => 1, 'nombre_completo' => 1, 'email' => 1]]) as $u) {
+    $usuariosMap[(string)$u['_id']] = (string)($u['nombre_completo'] ?? $u['email'] ?? 'N/A');
+}
+
 $reportesList = [];
-foreach ($db->reportes->aggregate([
-    ['$sort'   => ['_id' => -1]],
-    ['$limit'  => 400],
-    ['$lookup' => ['from' => 'usuario', 'localField' => 'usuario_id', 'foreignField' => '_id', 'as' => 'autor']]
-]) as $r) {
-    $autor = !empty($r['autor']) ? $r['autor'][0] : null;
+foreach ($db->reportes->find([], ['sort' => ['_id' => -1], 'limit' => 400]) as $r) {
+    $uidStr = (string)($r['usuario_id'] ?? $r['usuario_creador_id'] ?? '');
+    $autor  = $usuariosMap[$uidStr] ?? 'N/A';
     $fecha = 'N/A';
     if (isset($r['fecha_reporte'])) {
         if ($r['fecha_reporte'] instanceof UTCDateTime) {
@@ -67,16 +70,28 @@ foreach ($db->reportes->aggregate([
             $fecha = (string)$r['fecha_reporte'];
         }
     }
+    // Coordenadas: pueden estar en ubicacion.lat/lng, ubicacion.latitud/longitud, o raíz
+    $ubicacion = $r['ubicacion'] ?? [];
+    $lat = (string)($ubicacion['lat']      ?? $ubicacion['latitud']  ?? $r['latitud']  ?? '');
+    $lng = (string)($ubicacion['lng']      ?? $ubicacion['longitud'] ?? $r['longitud'] ?? '');
+    // Imagen: puede ser array imagenes[] o campo foto
+    $foto = '';
+    if (!empty($r['imagenes']) && is_array($r['imagenes'])) {
+        $foto = (string)($r['imagenes'][0] ?? '');
+    } elseif (!empty($r['foto'])) {
+        $foto = (string)$r['foto'];
+    }
+
     $reportesList[] = [
         'id'          => (string)$r['_id'],
-        'tipo'        => (string)($r['tipo_incidente'] ?? 'Sin tipo'),
+        'tipo'        => (string)($r['tipo'] ?? $r['tipo_incidente'] ?? 'Sin tipo'),
         'descripcion' => (string)($r['descripcion'] ?? ''),
         'estado'      => (string)($r['estado'] ?? 'pendiente'),
         'fecha'       => $fecha,
-        'usuario'     => $autor ? (string)($autor['nombre_completo'] ?? $autor['email'] ?? 'N/A') : 'N/A',
-        'lat'         => (string)($r['latitud'] ?? ''),
-        'lng'         => (string)($r['longitud'] ?? ''),
-        'foto'        => (string)($r['foto'] ?? ''),
+        'usuario'     => $autor,
+        'lat'         => $lat,
+        'lng'         => $lng,
+        'foto'        => $foto,
     ];
 }
 
