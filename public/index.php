@@ -25,18 +25,19 @@ if ($_accionTemprana === 'logout') {
     exit;
 }
 
-// Si ya tiene sesión activa, redirigir al panel correspondiente
-if (isset($_SESSION['usuario_id'])) {
-    $destino = ($_SESSION['usuario_rol'] ?? 'ciudadano') === 'admin'
-        ? 'views/admin/panel.php'
-        : 'views/usuario/inicio.php';
-    header('Location: ' . $destino);
-    exit;
-}
+// Solo auto-redirigir si no están enviando el formulario de login/registro
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    if (isset($_SESSION['usuario_id'])) {
+        $destino = ($_SESSION['usuario_rol'] ?? 'ciudadano') === 'admin'
+            ? 'views/admin/panel.php'
+            : 'views/usuario/inicio.php';
+        header('Location: ' . $destino);
+        exit;
+    }
 
-// Intentar restaurar sesión desde cookie remember_token
-$_cookieToken = $_COOKIE['remember_token'] ?? '';
-if ($_cookieToken && preg_match('/^[a-f0-9]{64}$/', $_cookieToken)) {
+    // Intentar restaurar sesión desde cookie remember_token
+    $_cookieToken = $_COOKIE['remember_token'] ?? '';
+    if ($_cookieToken && preg_match('/^[a-f0-9]{64}$/', $_cookieToken)) {
     try {
         $tokenDoc = $db->tokens_sesion->findOne(['token' => $_cookieToken]);
         if ($tokenDoc && $tokenDoc['expira']->toDateTime() >= new DateTime()) {
@@ -58,6 +59,7 @@ if ($_cookieToken && preg_match('/^[a-f0-9]{64}$/', $_cookieToken)) {
         // token inválido, continuar a login normal
     }
 }
+} // fin if REQUEST_METHOD !== POST
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';

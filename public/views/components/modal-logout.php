@@ -40,10 +40,6 @@ $logoutUrl = $logoutUrl ?? '../../index.php';
         justify-content: center;
         margin: 0 auto 18px;
     }
-    .modal-logout-icon i {
-        font-size: 1.8rem;
-        color: #e74c3c;
-    }
     .modal-logout-box h3 {
         font-size: 1.25rem;
         font-weight: 700;
@@ -92,7 +88,11 @@ $logoutUrl = $logoutUrl ?? '../../index.php';
 <div id="modalLogout" class="modal-logout-overlay" onclick="if(event.target===this)cerrarModalLogout()">
     <div class="modal-logout-box">
         <div class="modal-logout-icon">
-            <i class="fas fa-sign-out-alt"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
         </div>
         <h3>Cerrar sesión</h3>
         <p>¿Estás seguro que deseas salir de tu cuenta?</p>
