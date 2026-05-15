@@ -3,14 +3,12 @@ session_start();
 
 require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
+require_once __DIR__ . '/../../../config/auth_helper.php';
 
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
 
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../../index.php');
-    exit;
-}
+verificar_autenticacion('../../index.php');
 
 $db = conectarMongoDB();
 

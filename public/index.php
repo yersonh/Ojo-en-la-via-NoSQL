@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/auth_helper.php';
 
 $mensaje = '';
 $tipo = '';
@@ -12,6 +13,40 @@ try {
     $usuarios = $db->usuario;
 } catch (Throwable $e) {
     die("Error de conexión: " . htmlspecialchars($e->getMessage()));
+}
+
+// Si ya tiene sesión activa, redirigir al panel correspondiente
+if (isset($_SESSION['usuario_id'])) {
+    $destino = ($_SESSION['usuario_rol'] ?? 'ciudadano') === 'admin'
+        ? 'views/admin/panel.php'
+        : 'views/usuario/inicio.php';
+    header('Location: ' . $destino);
+    exit;
+}
+
+// Intentar restaurar sesión desde cookie remember_token
+$_cookieToken = $_COOKIE['remember_token'] ?? '';
+if ($_cookieToken && preg_match('/^[a-f0-9]{64}$/', $_cookieToken)) {
+    try {
+        $tokenDoc = $db->tokens_sesion->findOne(['token' => $_cookieToken]);
+        if ($tokenDoc && $tokenDoc['expira']->toDateTime() >= new DateTime()) {
+            $usuarioToken = $db->usuario->findOne(['_id' => $tokenDoc['usuario_id']]);
+            if ($usuarioToken && ($usuarioToken['estado'] ?? false)) {
+                $_SESSION['usuario_id']     = (string) $usuarioToken['_id'];
+                $_SESSION['usuario_nombre'] = trim($usuarioToken['nombre_completo'] ?? '') ?: ($usuarioToken['email'] ?? 'Usuario');
+                $_SESSION['usuario_email']  = $usuarioToken['email'] ?? '';
+                $_SESSION['foto_perfil']    = $usuarioToken['foto_perfil'] ?? '';
+                $_SESSION['usuario_rol']    = $usuarioToken['rol'] ?? 'ciudadano';
+                $destino = $_SESSION['usuario_rol'] === 'admin'
+                    ? 'views/admin/panel.php'
+                    : 'views/usuario/inicio.php';
+                header('Location: ' . $destino);
+                exit;
+            }
+        }
+    } catch (Throwable $e) {
+        // token inválido, continuar a login normal
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -93,6 +128,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['foto_perfil'] = $usuario['foto_perfil'] ?? '';
                 $_SESSION['usuario_rol'] = $usuario['rol'] ?? 'ciudadano';
 
+                if (!empty($_POST['recordar'])) {
+                    guardar_token_recordar($db, $_SESSION['usuario_id']);
+                }
+
                 if ($_SESSION['usuario_rol'] === 'admin') {
                     header('Location: views/admin/panel.php');
                     exit;
@@ -105,6 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($accion === 'logout') {
+        eliminar_token_recordar($db);
         session_destroy();
         header('Location: index.php');
         exit;
@@ -292,7 +332,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             outline: none;
             color: white;
             font-size: 1.05rem;
-            padding: 10px 10px 10px 30px;
+            padding: 10px 34px 10px 30px;
+        }
+
+        .input-box .toggle-password {
+            position: absolute;
+            right: 0;
+            top: 14px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+            user-select: none;
+        }
+
+        .input-box .toggle-password:hover {
+            color: #fff;
         }
 
         .input-box input::placeholder {
@@ -422,12 +476,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="input-box">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" name="password" placeholder="Contraseña" required>
+                <input type="password" id="loginPassword" name="password" placeholder="Contraseña" required>
+                <i class="fa-solid fa-eye toggle-password" onclick="togglePassword('loginPassword', this)"></i>
             </div>
 
             <div class="extra-options">
                 <label>
-                    <input type="checkbox"> Recuérdame
+                    <input type="checkbox" name="recordar" value="1"> Recuérdame
                 </label>
                 <a href="forgot_password.php">¿Olvidaste tu contraseña?</a>
             </div>
@@ -465,7 +520,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="input-box">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" name="password" placeholder="Contraseña" required>
+                <input type="password" id="registerPassword" name="password" placeholder="Contraseña" required>
+                <i class="fa-solid fa-eye toggle-password" onclick="togglePassword('registerPassword', this)"></i>
             </div>
 
             <button class="btn" type="submit">Registrarme</button>
@@ -487,6 +543,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     function mostrarLogin() {
         document.getElementById('registerBox').classList.remove('active');
         document.getElementById('loginBox').classList.add('active');
+    }
+
+    function togglePassword(inputId, icon) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
     }
 </script>
 

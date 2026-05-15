@@ -1,10 +1,10 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../../index.php');
-    exit;
-}
+require_once __DIR__ . '/../../../config/auth_helper.php';
+
+verificar_autenticacion('../../index.php');
+
 if (($_SESSION['usuario_rol'] ?? 'ciudadano') !== 'admin') {
     header('Location: ../usuario/inicio.php');
     exit;
