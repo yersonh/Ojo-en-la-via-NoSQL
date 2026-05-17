@@ -91,6 +91,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $usuarioReporteId = new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
             $fechaReporte = new \MongoDB\BSON\UTCDateTime();
 
+            // Geocodificación inversa: coordenadas → dirección legible
+            $direccionTexto = '';
+            try {
+                $geoUrl = 'https://nominatim.openstreetmap.org/reverse?format=json'
+                    . '&lat=' . urlencode($latitud)
+                    . '&lon=' . urlencode($longitud)
+                    . '&accept-language=es';
+                $ch = curl_init($geoUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'OjoEnLaVia/1.0 (ojoenlavia1@gmail.com)');
+                curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                $geoResp = curl_exec($ch);
+                curl_close($ch);
+                if ($geoResp !== false) {
+                    $geoData = json_decode($geoResp, true);
+                    $direccionTexto = $geoData['display_name'] ?? '';
+                }
+            } catch (Throwable $_) {}
+
             $documento = [
                 'usuario_id' => $usuarioReporteId,
                 'tipo' => $tipo,
@@ -99,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'latitud' => (float) $latitud,
                     'longitud' => (float) $longitud
                 ],
-                'direccion_texto' => '',
+                'direccion_texto' => $direccionTexto,
                 'imagenes' => $imagenes,
                 'estado' => 'pendiente',
                 'fecha_reporte' => $fechaReporte,
