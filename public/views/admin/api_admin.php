@@ -95,67 +95,70 @@ if ($accion === 'eliminar_reporte_admin') {
 }
 
 /* ═══════════════════════════════════════════════════════
-   GUARDAR NOTIFICACIÓN A ENTIDAD
+   CRUD DE REGLAS DE NOTIFICACIÓN AUTOMÁTICA
 ═══════════════════════════════════════════════════════ */
-if ($accion === 'guardar_notificacion_entidad') {
-    $entidad   = trim($_POST['entidad']    ?? '');
-    $prioridad = trim($_POST['prioridad']  ?? 'media');
-    $asunto    = trim($_POST['asunto']     ?? '');
-    $mensaje   = trim($_POST['mensaje']    ?? '');
-    $repIdTxt  = trim($_POST['reporte_id'] ?? '');
+if ($accion === 'crear_regla') {
+    $tipo      = trim($_POST['tipo_incidente'] ?? '');
+    $entidad   = trim($_POST['entidad']        ?? '');
+    $asunto    = trim($_POST['asunto']         ?? '');
+    $mensaje   = trim($_POST['mensaje']        ?? '');
+    $prioridad = trim($_POST['prioridad']      ?? 'media');
 
-    if ($entidad === '')  err('Selecciona una entidad.');
-    if ($asunto  === '')  err('El asunto es obligatorio.');
-    if ($mensaje === '')  err('El mensaje no puede estar vacío.');
-    if (mb_strlen($mensaje) > 1000) err('El mensaje supera los 1000 caracteres.');
+    if ($tipo    === '') err('El tipo de incidente es obligatorio.');
+    if ($entidad === '') err('La entidad es obligatoria.');
+    if ($asunto  === '') err('El asunto es obligatorio.');
+    if ($mensaje === '') err('El mensaje es obligatorio.');
     if (!in_array($prioridad, ['alta', 'media', 'baja'], true)) $prioridad = 'media';
 
-    $doc = [
-        'entidad'      => $entidad,
-        'prioridad'    => $prioridad,
-        'asunto'       => $asunto,
-        'mensaje'      => $mensaje,
-        'estado_notif' => 'enviada',
-        'admin_id'     => new ObjectId((string)$_SESSION['usuario_id']),
-        'admin_nombre' => $_SESSION['usuario_nombre'] ?? 'Admin',
-        'fecha'        => new UTCDateTime(),
-    ];
+    $existe = $db->reglas_notificacion->findOne(['tipo_incidente' => $tipo]);
+    if ($existe) err('Ya existe una regla para ese tipo de incidente.');
 
-    // Vincular reporte si se seleccionó
-    if ($repIdTxt !== '' && preg_match('/^[a-f\d]{24}$/i', $repIdTxt)) {
-        $doc['reporte_id'] = new ObjectId($repIdTxt);
-        $reporteVinculado = $db->Reportes->findOne(['_id' => $doc['reporte_id']]);
-
-        // Actualizar estado del reporte a 'notificado'
-        $fechaEstado = new UTCDateTime();
-
-        $db->Reportes->updateOne(
-            ['_id' => $doc['reporte_id']],
-            [
-                '$set' => ['estado' => 'notificado', 'fecha_estado' => $fechaEstado],
-                '$push' => [
-                    'historial_estados' => [
-                        'estado_anterior' => $reporteVinculado['estado'] ?? null,
-                        'estado_nuevo' => 'notificado',
-                        'admin_id' => new ObjectId((string)$_SESSION['usuario_id']),
-                        'fecha_estado' => $fechaEstado
-                    ]
-                ]
-            ]
-        );
-    }
-
-    $db->notificaciones_entidades->insertOne($doc);
-
-    ok([
-        'notificacion' => [
-            'entidad'   => $entidad,
-            'prioridad' => $prioridad,
-            'asunto'    => $asunto,
-            'mensaje'   => $mensaje,
-            'admin'     => $doc['admin_nombre'],
-        ]
+    $resultado = $db->reglas_notificacion->insertOne([
+        'tipo_incidente' => $tipo,
+        'entidad'        => $entidad,
+        'asunto'         => $asunto,
+        'mensaje'        => $mensaje,
+        'prioridad'      => $prioridad,
+        'activa'         => true,
+        'fecha_creacion' => new UTCDateTime(),
     ]);
+
+    ok(['id' => (string) $resultado->getInsertedId()]);
+}
+
+if ($accion === 'actualizar_regla') {
+    $rid       = validarId($_POST['regla_id']     ?? '');
+    $entidad   = trim($_POST['entidad']           ?? '');
+    $asunto    = trim($_POST['asunto']            ?? '');
+    $mensaje   = trim($_POST['mensaje']           ?? '');
+    $prioridad = trim($_POST['prioridad']         ?? 'media');
+
+    if ($entidad === '') err('La entidad es obligatoria.');
+    if ($asunto  === '') err('El asunto es obligatorio.');
+    if ($mensaje === '') err('El mensaje es obligatorio.');
+    if (!in_array($prioridad, ['alta', 'media', 'baja'], true)) $prioridad = 'media';
+
+    $db->reglas_notificacion->updateOne(
+        ['_id' => $rid],
+        ['$set' => ['entidad' => $entidad, 'asunto' => $asunto, 'mensaje' => $mensaje, 'prioridad' => $prioridad]]
+    );
+
+    ok();
+}
+
+if ($accion === 'toggle_regla') {
+    $rid    = validarId($_POST['regla_id'] ?? '');
+    $activa = ($_POST['activa'] ?? '0') === '1';
+
+    $db->reglas_notificacion->updateOne(['_id' => $rid], ['$set' => ['activa' => $activa]]);
+
+    ok(['activa' => $activa]);
+}
+
+if ($accion === 'eliminar_regla') {
+    $rid = validarId($_POST['regla_id'] ?? '');
+    $db->reglas_notificacion->deleteOne(['_id' => $rid]);
+    ok();
 }
 
 err('Acción no reconocida.');

@@ -31,6 +31,7 @@ There are no automated tests or linting tools configured in this project.
 There is no router. URL paths map directly to PHP files:
 
 - `public/index.php` - Login/registration
+- `public/forgot_password.php` / `public/reset_password.php` - Password reset flow (PHPMailer + Brevo SMTP)
 - `public/views/usuario/inicio.php` - Citizen home, map view, report creation
 - `public/views/usuario/alertas.php` - Reports list with comments and embedded report likes
 - `public/views/usuario/perfil.php` - User profile and notification history
@@ -38,54 +39,78 @@ There is no router. URL paths map directly to PHP files:
 
 ### Database
 
-- **Connection:** `config/conexion.php` returns a MongoDB `\MongoDB\Database` instance.
+- **Connection:** `config/conexion.php` — function `conectarMongoDB()` returns a `\MongoDB\Database` instance. The MongoDB URI is hardcoded here (production credentials). No `.env` file is used.
 - All document IDs are MongoDB `ObjectId`; validate with `/^[a-f\d]{24}$/i` before querying.
 
 **Collection schemas:**
 
-`usuario`: `_id`, `nombre_completo`, `telefono`, `email`, `password` (bcrypt), `estado` (bool), `fecha_creacion`, `foto_perfil` (string), `rol` ("ciudadano"|"admin"), `tokens` (array of remember-session tokens), `reset_password` (nullable password reset token document)
+`usuario`: `_id`, `nombre_completo`, `telefono`, `email`, `password` (bcrypt), `estado` (bool), `fecha_creacion`, `foto_perfil` (string path), `rol` ("ciudadano"|"admin"), `tokens` (array of remember-me token documents with expiry), `reset_password` (nullable password reset token document)
 
-`Reportes`: `_id`, `usuario_id` (ObjectId), `usuario_creador_id` (legacy alias), `estado` ("pendiente"|"en_revision"|"notificado"|"resuelto"), `fecha_reporte` (UTCDateTime), `fecha_estado` (UTCDateTime), `tipo`/`tipo_incidente`, `descripcion`, `ubicacion`, `latitud`, `longitud`, `direccion_texto`, `imagenes` (array), `likes` (array of `{usuario_id, fecha_like}`), `comentarios` (array of `{_id, usuario_id, comentario, comentario_padre_id, fecha_comentario, likes, eliminado, editado}`), `historial_estados` (array)
+`Reportes`: `_id`, `usuario_id` (ObjectId), `usuario_creador_id` (legacy alias), `estado` ("pendiente"|"en_revision"|"notificado"|"resuelto"), `fecha_reporte` (UTCDateTime), `fecha_estado` (UTCDateTime), `tipo`/`tipo_incidente`, `descripcion`, `ubicacion`, `latitud`, `longitud`, `direccion_texto`, `imagenes` (array of filename strings), `likes` (array of `{usuario_id, fecha_like}`), `comentarios` (array of `{_id, usuario_id, comentario, comentario_padre_id, fecha_comentario, likes, eliminado, editado}`), `historial_estados` (array)
 
 `notificaciones`: `_id`, `usuario_destino_id`, `usuario_origen_id`, `tipo` ("comentario"|"respuesta_comentario"|"like_reporte"|"like_comentario"|"estado_reporte"), `titulo`, `mensaje`, `reporte_id`, `comentario_id` (nullable), `leida` (bool), `fecha` (UTCDateTime)
 
-`tipo_incidente`: `_id`, `nombre` (string) - reference collection, no CRUD endpoints
+`tipo_incidente`: `_id`, `nombre` (string) — reference collection, no CRUD endpoints
 
-**ID type inconsistency:** older documents may store `usuario_id` as plain string instead of `ObjectId`. Queries on owner fields should use `$or` to match both types.
+**ID type inconsistency:** older documents may store `usuario_id` as a plain string instead of `ObjectId`. Queries on owner fields must use `$or` to match both types.
+
+**Field name inconsistency:** report type is stored as either `tipo` or `tipo_incidente` depending on when the document was created.
+
+### Controllers
+
+PHP classes (not endpoints) used by admin views for aggregation queries:
+
+- `controllers/admin_controlador.php` — `AdminControlador`: `obtenerEstadisticas()`, `obtenerUsuarios($limite)`
+- `controllers/analyticscontrolador.php` — `AnalyticsControlador`: `obtenerEstadisticasGenerales($dias)`, uses `DateTimeZone('America/Bogota')` for date math
 
 ### API Endpoints
 
-All API files are PHP scripts returning JSON with appropriate HTTP status codes. Use `reportes/controladores/` as the active user report API:
+All API files are PHP scripts returning JSON. Standard response shape:
+
+```json
+{ "ok": true, "data": { ... } }
+{ "ok": false, "mensaje": "error description" }
+```
 
 | Action | Path |
 |--------|------|
-| Edit/Delete report | `public/views/usuario/reportes/controladores/` |
+| Report CRUD (citizen) | `public/views/usuario/reportes/controladores/` |
 | Comment CRUD + likes | `public/views/usuario/reportes/controladores/` |
-| Admin: update status | `public/views/admin/actualizar_estado_reporte.php` |
+| Admin: update report status | `public/views/admin/actualizar_estado_reporte.php` |
+| Admin: user management, role changes, mass notifications | `public/views/admin/api_admin.php` |
 
 ### Authentication & Roles
 
-PHP sessions. Relevant session keys: `$_SESSION['usuario_id']` (string), `$_SESSION['usuario_rol']` ("ciudadano"|"admin"). Two roles: `ciudadano`, `admin`.
+`config/auth_helper.php` handles session and cookie-based auth.
+
+**Session keys:** `$_SESSION['usuario_id']` (string), `$_SESSION['usuario_nombre']`, `$_SESSION['usuario_email']`, `$_SESSION['foto_perfil']`, `$_SESSION['usuario_rol']` ("ciudadano"|"admin").
+
+**Remember-me:** 64-char hex token stored in `usuario.tokens[]` with expiry; cookie `remember_token` is HttpOnly + SameSite=Lax, 30-day expiry.
+
+**Password reset:** token stored in `usuario.reset_password` document → email link → validated on POST → cleared after successful reset.
 
 ### Notifications System
 
-`notificaciones_helper.php` inserts notification documents when comments, likes, or status changes occur. Admin panel uses Server-Sent Events (SSE) with exponential backoff reconnection logic (`admin-notificaciones.js`).
+`public/views/usuario/reportes/modelos/notificaciones_modelo.php` — `crearNotificacionUsuario()` inserts notification documents. Self-notifications are suppressed (no notification when acting on your own content).
+
+Admin panel uses Server-Sent Events (SSE) with exponential backoff reconnection in `admin-notificaciones.js`. Includes Visibility API integration (pauses when tab is hidden) and a polling fallback.
 
 ### File Uploads
 
-Images go to `public/uploads/reportes/`. Validation checks extension (jpg/jpeg/png/webp), MIME type, and size before saving with a randomized filename.
+Images saved to `public/uploads/reportes/` with filename `uniqid('reporte_', true) . '.' . ext`. Validation: extension whitelist (jpg/jpeg/png/webp), MIME type, and size limit. Filename strings are stored in `Reportes.imagenes[]`.
 
 ### Frontend
 
 No build step or framework. JavaScript files are loaded directly in PHP views:
 
-- Map: Leaflet.js + OpenStreetMap tiles (`mapa-reportes.js`, `admin-map.js`)
-- Camera: MediaDevices API (`foto-camara.js`)
+- **Map:** Leaflet.js + OpenStreetMap tiles, centered on Villavicencio (4.142, −73.6266). Key files: `mapa-reportes.js`, `admin-map.js`, `popup-reporte.js`
+- **Camera:** MediaDevices API (`foto-camara.js`)
+- **Admin form system:** ES6 modules in `public/views/components/admin/utils/` — `FormManager` orchestrates `ValidationManager`, `UIManager`, `ImageManager`, `CameraManager`. Loaded with `type="module"`.
 - All API calls use vanilla `fetch()` with JSON
 
 ## Key Conventions
 
-- Dates are formatted in `America/Bogota` timezone.
+- Dates are stored as `UTCDateTime` and always rendered in `America/Bogota` timezone.
 - `htmlspecialchars()` is applied when rendering user-provided content in PHP.
+- All endpoints validate ObjectId format (`/^[a-f\d]{24}$/i`) before querying MongoDB.
 - Error responses return JSON with HTTP 4xx/5xx codes.
-- Admin JS utilities are modular classes in `public/views/components/admin/utils/`.

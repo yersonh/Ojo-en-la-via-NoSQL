@@ -117,7 +117,21 @@ foreach ($db->usuario->find([], ['sort' => ['_id' => -1], 'limit' => 300]) as $u
     ];
 }
 
-// ── NOTIFICACIONES A ENTIDADES ─────────────────────────────────────────────
+// ── REGLAS DE NOTIFICACIÓN AUTOMÁTICA ─────────────────────────────────────
+$reglasList = [];
+foreach ($db->reglas_notificacion->find([], ['sort' => ['fecha_creacion' => -1]]) as $r) {
+    $reglasList[] = [
+        'id'             => (string)$r['_id'],
+        'tipo_incidente' => (string)($r['tipo_incidente'] ?? ''),
+        'entidad'        => (string)($r['entidad']        ?? ''),
+        'asunto'         => (string)($r['asunto']         ?? ''),
+        'mensaje'        => (string)($r['mensaje']        ?? ''),
+        'prioridad'      => (string)($r['prioridad']      ?? 'media'),
+        'activa'         => (bool)($r['activa']           ?? true),
+    ];
+}
+
+// ── HISTORIAL DE NOTIFICACIONES A ENTIDADES ────────────────────────────────
 $notifEntList = [];
 foreach ($db->notificaciones_entidades->find([], ['sort' => ['fecha' => -1], 'limit' => 100]) as $n) {
     $fecha = 'N/A';
@@ -127,15 +141,14 @@ foreach ($db->notificaciones_entidades->find([], ['sort' => ['fecha' => -1], 'li
             ->format('d/m/Y H:i');
     }
     $notifEntList[] = [
-        'id'           => (string)$n['_id'],
-        'entidad'      => (string)($n['entidad'] ?? ''),
-        'prioridad'    => (string)($n['prioridad'] ?? 'media'),
-        'asunto'       => (string)($n['asunto'] ?? ''),
-        'mensaje'      => (string)($n['mensaje'] ?? ''),
-        'estado_notif' => (string)($n['estado_notif'] ?? 'enviada'),
-        'reporte_id'   => isset($n['reporte_id']) ? (string)$n['reporte_id'] : null,
-        'fecha'        => $fecha,
-        'admin'        => (string)($n['admin_nombre'] ?? 'Admin'),
+        'id'        => (string)$n['_id'],
+        'entidad'   => (string)($n['entidad']      ?? ''),
+        'prioridad' => (string)($n['prioridad']    ?? 'media'),
+        'asunto'    => (string)($n['asunto']       ?? ''),
+        'mensaje'   => (string)($n['mensaje']      ?? ''),
+        'reporte_id'=> isset($n['reporte_id']) ? (string)$n['reporte_id'] : null,
+        'fecha'     => $fecha,
+        'origen'    => (string)($n['admin_nombre'] ?? 'Sistema automático'),
     ];
 }
 
@@ -638,94 +651,75 @@ textarea.form-control{resize:vertical;min-height:100px;}
             </div>
         </div><!-- /tab-usuarios -->
 
-        <!-- ════════════════ TAB: NOTIFICAR ENTIDAD ════════════════ -->
+        <!-- ════════════════ TAB: REGLAS DE NOTIFICACIÓN ════════════════ -->
         <div id="tab-notificar" class="tab-content">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;">
 
-                <!-- FORMULARIO -->
+                <!-- GESTIÓN DE REGLAS -->
                 <div class="section-card">
                     <div class="section-card-header">
-                        <h4><i class="fas fa-paper-plane"></i> Redactar Notificación</h4>
+                        <h4><i class="fas fa-cogs"></i> Reglas de Notificación Automática</h4>
+                        <button class="btn btn-primary btn-sm" onclick="abrirModalRegla()">
+                            <i class="fas fa-plus"></i> Nueva regla
+                        </button>
                     </div>
-
                     <p style="font-size:.85rem;color:#7f8c8d;margin-bottom:16px;">
-                        Selecciona la entidad responsable y redacta la notificación oficial del reporte ciudadano.
+                        Cada vez que un ciudadano crea un reporte, el sistema busca la regla correspondiente
+                        al tipo de incidente y envía automáticamente el correo a la entidad.
                     </p>
 
-                    <!-- ENTIDADES -->
-                    <div class="form-group">
-                        <label class="form-label">Entidad Destinataria</label>
-                        <div class="entity-grid" id="entity-grid">
-                            <?php
-                            $entidades = [
-                                ['id'=>'alcaldia',       'nombre'=>'Alcaldía de Villavicencio',        'icon'=>'fa-building'],
-                                ['id'=>'secretaria',     'nombre'=>'Sec. de Infraestructura',           'icon'=>'fa-hard-hat'],
-                                ['id'=>'invias',         'nombre'=>'INVIAS Regional Llanos',            'icon'=>'fa-road'],
-                                ['id'=>'policia',        'nombre'=>'Policía Nacional',                  'icon'=>'fa-shield-alt'],
-                                ['id'=>'transito',       'nombre'=>'Tránsito y Transporte',             'icon'=>'fa-traffic-light'],
-                                ['id'=>'epu',            'nombre'=>'Empresas Públicas Utilities',       'icon'=>'fa-wrench'],
-                            ];
-                            foreach ($entidades as $ent): ?>
-                            <div class="entity-card" data-entity="<?= $ent['id'] ?>" data-label="<?= htmlspecialchars($ent['nombre']) ?>" onclick="selectEntity(this)">
-                                <i class="fas <?= $ent['icon'] ?>"></i>
-                                <p><?= htmlspecialchars($ent['nombre']) ?></p>
-                            </div>
-                            <?php endforeach; ?>
+                    <div id="reglas-lista">
+                    <?php if (empty($reglasList)): ?>
+                        <div class="empty-state" id="reglas-empty">
+                            <i class="fas fa-cogs"></i>
+                            <p>No hay reglas configuradas aún.</p>
                         </div>
-                        <input type="hidden" id="entidad-sel" value="">
-                        <input type="hidden" id="entidad-label" value="">
+                    <?php else: ?>
+                    <?php foreach ($reglasList as $reg): ?>
+                        <div class="regla-item" id="regla-<?= $reg['id'] ?>" style="border:1px solid #e8ecef;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:<?= $reg['activa'] ? '#fff' : '#f8f9fa' ?>;">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                                <div style="flex:1;">
+                                    <div style="font-weight:600;font-size:.9rem;margin-bottom:2px;">
+                                        <?= htmlspecialchars($reg['tipo_incidente']) ?>
+                                        <span class="badge badge-<?= $reg['prioridad'] ?>" style="margin-left:6px;"><?= ucfirst($reg['prioridad']) ?></span>
+                                        <?php if (!$reg['activa']): ?>
+                                        <span class="badge" style="background:#95a5a6;color:#fff;margin-left:4px;">Inactiva</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div style="font-size:.82rem;color:#7f8c8d;">→ <?= htmlspecialchars($reg['entidad']) ?></div>
+                                </div>
+                                <div style="display:flex;gap:6px;flex-shrink:0;">
+                                    <button class="btn btn-secondary btn-sm" onclick="editarRegla(<?= htmlspecialchars(json_encode($reg)) ?>)" title="Editar">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button class="btn btn-sm" style="background:<?= $reg['activa'] ? '#f39c12' : '#27ae60' ?>;color:#fff;"
+                                        onclick="toggleRegla('<?= $reg['id'] ?>', <?= $reg['activa'] ? 'false' : 'true' ?>)"
+                                        title="<?= $reg['activa'] ? 'Desactivar' : 'Activar' ?>">
+                                        <i class="fas fa-<?= $reg['activa'] ? 'pause' : 'play' ?>"></i>
+                                    </button>
+                                    <button class="btn btn-sm" style="background:#e74c3c;color:#fff;" onclick="eliminarRegla('<?= $reg['id'] ?>')" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
                     </div>
-
-                    <form id="form-notificar" onsubmit="enviarNotificacion(event)">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Prioridad</label>
-                                <select class="form-control" id="notif-prioridad" required>
-                                    <option value="alta">Alta</option>
-                                    <option value="media" selected>Media</option>
-                                    <option value="baja">Baja</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Reporte Asociado (opcional)</label>
-                                <select class="form-control" id="notif-reporte">
-                                    <option value="">— Sin reporte específico —</option>
-                                    <?php foreach ($reportesList as $r): ?>
-                                    <option value="<?= $r['id'] ?>"><?= htmlspecialchars(mb_substr($r['tipo'].' – '.$r['descripcion'], 0, 60)) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Asunto</label>
-                            <input type="text" class="form-control" id="notif-asunto" placeholder="Ej: Reporte urgente de hueco en vía principal" maxlength="120" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Mensaje</label>
-                            <textarea class="form-control" id="notif-mensaje" rows="5" placeholder="Detalle de la notificación oficial a la entidad..." maxlength="1000" required></textarea>
-                            <div class="form-hint"><span id="notif-chars">0</span>/1000 caracteres</div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width:100%;">
-                            <i class="fas fa-paper-plane"></i> Enviar Notificación
-                        </button>
-                    </form>
                 </div>
 
-                <!-- LOG DE NOTIFICACIONES -->
+                <!-- HISTORIAL DE NOTIFICACIONES AUTOMÁTICAS -->
                 <div class="section-card">
                     <div class="section-card-header">
-                        <h4><i class="fas fa-history"></i> Historial de Notificaciones</h4>
-                        <span style="background:#eaf3fb;color:#2471a3;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600;" id="count-notifs"><?= count($notifEntList) ?></span>
+                        <h4><i class="fas fa-history"></i> Historial de Envíos</h4>
+                        <span style="background:#eaf3fb;color:#2471a3;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600;"><?= count($notifEntList) ?></span>
                     </div>
 
-                    <div id="notif-timeline" class="timeline" style="max-height:600px;overflow-y:auto;">
+                    <div class="timeline" style="max-height:600px;overflow-y:auto;">
                         <?php if (empty($notifEntList)): ?>
                         <div class="empty-state">
-                            <i class="fas fa-paper-plane"></i>
-                            <p>Aún no se han enviado notificaciones a entidades.</p>
+                            <i class="fas fa-inbox"></i>
+                            <p>Aún no se han enviado notificaciones automáticas.</p>
                         </div>
                         <?php else: ?>
                         <?php foreach ($notifEntList as $n): ?>
@@ -734,15 +728,12 @@ textarea.form-control{resize:vertical;min-height:100px;}
                             <div class="timeline-content">
                                 <div class="timeline-header">
                                     <span class="timeline-title"><?= htmlspecialchars($n['entidad']) ?></span>
-                                    <div style="display:flex;gap:6px;align-items:center;">
-                                        <span class="badge badge-<?= htmlspecialchars($n['prioridad']) ?>"><?= ucfirst($n['prioridad']) ?></span>
-                                        <span class="badge badge-enviada"><i class="fas fa-check"></i> <?= ucfirst($n['estado_notif']) ?></span>
-                                    </div>
+                                    <span class="badge badge-<?= htmlspecialchars($n['prioridad']) ?>"><?= ucfirst($n['prioridad']) ?></span>
                                 </div>
                                 <div style="font-weight:600;font-size:.85rem;margin-bottom:4px;"><?= htmlspecialchars($n['asunto']) ?></div>
-                                <div class="timeline-body"><?= nl2br(htmlspecialchars(mb_substr($n['mensaje'], 0, 200))) ?><?= mb_strlen($n['mensaje'])>200 ? '…' : '' ?></div>
+                                <div class="timeline-body"><?= nl2br(htmlspecialchars(mb_substr($n['mensaje'], 0, 200))) ?><?= mb_strlen($n['mensaje']) > 200 ? '…' : '' ?></div>
                                 <div class="timeline-meta" style="margin-top:6px;">
-                                    <i class="fas fa-user-shield"></i> <?= htmlspecialchars($n['admin']) ?>
+                                    <i class="fas fa-robot"></i> <?= htmlspecialchars($n['origen']) ?>
                                     &nbsp;·&nbsp;
                                     <i class="fas fa-clock"></i> <?= htmlspecialchars($n['fecha']) ?>
                                     <?php if ($n['reporte_id']): ?>
@@ -758,6 +749,43 @@ textarea.form-control{resize:vertical;min-height:100px;}
 
             </div>
         </div><!-- /tab-notificar -->
+
+        <!-- Modal regla -->
+        <div class="modal-overlay" id="modal-regla" style="display:none;">
+            <div class="modal" style="max-width:500px;width:95%;">
+                <h3 id="modal-regla-titulo">Nueva regla</h3>
+                <input type="hidden" id="regla-edit-id">
+                <div class="form-group" style="margin-top:14px;">
+                    <label class="form-label">Tipo de incidente</label>
+                    <input type="text" class="form-control" id="regla-tipo" placeholder="Ej: Hueco en vía">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Entidad responsable</label>
+                    <input type="text" class="form-control" id="regla-entidad" placeholder="Ej: Secretaría de Infraestructura">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prioridad</label>
+                    <select class="form-control" id="regla-prioridad">
+                        <option value="alta">Alta</option>
+                        <option value="media" selected>Media</option>
+                        <option value="baja">Baja</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Asunto del correo</label>
+                    <input type="text" class="form-control" id="regla-asunto" placeholder="Usa {tipo}, {direccion}, {reporte_id}" maxlength="120">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mensaje del correo</label>
+                    <textarea class="form-control" id="regla-mensaje" rows="4" placeholder="Usa {tipo}, {direccion}, {reporte_id}" maxlength="1000"></textarea>
+                    <div class="form-hint">Variables disponibles: <code>{tipo}</code>, <code>{direccion}</code>, <code>{reporte_id}</code></div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="cerrarModalRegla()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarRegla()"><i class="fas fa-save"></i> Guardar</button>
+                </div>
+            </div>
+        </div>
 
         <!-- ════════════════ TAB: MAPA ════════════════ -->
         <div id="tab-mapa" class="tab-content">
@@ -1111,89 +1139,122 @@ document.querySelectorAll('.cambiar-rol').forEach(btn => {
 });
 
 /* ════════════════════════════════════════════════════════
-   NOTIFICAR ENTIDAD
+   REGLAS DE NOTIFICACIÓN AUTOMÁTICA
 ════════════════════════════════════════════════════════ */
-function selectEntity(card) {
-    document.querySelectorAll('.entity-card').forEach(c => c.classList.remove('selected'));
-    card.classList.add('selected');
-    document.getElementById('entidad-sel').value   = card.dataset.entity;
-    document.getElementById('entidad-label').value = card.dataset.label;
+function abrirModalRegla() {
+    document.getElementById('modal-regla-titulo').textContent = 'Nueva regla';
+    document.getElementById('regla-edit-id').value  = '';
+    document.getElementById('regla-tipo').value     = '';
+    document.getElementById('regla-tipo').disabled  = false;
+    document.getElementById('regla-entidad').value  = '';
+    document.getElementById('regla-prioridad').value = 'media';
+    document.getElementById('regla-asunto').value   = '';
+    document.getElementById('regla-mensaje').value  = '';
+    document.getElementById('modal-regla').style.display = 'flex';
 }
 
-document.getElementById('notif-mensaje')?.addEventListener('input', function() {
-    document.getElementById('notif-chars').textContent = this.value.length;
-});
+function editarRegla(reg) {
+    document.getElementById('modal-regla-titulo').textContent = 'Editar regla';
+    document.getElementById('regla-edit-id').value   = reg.id;
+    document.getElementById('regla-tipo').value      = reg.tipo_incidente;
+    document.getElementById('regla-tipo').disabled   = true;
+    document.getElementById('regla-entidad').value   = reg.entidad;
+    document.getElementById('regla-prioridad').value = reg.prioridad;
+    document.getElementById('regla-asunto').value    = reg.asunto;
+    document.getElementById('regla-mensaje').value   = reg.mensaje;
+    document.getElementById('modal-regla').style.display = 'flex';
+}
 
-async function enviarNotificacion(e) {
-    e.preventDefault();
-    const entidad = document.getElementById('entidad-sel').value;
-    if (!entidad) { showToast('Selecciona una entidad destinataria', 'warning'); return; }
+function cerrarModalRegla() {
+    document.getElementById('modal-regla').style.display = 'none';
+}
+
+async function guardarRegla() {
+    const id      = document.getElementById('regla-edit-id').value;
+    const tipo    = document.getElementById('regla-tipo').value.trim();
+    const entidad = document.getElementById('regla-entidad').value.trim();
+    const asunto  = document.getElementById('regla-asunto').value.trim();
+    const mensaje = document.getElementById('regla-mensaje').value.trim();
+    const prio    = document.getElementById('regla-prioridad').value;
+
+    if (!tipo || !entidad || !asunto || !mensaje) {
+        showToast('Completa todos los campos', 'warning');
+        return;
+    }
 
     const fd = new FormData();
-    fd.append('accion',        'guardar_notificacion_entidad');
-    fd.append('entidad',       document.getElementById('entidad-label').value);
-    fd.append('prioridad',     document.getElementById('notif-prioridad').value);
-    fd.append('reporte_id',    document.getElementById('notif-reporte').value);
-    fd.append('asunto',        document.getElementById('notif-asunto').value);
-    fd.append('mensaje',       document.getElementById('notif-mensaje').value);
+    fd.append('prioridad', prio);
+    fd.append('entidad',   entidad);
+    fd.append('asunto',    asunto);
+    fd.append('mensaje',   mensaje);
 
-    const btn = e.target.querySelector('button[type=submit]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando…';
+    if (id) {
+        fd.append('accion',    'actualizar_regla');
+        fd.append('regla_id',  id);
+    } else {
+        fd.append('accion',        'crear_regla');
+        fd.append('tipo_incidente', tipo);
+    }
 
     try {
         const res  = await fetch('api_admin.php', { method: 'POST', body: fd });
         const data = await res.json();
         if (data.ok) {
-            showToast('Notificación enviada correctamente', 'success');
-            agregarNotifTimeline(data.notificacion);
-            document.getElementById('form-notificar').reset();
-            document.getElementById('notif-chars').textContent = '0';
-            document.querySelectorAll('.entity-card').forEach(c => c.classList.remove('selected'));
-            document.getElementById('entidad-sel').value   = '';
-            document.getElementById('entidad-label').value = '';
-            const count = document.getElementById('count-notifs');
-            if (count) count.textContent = parseInt(count.textContent || '0') + 1;
+            showToast(id ? 'Regla actualizada' : 'Regla creada', 'success');
+            cerrarModalRegla();
+            setTimeout(() => location.reload(), 800);
         } else {
-            showToast(data.mensaje || 'Error al enviar', 'error');
+            showToast(data.mensaje || 'Error al guardar', 'error');
         }
-    } catch(err) {
+    } catch {
         showToast('Error de conexión', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Notificación';
     }
 }
 
-function agregarNotifTimeline(n) {
-    const tl    = document.getElementById('notif-timeline');
-    const empty = tl.querySelector('.empty-state');
-    if (empty) empty.remove();
+async function toggleRegla(id, activar) {
+    const fd = new FormData();
+    fd.append('accion',   'toggle_regla');
+    fd.append('regla_id', id);
+    fd.append('activa',   activar ? '1' : '0');
 
-    const prioColors = { alta:'#e74c3c', media:'#f39c12', baja:'#27ae60' };
-
-    const item = document.createElement('div');
-    item.className = 'timeline-item';
-    item.innerHTML = `
-        <div class="timeline-dot ${n.prioridad}"></div>
-        <div class="timeline-content">
-            <div class="timeline-header">
-                <span class="timeline-title">${n.entidad}</span>
-                <div style="display:flex;gap:6px;">
-                    <span class="badge badge-${n.prioridad}">${n.prioridad.charAt(0).toUpperCase()+n.prioridad.slice(1)}</span>
-                    <span class="badge badge-enviada"><i class="fas fa-check"></i> Enviada</span>
-                </div>
-            </div>
-            <div style="font-weight:600;font-size:.85rem;margin-bottom:4px;">${n.asunto}</div>
-            <div class="timeline-body">${n.mensaje.substring(0,200)}${n.mensaje.length>200?'…':''}</div>
-            <div class="timeline-meta" style="margin-top:6px;">
-                <i class="fas fa-user-shield"></i> ${n.admin}
-                &nbsp;·&nbsp;
-                <i class="fas fa-clock"></i> Ahora
-            </div>
-        </div>`;
-    tl.insertBefore(item, tl.firstChild);
+    try {
+        const res  = await fetch('api_admin.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.ok) {
+            showToast(activar ? 'Regla activada' : 'Regla desactivada', 'success');
+            setTimeout(() => location.reload(), 600);
+        } else {
+            showToast(data.mensaje || 'Error', 'error');
+        }
+    } catch {
+        showToast('Error de conexión', 'error');
+    }
 }
+
+async function eliminarRegla(id) {
+    if (!confirm('¿Eliminar esta regla? Las notificaciones ya enviadas no se borrarán.')) return;
+
+    const fd = new FormData();
+    fd.append('accion',   'eliminar_regla');
+    fd.append('regla_id', id);
+
+    try {
+        const res  = await fetch('api_admin.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.ok) {
+            document.getElementById('regla-' + id)?.remove();
+            showToast('Regla eliminada', 'success');
+        } else {
+            showToast(data.mensaje || 'Error', 'error');
+        }
+    } catch {
+        showToast('Error de conexión', 'error');
+    }
+}
+
+document.getElementById('modal-regla')?.addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalRegla();
+});
 
 /* ════════════════════════════════════════════════════════
    MAPA ADMIN — usa el componente compartido popup-reporte.js

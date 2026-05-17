@@ -4,6 +4,7 @@ session_start();
 require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../config/auth_helper.php';
+require_once __DIR__ . '/../../../config/notificacion_entidad_auto.php';
 
 verificar_autenticacion('../../index.php');
 
@@ -118,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resultado = $reportes->insertOne($documento);
 
             if ($resultado->getInsertedCount() > 0) {
+                dispararNotificacionEntidad($db, $documento, $resultado->getInsertedId());
                 $mensaje = 'Reporte guardado correctamente.';
                 $tipoMensaje = 'success';
             } else {

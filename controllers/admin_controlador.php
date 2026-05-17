@@ -205,58 +205,6 @@ class AdminControlador
         }
     }
 
-    public function obtenerAutoridades()
-    {
-        return [
-            ['id' => 1, 'nombre' => 'Alcaldia de Villavicencio - Secretaria de Infraestructura', 'email' => 'infraestructura@villavicencio.gov.co', 'tipo' => 'municipal', 'descripcion' => 'Vias urbanas, calles y avenidas dentro de la ciudad', 'responsable' => 'Secretaria de Infraestructura'],
-            ['id' => 2, 'nombre' => 'INVIAS - Instituto Nacional de Vias', 'email' => 'pqrs@invias.gov.co', 'tipo' => 'nacional', 'descripcion' => 'Vias nacionales como la Via al Llano, via a Puerto Lopez', 'responsable' => 'Direccion Territorial Meta'],
-            ['id' => 3, 'nombre' => 'Gobernacion del Meta - Secretaria de Infraestructura', 'email' => 'infraestructura@meta.gov.co', 'tipo' => 'departamental', 'descripcion' => 'Vias departamentales que conectan municipios del Meta', 'responsable' => 'Secretaria de Infraestructura Departamental']
-        ];
-    }
-
-    public function enviarAlertaAutoridad($idReporte, $idAutoridad, $emailPersonalizado = null)
-    {
-        try {
-            $rid = $this->objectId($idReporte);
-            $reporte = $this->db->Reportes->findOne(['_id' => $rid]);
-
-            if (!$reporte) {
-                throw new Exception('Reporte no encontrado');
-            }
-
-            $autoridad = null;
-            foreach ($this->obtenerAutoridades() as $opcion) {
-                if ((int) $opcion['id'] === (int) $idAutoridad) {
-                    $autoridad = $opcion;
-                    break;
-                }
-            }
-
-            if (!$autoridad) {
-                throw new Exception('Autoridad no valida');
-            }
-
-            $this->db->notificaciones_entidades->insertOne([
-                'reporte_id' => $rid,
-                'entidad' => $autoridad['nombre'],
-                'email' => $emailPersonalizado ?: $autoridad['email'],
-                'prioridad' => 'media',
-                'asunto' => 'Alerta de reporte ciudadano',
-                'mensaje' => 'Alerta generada para el reporte ' . (string) $rid,
-                'estado_notif' => 'enviada',
-                'fecha' => new UTCDateTime()
-            ]);
-
-            $this->cambiarEstadoReporte($rid, 'notificado');
-            $_SESSION['mensaje'] = 'Notificacion de alerta creada.';
-            return true;
-        } catch (Throwable $e) {
-            error_log('Error en alerta simulada: ' . $e->getMessage());
-            $_SESSION['error'] = 'Error: ' . $e->getMessage();
-            return false;
-        }
-    }
-
     public function obtenerNotificacionesNoLeidas($idUsuario, $limite = 10)
     {
         return $this->obtenerNotificaciones($idUsuario, $limite, false);
