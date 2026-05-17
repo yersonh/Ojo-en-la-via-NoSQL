@@ -88,19 +88,8 @@ if ($accion === 'cambiar_rol') {
 if ($accion === 'eliminar_reporte_admin') {
     $rid = validarId($_POST['reporte_id'] ?? '');
 
-    // Recopilar IDs de comentarios para borrar sus likes
-    $comentariosIds = [];
-    foreach ($db->comentarios_reporte->find(['reporte_id' => $rid]) as $c) {
-        if (isset($c['_id'])) $comentariosIds[] = $c['_id'];
-    }
-
     $db->Reportes->deleteOne(['_id' => $rid]);
-    $db->comentarios_reporte->deleteMany(['reporte_id' => $rid]);
     $db->notificaciones->deleteMany(['reporte_id' => $rid]);
-
-    if (!empty($comentariosIds)) {
-        $db->likes_comentario->deleteMany(['comentario_id' => ['$in' => $comentariosIds]]);
-    }
 
     ok(['mensaje' => 'Reporte eliminado.']);
 }

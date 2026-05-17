@@ -62,31 +62,79 @@ try {
 
     $db = conectarMongoDB();
 
-    $comentarios = $db->comentarios_reporte;
     $reportes = $db->Reportes;
 
     $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
     $usuarioId = new MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
 
-    $resultadoComentario = $comentarios->insertOne([
-        'reporte_id' => $reporteId,
-        'usuario_id' => $usuarioId,
-        'comentario' => $comentarioTexto,
-        'comentario_padre_id' => $comentarioPadreId,
-        'fecha_comentario' => new MongoDB\BSON\UTCDateTime()
-    ]);
-
-    $comentarioId = $resultadoComentario->getInsertedId();
     $reporte = $reportes->findOne([
         '_id' => $reporteId
     ]);
+
+    if (!$reporte) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'Reporte no encontrado.'
+        ], 404);
+    }
+
+    if ($comentarioPadreId !== null) {
+        $comentariosActuales = $reporte['comentarios'] ?? [];
+
+        if ($comentariosActuales instanceof MongoDB\Model\BSONArray) {
+            $comentariosActuales = $comentariosActuales->getArrayCopy();
+        }
+
+        $padreExiste = false;
+        foreach ($comentariosActuales as $comentarioActual) {
+            if (isset($comentarioActual['_id']) && (string) $comentarioActual['_id'] === (string) $comentarioPadreId) {
+                $padreExiste = true;
+                break;
+            }
+        }
+
+        if (!$padreExiste) {
+            responderJson([
+                'ok' => false,
+                'mensaje' => 'Comentario padre no encontrado.'
+            ], 404);
+        }
+    }
+
+    $comentarioId = new MongoDB\BSON\ObjectId();
+    $comentarioNuevo = [
+        '_id' => $comentarioId,
+        'usuario_id' => $usuarioId,
+        'comentario' => $comentarioTexto,
+        'comentario_padre_id' => $comentarioPadreId,
+        'fecha_comentario' => new MongoDB\BSON\UTCDateTime(),
+        'likes' => [],
+        'eliminado' => false,
+        'editado' => false
+    ];
+
+    $reportes->updateOne(
+        ['_id' => $reporteId],
+        ['$push' => ['comentarios' => $comentarioNuevo]]
+    );
+
     $nombreOrigen = obtenerNombreNotificador();
     $usuarioRespuestaNotificado = null;
 
     if ($comentarioPadreId !== null) {
-        $comentarioPadre = $comentarios->findOne([
-            '_id' => $comentarioPadreId
-        ]);
+        $comentarioPadre = null;
+        $comentariosActuales = $reporte['comentarios'] ?? [];
+
+        if ($comentariosActuales instanceof MongoDB\Model\BSONArray) {
+            $comentariosActuales = $comentariosActuales->getArrayCopy();
+        }
+
+        foreach ($comentariosActuales as $comentarioActual) {
+            if (isset($comentarioActual['_id']) && (string) $comentarioActual['_id'] === (string) $comentarioPadreId) {
+                $comentarioPadre = $comentarioActual;
+                break;
+            }
+        }
 
         if ($comentarioPadre && isset($comentarioPadre['usuario_id'])) {
             $usuarioRespuestaNotificado = (string) $comentarioPadre['usuario_id'];
@@ -123,10 +171,19 @@ try {
         );
     }
 
-    $totalComentarios = $comentarios->countDocuments([
-        'reporte_id' => $reporteId,
-        'comentario_padre_id' => null
-    ]);
+    $reporteActualizado = $reportes->findOne(['_id' => $reporteId]);
+    $comentariosActualizados = $reporteActualizado['comentarios'] ?? [];
+
+    if ($comentariosActualizados instanceof MongoDB\Model\BSONArray) {
+        $comentariosActualizados = $comentariosActualizados->getArrayCopy();
+    }
+
+    $totalComentarios = 0;
+    foreach (is_array($comentariosActualizados) ? $comentariosActualizados : [] as $comentarioActual) {
+        if (($comentarioActual['comentario_padre_id'] ?? null) === null) {
+            $totalComentarios++;
+        }
+    }
 
     responderJson([
         'ok' => true,

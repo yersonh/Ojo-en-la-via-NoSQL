@@ -110,59 +110,75 @@ try {
 
     $db = conectarMongoDB();
 
-    $comentarios = $db->comentarios_reporte;
-    $likesComentario = $db->likes_comentario;
+    $reportes = $db->Reportes;
+    $usuarios = $db->usuario;
 
     $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
     $usuarioSesionId = (string) $_SESSION['usuario_id'];
 
-    $cursor = $comentarios->aggregate([
-        [
-            '$match' => [
-                'reporte_id' => $reporteId
-            ]
-        ],
-        [
-            '$lookup' => [
-                'from' => 'usuario',
-                'localField' => 'usuario_id',
-                'foreignField' => '_id',
-                'as' => 'usuario'
-            ]
-        ],
-        [
-            '$sort' => [
-                'fecha_comentario' => 1
-            ]
-        ]
+    $reporte = $reportes->findOne([
+        '_id' => $reporteId
     ]);
+
+    if (!$reporte) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'Reporte no encontrado.'
+        ], 404);
+    }
+
+    $comentariosReporte = $reporte['comentarios'] ?? [];
+
+    if ($comentariosReporte instanceof MongoDB\Model\BSONArray) {
+        $comentariosReporte = $comentariosReporte->getArrayCopy();
+    }
+
+    $comentariosReporte = is_array($comentariosReporte) ? $comentariosReporte : [];
+
+    usort($comentariosReporte, function ($a, $b) {
+        $fechaA = $a['fecha_comentario'] ?? null;
+        $fechaB = $b['fecha_comentario'] ?? null;
+        $tsA = $fechaA instanceof MongoDB\BSON\UTCDateTime ? $fechaA->toDateTime()->getTimestamp() : 0;
+        $tsB = $fechaB instanceof MongoDB\BSON\UTCDateTime ? $fechaB->toDateTime()->getTimestamp() : 0;
+        return $tsA <=> $tsB;
+    });
+
+    $usuariosIds = [];
+    foreach ($comentariosReporte as $comentario) {
+        if (($comentario['usuario_id'] ?? null) instanceof MongoDB\BSON\ObjectId) {
+            $usuariosIds[(string) $comentario['usuario_id']] = $comentario['usuario_id'];
+        }
+    }
+
+    $usuariosPorId = [];
+    if (!empty($usuariosIds)) {
+        foreach ($usuarios->find(['_id' => ['$in' => array_values($usuariosIds)]]) as $usuario) {
+            $usuariosPorId[(string) $usuario['_id']] = $usuario;
+        }
+    }
 
     $comentariosTemporales = [];
 
-    foreach ($cursor as $comentario) {
-        $usuario = null;
-
-        if (!empty($comentario['usuario'])) {
-            foreach ($comentario['usuario'] as $usuarioEncontrado) {
-                $usuario = $usuarioEncontrado;
-                break;
-            }
-        }
+    foreach ($comentariosReporte as $comentario) {
+        $usuarioComentarioId = isset($comentario['usuario_id'])
+            ? (string) $comentario['usuario_id']
+            : '';
+        $usuario = $usuariosPorId[$usuarioComentarioId] ?? null;
 
         $nombre = obtenerNombreUsuario($usuario);
         $foto = obtenerFotoUsuario($usuario);
 
         $comentarioId = $comentario['_id'];
 
-        $usuarioComentarioId = isset($comentario['usuario_id'])
-            ? (string) $comentario['usuario_id']
-            : '';
-
         $esMio = $usuarioSesionId === $usuarioComentarioId;
 
-        $totalLikes = $likesComentario->countDocuments([
-            'comentario_id' => $comentarioId
-        ]);
+        $likesComentario = $comentario['likes'] ?? [];
+
+        if ($likesComentario instanceof MongoDB\Model\BSONArray) {
+            $likesComentario = $likesComentario->getArrayCopy();
+        }
+
+        $totalLikes = is_array($likesComentario) ? count($likesComentario) : 0;
 
         $comentarioPadreId = null;
 

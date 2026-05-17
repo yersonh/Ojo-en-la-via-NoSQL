@@ -13,7 +13,16 @@ function responderJson($data, $status = 200)
     exit;
 }
 
-function obtenerIdsDescendientes($comentarios, MongoDB\BSON\ObjectId $comentarioId)
+function normalizarArray($valor): array
+{
+    if ($valor instanceof MongoDB\Model\BSONArray) {
+        return $valor->getArrayCopy();
+    }
+
+    return is_array($valor) ? $valor : [];
+}
+
+function obtenerIdsDescendientes(array $comentarios, string $comentarioId): array
 {
     $ids = [$comentarioId];
     $pendientes = [$comentarioId];
@@ -21,18 +30,14 @@ function obtenerIdsDescendientes($comentarios, MongoDB\BSON\ObjectId $comentario
     while (!empty($pendientes)) {
         $padreActual = array_shift($pendientes);
 
-        $hijos = $comentarios->find([
-            'comentario_padre_id' => $padreActual
-        ]);
+        foreach ($comentarios as $comentario) {
+            $padreId = $comentario['comentario_padre_id'] ?? null;
 
-        foreach ($hijos as $hijo) {
-            if (!isset($hijo['_id'])) {
-                continue;
+            if ($padreId !== null && (string) $padreId === $padreActual && isset($comentario['_id'])) {
+                $hijoId = (string) $comentario['_id'];
+                $ids[] = $hijoId;
+                $pendientes[] = $hijoId;
             }
-
-            $hijoId = $hijo['_id'];
-            $ids[] = $hijoId;
-            $pendientes[] = $hijoId;
         }
     }
 
@@ -43,7 +48,7 @@ try {
     if (!isset($_SESSION['usuario_id'])) {
         responderJson([
             'ok' => false,
-            'mensaje' => 'No has iniciado sesión.'
+            'mensaje' => 'No has iniciado sesion.'
         ], 401);
     }
 
@@ -52,56 +57,66 @@ try {
     if (!preg_match('/^[a-f\d]{24}$/i', $comentarioIdTexto)) {
         responderJson([
             'ok' => false,
-            'mensaje' => 'ID de comentario inválido.'
+            'mensaje' => 'ID de comentario invalido.'
         ], 400);
     }
 
     $db = conectarMongoDB();
-
-    $comentarios = $db->comentarios_reporte;
-    $likesComentario = $db->likes_comentario;
+    $reportes = $db->Reportes;
 
     $comentarioId = new MongoDB\BSON\ObjectId($comentarioIdTexto);
-    $usuarioId = new MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
+    $usuarioIdTexto = (string) $_SESSION['usuario_id'];
 
-    $comentario = $comentarios->findOne([
-        '_id' => $comentarioId
+    $reporte = $reportes->findOne([
+        'comentarios._id' => $comentarioId
     ]);
 
-    if (!$comentario) {
+    if (!$reporte) {
         responderJson([
             'ok' => false,
             'mensaje' => 'Comentario no encontrado.'
         ], 404);
     }
 
-    if (!isset($comentario['usuario_id']) || (string) $comentario['usuario_id'] !== (string) $usuarioId) {
+    $comentarios = normalizarArray($reporte['comentarios'] ?? []);
+    $comentarioBase = null;
+
+    foreach ($comentarios as $comentario) {
+        if (isset($comentario['_id']) && (string) $comentario['_id'] === $comentarioIdTexto) {
+            $comentarioBase = $comentario;
+            break;
+        }
+    }
+
+    if (!$comentarioBase) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'Comentario no encontrado.'
+        ], 404);
+    }
+
+    if (!isset($comentarioBase['usuario_id']) || (string) $comentarioBase['usuario_id'] !== $usuarioIdTexto) {
         responderJson([
             'ok' => false,
             'mensaje' => 'No puedes eliminar comentarios de otros usuarios.'
         ], 403);
     }
 
-    $idsAEliminar = obtenerIdsDescendientes($comentarios, $comentarioId);
+    $idsAEliminar = obtenerIdsDescendientes($comentarios, $comentarioIdTexto);
+    $comentariosFiltrados = array_values(array_filter($comentarios, function ($comentario) use ($idsAEliminar) {
+        return !isset($comentario['_id']) || !in_array((string) $comentario['_id'], $idsAEliminar, true);
+    }));
 
-    $comentarios->deleteMany([
-        '_id' => [
-            '$in' => $idsAEliminar
-        ]
-    ]);
-
-    $likesComentario->deleteMany([
-        'comentario_id' => [
-            '$in' => $idsAEliminar
-        ]
-    ]);
+    $reportes->updateOne(
+        ['_id' => $reporte['_id']],
+        ['$set' => ['comentarios' => $comentariosFiltrados]]
+    );
 
     responderJson([
         'ok' => true,
         'mensaje' => 'Comentario eliminado.',
         'comentarios_eliminados' => count($idsAEliminar)
     ]);
-
 } catch (Throwable $e) {
     responderJson([
         'ok' => false,

@@ -193,19 +193,8 @@ class AdminControlador
     {
         try {
             $rid = $this->objectId($idReporte);
-            $comentariosIds = [];
-
-            foreach ($this->db->comentarios_reporte->find(['reporte_id' => $rid]) as $comentario) {
-                $comentariosIds[] = $comentario['_id'];
-            }
-
             $this->db->Reportes->deleteOne(['_id' => $rid]);
-            $this->db->comentarios_reporte->deleteMany(['reporte_id' => $rid]);
             $this->db->notificaciones->deleteMany(['reporte_id' => $rid]);
-
-            if ($comentariosIds) {
-                $this->db->likes_comentario->deleteMany(['comentario_id' => ['$in' => $comentariosIds]]);
-            }
 
             $_SESSION['mensaje'] = 'Reporte eliminado correctamente';
             return true;

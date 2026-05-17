@@ -13,11 +13,20 @@ function responderJson($data, $status = 200)
     exit;
 }
 
+function normalizarArray($valor): array
+{
+    if ($valor instanceof MongoDB\Model\BSONArray) {
+        return $valor->getArrayCopy();
+    }
+
+    return is_array($valor) ? $valor : [];
+}
+
 try {
     if (!isset($_SESSION['usuario_id'])) {
         responderJson([
             'ok' => false,
-            'mensaje' => 'No has iniciado sesión.'
+            'mensaje' => 'No has iniciado sesion.'
         ], 401);
     }
 
@@ -26,61 +35,77 @@ try {
     if (!preg_match('/^[a-f\d]{24}$/i', $comentarioIdTexto)) {
         responderJson([
             'ok' => false,
-            'mensaje' => 'ID de comentario inválido.'
+            'mensaje' => 'ID de comentario invalido.'
         ], 400);
     }
 
     $db = conectarMongoDB();
-
-    $comentariosReporte = $db->comentarios_reporte;
-    $likesComentario = $db->likes_comentario;
+    $reportes = $db->Reportes;
 
     $comentarioId = new MongoDB\BSON\ObjectId($comentarioIdTexto);
-    $usuarioId = new MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
+    $usuarioIdTexto = (string) $_SESSION['usuario_id'];
+    $usuarioId = new MongoDB\BSON\ObjectId($usuarioIdTexto);
 
-    $comentario = $comentariosReporte->findOne([
-        '_id' => $comentarioId
+    $reporte = $reportes->findOne([
+        'comentarios._id' => $comentarioId
     ]);
 
-    if (!$comentario) {
+    if (!$reporte) {
         responderJson([
             'ok' => false,
             'mensaje' => 'Comentario no encontrado.'
         ], 404);
     }
 
-    $likeExistente = $likesComentario->findOne([
-        'comentario_id' => $comentarioId,
-        'usuario_id' => $usuarioId
-    ]);
+    $comentarios = normalizarArray($reporte['comentarios'] ?? []);
+    $liked = false;
+    $totalLikes = 0;
 
-    if ($likeExistente) {
-        $likesComentario->deleteOne([
-            'comentario_id' => $comentarioId,
-            'usuario_id' => $usuarioId
-        ]);
+    foreach ($comentarios as &$comentario) {
+        if (!isset($comentario['_id']) || (string) $comentario['_id'] !== (string) $comentarioId) {
+            continue;
+        }
 
-        $liked = false;
-    } else {
-        $likesComentario->insertOne([
-            'comentario_id' => $comentarioId,
-            'usuario_id' => $usuarioId,
-            'fecha_like' => new MongoDB\BSON\UTCDateTime()
-        ]);
+        $likes = normalizarArray($comentario['likes'] ?? []);
+        $indiceLike = null;
 
-        $liked = true;
+        foreach ($likes as $indice => $like) {
+            $usuarioLike = $like['usuario_id'] ?? $like['usuario_origen_id'] ?? null;
+
+            if ($usuarioLike !== null && (string) $usuarioLike === $usuarioIdTexto) {
+                $indiceLike = $indice;
+                break;
+            }
+        }
+
+        if ($indiceLike !== null) {
+            array_splice($likes, $indiceLike, 1);
+            $liked = false;
+        } else {
+            $likes[] = [
+                'usuario_id' => $usuarioId,
+                'fecha_like' => new MongoDB\BSON\UTCDateTime()
+            ];
+            $liked = true;
+        }
+
+        $comentario['likes'] = array_values($likes);
+        $totalLikes = count($comentario['likes']);
+        break;
     }
 
-    $totalLikes = $likesComentario->countDocuments([
-        'comentario_id' => $comentarioId
-    ]);
+    unset($comentario);
+
+    $reportes->updateOne(
+        ['_id' => $reporte['_id']],
+        ['$set' => ['comentarios' => array_values($comentarios)]]
+    );
 
     responderJson([
         'ok' => true,
         'liked' => $liked,
         'total_likes' => $totalLikes
     ]);
-
 } catch (Throwable $e) {
     responderJson([
         'ok' => false,

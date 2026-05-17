@@ -45,11 +45,7 @@ There is no router. URL paths map directly to PHP files:
 
 `usuario`: `_id`, `nombre_completo`, `telefono`, `email`, `password` (bcrypt), `estado` (bool), `fecha_creacion` (string), `foto_perfil` (string), `rol` ("ciudadano"|"admin")
 
-`Reportes`: `_id`, `usuario_id` (ObjectId), `usuario_creador_id` (legacy alias), `estado` ("pendiente"|"en_revision"|"notificado"|"resuelto"), `fecha_reporte` (UTCDateTime), `fecha_estado` (UTCDateTime), `tipo`/`tipo_incidente`, `descripcion`, `ubicacion`, `latitud`, `longitud`, `direccion_texto`, `imagenes` (array), `likes` (array of `{usuario_id, fecha_like}`), `historial_estados` (array)
-
-`comentarios_reporte`: `_id`, `reporte_id`, `usuario_id`, `comentario` (max 500 chars), `comentario_padre_id` (null = root, ObjectId = reply), `fecha_comentario` (UTCDateTime), `eliminado` (bool), `editado` (bool)
-
-`likes_comentario`: `_id`, `comentario_id`, `usuario_id`, `fecha_like` (UTCDateTime)
+`Reportes`: `_id`, `usuario_id` (ObjectId), `usuario_creador_id` (legacy alias), `estado` ("pendiente"|"en_revision"|"notificado"|"resuelto"), `fecha_reporte` (UTCDateTime), `fecha_estado` (UTCDateTime), `tipo`/`tipo_incidente`, `descripcion`, `ubicacion`, `latitud`, `longitud`, `direccion_texto`, `imagenes` (array), `likes` (array of `{usuario_id, fecha_like}`), `comentarios` (array of `{_id, usuario_id, comentario, comentario_padre_id, fecha_comentario, likes, eliminado, editado}`), `historial_estados` (array)
 
 `notificaciones`: `_id`, `usuario_destino_id`, `usuario_origen_id`, `tipo` ("comentario"|"respuesta_comentario"|"like_reporte"|"like_comentario"|"estado_reporte"), `titulo`, `mensaje`, `reporte_id`, `comentario_id` (nullable), `leida` (bool), `fecha` (UTCDateTime)
 

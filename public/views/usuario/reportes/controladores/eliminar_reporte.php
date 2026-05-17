@@ -46,8 +46,6 @@ try {
     $db = conectarMongoDB();
 
     $reportes = $db->Reportes;
-    $comentariosReporte = $db->comentarios_reporte;
-    $likesComentarios = $db->likes_comentario;
 
     $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
     $usuarioIdTexto = (string) $_SESSION['usuario_id'];
@@ -63,29 +61,8 @@ try {
         ], 404);
     }
 
-    $comentariosIds = [];
-    $comentarios = $comentariosReporte->find([
-        'reporte_id' => $reporteId
-    ]);
-
-    foreach ($comentarios as $comentario) {
-        if (isset($comentario['_id'])) {
-            $comentariosIds[] = $comentario['_id'];
-        }
-    }
-
     $reportes->deleteOne($filtro);
-    $comentariosReporte->deleteMany([
-        'reporte_id' => $reporteId
-    ]);
-
-    if (!empty($comentariosIds)) {
-        $likesComentarios->deleteMany([
-            'comentario_id' => [
-                '$in' => $comentariosIds
-            ]
-        ]);
-    }
+    $db->notificaciones->deleteMany(['reporte_id' => $reporteId]);
 
     responderJson([
         'ok' => true,

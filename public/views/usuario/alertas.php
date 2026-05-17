@@ -132,7 +132,6 @@ try {
     $db = conectarMongoDB();
 
     $reportes = $db->Reportes;
-    $comentariosReporte = $db->comentarios_reporte;
 
     $comentariosAutoIdTexto = $_GET['comentarios'] ?? '';
     $reporteAutoIdTexto = $_GET['reporte'] ?? '';
@@ -265,10 +264,14 @@ $cursor = $reportes->aggregate($pipeline);
                     $totalLikes = count($likesReporte);
                     $yaDioLike = usuarioDioLikeReporte($likesReporte, $usuarioIdActual);
 
-                 $totalComentariosReporte = $comentariosReporte->countDocuments([
-                    'reporte_id' => $reporteIdObj,
-                    'comentario_padre_id' => null
-                ]);
+                    $comentariosReporte = normalizarArrayBson($reporte['comentarios'] ?? []);
+                    $totalComentariosReporte = 0;
+
+                    foreach ($comentariosReporte as $comentarioReporte) {
+                        if (($comentarioReporte['comentario_padre_id'] ?? null) === null) {
+                            $totalComentariosReporte++;
+                        }
+                    }
 
                     $esReportePropio = reportePerteneceUsuario($reporte, $usuarioIdActual);
                 ?>

@@ -49,14 +49,23 @@ $totalReportes = $db->Reportes->countDocuments([
     ]
 ]);
 
-$totalComentarios = $db->comentarios_reporte->countDocuments([
-    '$or' => [
-        ['usuario_id' => $usuarioId],
-        ['usuario_id' => $usuarioObjectId],
-        ['usuario_origen_id' => $usuarioId],
-        ['usuario_origen_id' => $usuarioObjectId],
-    ]
+$totalComentariosCursor = $db->Reportes->aggregate([
+    ['$unwind' => '$comentarios'],
+    [
+        '$match' => [
+            '$or' => [
+                ['comentarios.usuario_id' => $usuarioId],
+                ['comentarios.usuario_id' => $usuarioObjectId],
+                ['comentarios.usuario_origen_id' => $usuarioId],
+                ['comentarios.usuario_origen_id' => $usuarioObjectId],
+            ]
+        ]
+    ],
+    ['$count' => 'total']
 ]);
+
+$totalComentariosData = current(iterator_to_array($totalComentariosCursor, false)) ?: [];
+$totalComentarios = (int) ($totalComentariosData['total'] ?? 0);
 
 $totalLikesReportes = $db->Reportes->countDocuments([
     '$or' => [

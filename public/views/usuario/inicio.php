@@ -104,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'fecha_reporte' => $fechaReporte,
                 'fecha_estado' => $fechaReporte,
                 'likes' => [],
+                'comentarios' => [],
                 'historial_estados' => [
                     [
                         'estado_anterior' => null,
