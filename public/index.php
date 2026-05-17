@@ -5,6 +5,8 @@ require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/auth_helper.php';
 
+use MongoDB\BSON\UTCDateTime;
+
 $mensaje = '';
 $tipo = '';
 
@@ -90,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mensaje = 'Todos los campos son obligatorios.';
             $tipo = 'error';
         } else {
+            try {
              $existeEmail = $usuarios->findOne(['email' => $email]);
             $existeTelefono = $usuarios->findOne(['telefono' => $telefono]);
 
@@ -108,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email' => $email,
                     'password' => $hash,
                     'estado' => true,
-                    'fecha_creacion' => date('Y-m-d H:i:s'),
+                    'fecha_creacion' => new UTCDateTime(),
                     'foto_perfil' => '',
                     'rol' => 'ciudadano',
                     'tokens' => []
@@ -121,6 +124,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $mensaje = 'No se pudo registrar el usuario.';
                     $tipo = 'error';
                 }
+            }
+            } catch (Throwable $e) {
+                $mensaje = 'Error al registrar usuario: ' . $e->getMessage();
+                $tipo = 'error';
             }
         }
     }
