@@ -1,47 +1,81 @@
 <?php
-class AdminControlador {
+
+require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use MongoDB\BSON\ObjectId;
+use MongoDB\BSON\UTCDateTime;
+
+class AdminControlador
+{
     private $db;
 
-    public function __construct($database) {
-        $this->db = $database->conectar();
+    public function __construct($database = null)
+    {
+        $this->db = conectarMongoDB();
     }
-    public function obtenerEstadisticas() {
+
+    private function objectId($id): ObjectId
+    {
+        if ($id instanceof ObjectId) {
+            return $id;
+        }
+
+        if (!preg_match('/^[a-f\d]{24}$/i', (string) $id)) {
+            throw new Exception('ID invalido.');
+        }
+
+        return new ObjectId((string) $id);
+    }
+
+    private function filtroUsuario($id): array
+    {
+        $texto = (string) $id;
+        $filtro = [['usuario_id' => $texto], ['usuario_creador_id' => $texto]];
+
+        if (preg_match('/^[a-f\d]{24}$/i', $texto)) {
+            $obj = new ObjectId($texto);
+            $filtro[] = ['usuario_id' => $obj];
+            $filtro[] = ['usuario_creador_id' => $obj];
+        }
+
+        return ['$or' => $filtro];
+    }
+
+    public function obtenerEstadisticas()
+    {
         try {
-            $estadisticas = [];
+            $estadisticas = [
+                'total_reportes' => $this->db->Reportes->countDocuments([]),
+                'total_usuarios' => $this->db->usuario->countDocuments([]),
+                'reportes_por_estado' => [],
+                'tipos_comunes' => []
+            ];
 
-            // Total reportes
-            $sql1 = "SELECT COUNT(*) as total FROM reporte";
-            $stmt1 = $this->db->prepare($sql1);
-            $stmt1->execute();
-            $estadisticas['total_reportes'] = $stmt1->fetchColumn();
+            foreach ($this->db->Reportes->aggregate([
+                ['$group' => ['_id' => '$estado', 'cantidad' => ['$sum' => 1]]],
+                ['$sort' => ['cantidad' => -1]]
+            ]) as $estado) {
+                $estadisticas['reportes_por_estado'][] = [
+                    'estado' => (string) ($estado['_id'] ?? 'pendiente'),
+                    'cantidad' => (int) $estado['cantidad']
+                ];
+            }
 
-            // Total usuarios
-            $sql2 = "SELECT COUNT(*) as total FROM usuario";
-            $stmt2 = $this->db->prepare($sql2);
-            $stmt2->execute();
-            $estadisticas['total_usuarios'] = $stmt2->fetchColumn();
-
-            // Reportes por estado
-            $sql3 = "SELECT estado, COUNT(*) as cantidad FROM reporte GROUP BY estado";
-            $stmt3 = $this->db->prepare($sql3);
-            $stmt3->execute();
-            $estadisticas['reportes_por_estado'] = $stmt3->fetchAll(PDO::FETCH_ASSOC);
-
-            // Tipos de incidentes más comunes
-            $sql4 = "SELECT ti.nombre, COUNT(*) as cantidad
-                    FROM reporte r
-                    INNER JOIN tipo_incidente ti ON r.id_tipo_incidente = ti.id_tipo_incidente
-                    GROUP BY ti.nombre
-                    ORDER BY cantidad DESC
-                    LIMIT 5";
-            $stmt4 = $this->db->prepare($sql4);
-            $stmt4->execute();
-            $estadisticas['tipos_comunes'] = $stmt4->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($this->db->Reportes->aggregate([
+                ['$group' => ['_id' => ['$ifNull' => ['$tipo', '$tipo_incidente']], 'cantidad' => ['$sum' => 1]]],
+                ['$sort' => ['cantidad' => -1]],
+                ['$limit' => 5]
+            ]) as $tipo) {
+                $estadisticas['tipos_comunes'][] = [
+                    'nombre' => (string) ($tipo['_id'] ?? 'Sin tipo'),
+                    'cantidad' => (int) $tipo['cantidad']
+                ];
+            }
 
             return $estadisticas;
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo estadísticas: " . $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('Error obteniendo estadisticas: ' . $e->getMessage());
             return [
                 'total_reportes' => 0,
                 'total_usuarios' => 0,
@@ -51,412 +85,264 @@ class AdminControlador {
         }
     }
 
-    // Método para obtener usuarios
-    public function obtenerUsuarios($limite = 50) {
+    public function obtenerUsuarios($limite = 50)
+    {
         try {
-            $sql = "SELECT
-                        u.id_usuario,
-                        p.nombres,
-                        p.apellidos,
-                        p.telefono,
-                        u.correo,
-                        r.nombre as rol,
-                        r.id_rol,
-                        eu.nombre as estado,
-                        eu.id_estado,
-                        COUNT(re.id_reporte) as total_reportes
-                    FROM usuario u
-                    INNER JOIN persona p ON u.id_persona = p.id_persona
-                    INNER JOIN rol r ON u.id_rol = r.id_rol
-                    INNER JOIN estado_usuario eu ON u.id_estado = eu.id_estado
-                    LEFT JOIN reporte re ON u.id_usuario = re.id_usuario
-                    GROUP BY u.id_usuario, p.nombres, p.apellidos, p.telefono, u.correo, r.nombre, r.id_rol, eu.nombre, eu.id_estado
-                    ORDER BY u.id_usuario DESC
-                    LIMIT :limite";
+            $usuarios = [];
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
-            $stmt->execute();
+            foreach ($this->db->usuario->find([], ['sort' => ['_id' => -1], 'limit' => (int) $limite]) as $u) {
+                $nombre = (string) ($u['nombre_completo'] ?? $u['nombre'] ?? '');
+                $usuarios[] = [
+                    'id_usuario' => (string) $u['_id'],
+                    'nombres' => $nombre,
+                    'apellidos' => '',
+                    'telefono' => (string) ($u['telefono'] ?? ''),
+                    'correo' => (string) ($u['email'] ?? ''),
+                    'rol' => (string) ($u['rol'] ?? 'ciudadano'),
+                    'id_rol' => ($u['rol'] ?? 'ciudadano') === 'admin' ? 1 : 2,
+                    'estado' => !empty($u['estado']) ? 'Activo' : 'Inactivo',
+                    'id_estado' => !empty($u['estado']) ? 1 : 2,
+                    'total_reportes' => $this->db->Reportes->countDocuments($this->filtroUsuario($u['_id']))
+                ];
+            }
 
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo usuarios: " . $e->getMessage());
+            return $usuarios;
+        } catch (Throwable $e) {
+            error_log('Error obteniendo usuarios: ' . $e->getMessage());
             return [];
         }
     }
 
-    // Método para obtener reportes
-    public function obtenerReportes($limite = 50) {
+    public function obtenerReportes($limite = 50)
+    {
         try {
-            $sql = "SELECT
-                        r.id_reporte,
-                        r.descripcion,
-                        r.latitud,
-                        r.longitud,
-                        r.fecha_reporte,
-                        r.estado,
-                        ti.nombre as tipo_incidente,
-                        u.correo,
-                        CONCAT(p.nombres, ' ', p.apellidos) as usuario
-                    FROM reporte r
-                    INNER JOIN tipo_incidente ti ON r.id_tipo_incidente = ti.id_tipo_incidente
-                    INNER JOIN usuario u ON r.id_usuario = u.id_usuario
-                    INNER JOIN persona p ON u.id_persona = p.id_persona
-                    ORDER BY r.fecha_reporte DESC
-                    LIMIT :limite";
+            $usuarios = [];
+            foreach ($this->db->usuario->find([], ['projection' => ['nombre_completo' => 1, 'nombre' => 1, 'email' => 1]]) as $u) {
+                $usuarios[(string) $u['_id']] = (string) ($u['nombre_completo'] ?? $u['nombre'] ?? $u['email'] ?? 'N/A');
+            }
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
-            $stmt->execute();
+            $reportes = [];
+            foreach ($this->db->Reportes->find([], ['sort' => ['fecha_reporte' => -1, '_id' => -1], 'limit' => (int) $limite]) as $r) {
+                $ubicacion = $r['ubicacion'] ?? [];
+                $uid = (string) ($r['usuario_id'] ?? $r['usuario_creador_id'] ?? '');
+                $reportes[] = [
+                    'id_reporte' => (string) $r['_id'],
+                    'descripcion' => (string) ($r['descripcion'] ?? ''),
+                    'latitud' => $ubicacion['latitud'] ?? $ubicacion['lat'] ?? $r['latitud'] ?? '',
+                    'longitud' => $ubicacion['longitud'] ?? $ubicacion['lng'] ?? $r['longitud'] ?? '',
+                    'fecha_reporte' => $r['fecha_reporte'] ?? null,
+                    'estado' => (string) ($r['estado'] ?? 'pendiente'),
+                    'tipo_incidente' => (string) ($r['tipo'] ?? $r['tipo_incidente'] ?? 'Sin tipo'),
+                    'correo' => '',
+                    'usuario' => $usuarios[$uid] ?? 'N/A'
+                ];
+            }
 
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo reportes: " . $e->getMessage());
+            return $reportes;
+        } catch (Throwable $e) {
+            error_log('Error obteniendo reportes: ' . $e->getMessage());
             return [];
         }
     }
 
-    // Método para cambiar estado de usuario
-    public function cambiarEstadoUsuario($idUsuario, $nuevoEstado) {
+    public function cambiarEstadoUsuario($idUsuario, $nuevoEstado)
+    {
         try {
-            // Validar que el nuevo estado existe (1 = Activo, 2 = Inactivo)
-            $estadosValidos = [1, 2];
-            if (!in_array($nuevoEstado, $estadosValidos)) {
-                throw new Exception("Estado no válido");
-            }
-
-            $sql = "UPDATE usuario SET id_estado = :estado WHERE id_usuario = :id_usuario";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':estado', $nuevoEstado, PDO::PARAM_INT);
-            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
-
-            if ($stmt->execute()) {
-                $_SESSION['mensaje'] = "Estado del usuario actualizado correctamente";
-                return true;
-            } else {
-                throw new Exception("Error al actualizar estado");
-            }
-
-        } catch (Exception $e) {
-            error_log("Error cambiando estado usuario: " . $e->getMessage());
-            $_SESSION['error'] = "Error al cambiar estado del usuario: " . $e->getMessage();
-            return false;
-        }
-    }
-
-    // Método para cambiar estado de reporte
-    public function cambiarEstadoReporte($idReporte, $nuevoEstado) {
-        try {
-            $sql = "UPDATE reporte SET estado = :estado WHERE id_reporte = :id_reporte";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':estado', $nuevoEstado, PDO::PARAM_STR);
-            $stmt->bindValue(':id_reporte', $idReporte, PDO::PARAM_INT);
-
-            if ($stmt->execute()) {
-                $_SESSION['mensaje'] = "Estado del reporte actualizado correctamente";
-                return true;
-            } else {
-                throw new Exception("Error al actualizar estado del reporte");
-            }
-
-        } catch (Exception $e) {
-            error_log("Error cambiando estado reporte: " . $e->getMessage());
-            $_SESSION['error'] = "Error al cambiar estado del reporte: " . $e->getMessage();
-            return false;
-        }
-    }
-
-    // Método para eliminar reporte
-    public function eliminarReporte($idReporte) {
-        try {
-            // Iniciar transacción para eliminar en cascada
-            $this->db->beginTransaction();
-
-            // Eliminar imágenes del reporte
-            $sql1 = "DELETE FROM imagen_reporte WHERE id_reporte = :id_reporte";
-            $stmt1 = $this->db->prepare($sql1);
-            $stmt1->bindValue(':id_reporte', $idReporte, PDO::PARAM_INT);
-            $stmt1->execute();
-
-            // Eliminar comentarios del reporte
-            $sql2 = "DELETE FROM comentario_reporte WHERE id_reporte = :id_reporte";
-            $stmt2 = $this->db->prepare($sql2);
-            $stmt2->bindValue(':id_reporte', $idReporte, PDO::PARAM_INT);
-            $stmt2->execute();
-
-            // Eliminar historial del reporte
-            $sql3 = "DELETE FROM historial_estado WHERE id_reporte = :id_reporte";
-            $stmt3 = $this->db->prepare($sql3);
-            $stmt3->bindValue(':id_reporte', $idReporte, PDO::PARAM_INT);
-            $stmt3->execute();
-
-            // Eliminar reporte
-            $sql4 = "DELETE FROM reporte WHERE id_reporte = :id_reporte";
-            $stmt4 = $this->db->prepare($sql4);
-            $stmt4->bindValue(':id_reporte', $idReporte, PDO::PARAM_INT);
-            $stmt4->execute();
-
-            $this->db->commit();
-            $_SESSION['mensaje'] = "Reporte eliminado correctamente";
+            $estado = in_array($nuevoEstado, [1, '1', true, 'true', 'Activo'], true);
+            $this->db->usuario->updateOne(['_id' => $this->objectId($idUsuario)], ['$set' => ['estado' => $estado]]);
+            $_SESSION['mensaje'] = 'Estado del usuario actualizado correctamente';
             return true;
-
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Error eliminando reporte: " . $e->getMessage());
-            $_SESSION['error'] = "Error al eliminar el reporte: " . $e->getMessage();
+        } catch (Throwable $e) {
+            error_log('Error cambiando estado usuario: ' . $e->getMessage());
+            $_SESSION['error'] = 'Error al cambiar estado del usuario: ' . $e->getMessage();
             return false;
         }
     }
 
-    // ==============================================
-    // NUEVOS MÉTODOS AGREGADOS - SIN MODIFICAR LO EXISTENTE
-    // ==============================================
+    public function cambiarEstadoReporte($idReporte, $nuevoEstado)
+    {
+        try {
+            $rid = $this->objectId($idReporte);
+            $reporte = $this->db->Reportes->findOne(['_id' => $rid]);
+            $fecha = new UTCDateTime();
 
-    // Método para obtener autoridades disponibles
-    public function obtenerAutoridades() {
+            $this->db->Reportes->updateOne(
+                ['_id' => $rid],
+                [
+                    '$set' => ['estado' => $nuevoEstado, 'fecha_estado' => $fecha],
+                    '$push' => [
+                        'historial_estados' => [
+                            'estado_anterior' => $reporte['estado'] ?? null,
+                            'estado_nuevo' => $nuevoEstado,
+                            'fecha_estado' => $fecha
+                        ]
+                    ]
+                ]
+            );
+
+            $_SESSION['mensaje'] = 'Estado del reporte actualizado correctamente';
+            return true;
+        } catch (Throwable $e) {
+            error_log('Error cambiando estado reporte: ' . $e->getMessage());
+            $_SESSION['error'] = 'Error al cambiar estado del reporte: ' . $e->getMessage();
+            return false;
+        }
+    }
+
+    public function eliminarReporte($idReporte)
+    {
+        try {
+            $rid = $this->objectId($idReporte);
+            $comentariosIds = [];
+
+            foreach ($this->db->comentarios_reporte->find(['reporte_id' => $rid]) as $comentario) {
+                $comentariosIds[] = $comentario['_id'];
+            }
+
+            $this->db->Reportes->deleteOne(['_id' => $rid]);
+            $this->db->comentarios_reporte->deleteMany(['reporte_id' => $rid]);
+            $this->db->notificaciones->deleteMany(['reporte_id' => $rid]);
+
+            if ($comentariosIds) {
+                $this->db->likes_comentario->deleteMany(['comentario_id' => ['$in' => $comentariosIds]]);
+            }
+
+            $_SESSION['mensaje'] = 'Reporte eliminado correctamente';
+            return true;
+        } catch (Throwable $e) {
+            error_log('Error eliminando reporte: ' . $e->getMessage());
+            $_SESSION['error'] = 'Error al eliminar el reporte: ' . $e->getMessage();
+            return false;
+        }
+    }
+
+    public function obtenerAutoridades()
+    {
         return [
-            [
-                'id' => 1,
-                'nombre' => 'Alcaldía de Villavicencio - Secretaría de Infraestructura',
-                'email' => 'infraestructura@villavicencio.gov.co',
-                'tipo' => 'municipal',
-                'descripcion' => 'Vías urbanas, calles y avenidas dentro de la ciudad',
-                'responsable' => 'Secretaría de Infraestructura'
-            ],
-            [
-                'id' => 2,
-                'nombre' => 'INVIAS - Instituto Nacional de Vías',
-                'email' => 'pqrs@invias.gov.co',
-                'tipo' => 'nacional',
-                'descripcion' => 'Vías nacionales como la Vía al Llano, vía a Puerto López',
-                'responsable' => 'Dirección Territorial Meta'
-            ],
-            [
-                'id' => 3,
-                'nombre' => 'Gobernación del Meta - Secretaría de Infraestructura',
-                'email' => 'infraestructura@meta.gov.co',
-                'tipo' => 'departamental',
-                'descripcion' => 'Vías departamentales que conectan municipios del Meta',
-                'responsable' => 'Secretaría de Infraestructura Departamental'
-            ]
+            ['id' => 1, 'nombre' => 'Alcaldia de Villavicencio - Secretaria de Infraestructura', 'email' => 'infraestructura@villavicencio.gov.co', 'tipo' => 'municipal', 'descripcion' => 'Vias urbanas, calles y avenidas dentro de la ciudad', 'responsable' => 'Secretaria de Infraestructura'],
+            ['id' => 2, 'nombre' => 'INVIAS - Instituto Nacional de Vias', 'email' => 'pqrs@invias.gov.co', 'tipo' => 'nacional', 'descripcion' => 'Vias nacionales como la Via al Llano, via a Puerto Lopez', 'responsable' => 'Direccion Territorial Meta'],
+            ['id' => 3, 'nombre' => 'Gobernacion del Meta - Secretaria de Infraestructura', 'email' => 'infraestructura@meta.gov.co', 'tipo' => 'departamental', 'descripcion' => 'Vias departamentales que conectan municipios del Meta', 'responsable' => 'Secretaria de Infraestructura Departamental']
         ];
     }
 
-    // Método para "simular" envío de alerta (solo notificación interna)
-    public function enviarAlertaAutoridad($idReporte, $idAutoridad, $emailPersonalizado = null) {
+    public function enviarAlertaAutoridad($idReporte, $idAutoridad, $emailPersonalizado = null)
+    {
         try {
-            // 1. Obtener información del reporte
-            $sqlReporte = "SELECT r.*, ti.nombre as tipo_incidente,
-                                  CONCAT(p.nombres, ' ', p.apellidos) as ciudadano
-                           FROM reporte r
-                           INNER JOIN tipo_incidente ti ON r.id_tipo_incidente = ti.id_tipo_incidente
-                           INNER JOIN usuario u ON r.id_usuario = u.id_usuario
-                           INNER JOIN persona p ON u.id_persona = p.id_persona
-                           WHERE r.id_reporte = :id_reporte";
-
-            $stmtReporte = $this->db->prepare($sqlReporte);
-            $stmtReporte->bindValue(':id_reporte', $idReporte, PDO::PARAM_INT);
-            $stmtReporte->execute();
-            $reporte = $stmtReporte->fetch(PDO::FETCH_ASSOC);
+            $rid = $this->objectId($idReporte);
+            $reporte = $this->db->Reportes->findOne(['_id' => $rid]);
 
             if (!$reporte) {
-                throw new Exception("Reporte no encontrado");
+                throw new Exception('Reporte no encontrado');
             }
 
-            // 2. Obtener información de la autoridad
-            $autoridades = $this->obtenerAutoridades();
             $autoridad = null;
-
-            foreach ($autoridades as $auth) {
-                if ($auth['id'] == $idAutoridad) {
-                    $autoridad = $auth;
+            foreach ($this->obtenerAutoridades() as $opcion) {
+                if ((int) $opcion['id'] === (int) $idAutoridad) {
+                    $autoridad = $opcion;
                     break;
                 }
             }
 
             if (!$autoridad) {
-                throw new Exception("Autoridad no válida");
+                throw new Exception('Autoridad no valida');
             }
 
-            // 3. Crear notificación interna (SIMULACIÓN)
-            $mensajeNotificacion = "📤 Alerta simulada enviada a {$autoridad['nombre']} " .
-                                  "para el reporte #{$idReporte} - {$reporte['tipo_incidente']}";
+            $this->db->notificaciones_entidades->insertOne([
+                'reporte_id' => $rid,
+                'entidad' => $autoridad['nombre'],
+                'email' => $emailPersonalizado ?: $autoridad['email'],
+                'prioridad' => 'media',
+                'asunto' => 'Alerta de reporte ciudadano',
+                'mensaje' => 'Alerta generada para el reporte ' . (string) $rid,
+                'estado_notif' => 'enviada',
+                'fecha' => new UTCDateTime()
+            ]);
 
-            $this->crearNotificacionAlerta($idReporte, $autoridad, $mensajeNotificacion);
-
-            // 4. Actualizar estado del reporte
-            $this->actualizarEstadoReporte($idReporte, 'Notificado');
-
-            // 5. Registrar en historial (para analytics)
-            $emailDestino = $emailPersonalizado ?: $autoridad['email'];
-            $this->registrarAlertaEnHistorial($idReporte, $autoridad, $emailDestino, 'simulado');
-
-            $_SESSION['mensaje'] = "✅ Notificación de alerta creada: {$autoridad['nombre']} ha sido notificado";
+            $this->cambiarEstadoReporte($rid, 'notificado');
+            $_SESSION['mensaje'] = 'Notificacion de alerta creada.';
             return true;
-
-        } catch (Exception $e) {
-            error_log("Error en alerta simulada: " . $e->getMessage());
-            $_SESSION['error'] = "❌ Error: " . $e->getMessage();
+        } catch (Throwable $e) {
+            error_log('Error en alerta simulada: ' . $e->getMessage());
+            $_SESSION['error'] = 'Error: ' . $e->getMessage();
             return false;
         }
     }
 
-    // Método para crear notificación de alerta
-    private function crearNotificacionAlerta($idReporte, $autoridad, $mensaje) {
+    public function obtenerNotificacionesNoLeidas($idUsuario, $limite = 10)
+    {
+        return $this->obtenerNotificaciones($idUsuario, $limite, false);
+    }
+
+    public function obtenerTodasNotificaciones($idUsuario, $limite = 20)
+    {
+        return $this->obtenerNotificaciones($idUsuario, $limite, null);
+    }
+
+    private function obtenerNotificaciones($idUsuario, $limite, $leida)
+    {
         try {
-            // Notificar a todos los admins sobre la alerta simulada
-            $sqlAdmins = "SELECT id_usuario FROM usuario WHERE id_rol = 1 AND id_estado = 1";
-            $stmtAdmins = $this->db->prepare($sqlAdmins);
-            $stmtAdmins->execute();
-            $admins = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
+            $uid = $this->objectId($idUsuario);
+            $filtro = [
+                '$or' => [
+                    ['usuario_destino_id' => $uid],
+                    ['usuario_destino_id' => (string) $uid]
+                ]
+            ];
 
-            foreach ($admins as $admin) {
-                $sql = "INSERT INTO notificacion
-                        (id_usuario_destino, id_reporte, tipo, mensaje)
-                        VALUES (:id_destino, :id_reporte, 'alerta_autoridad', :mensaje)";
-
-                $stmt = $this->db->prepare($sql);
-                $stmt->bindValue(':id_destino', $admin['id_usuario'], PDO::PARAM_INT);
-                $stmt->bindValue(':id_reporte', $idReporte, PDO::PARAM_INT);
-                $stmt->bindValue(':mensaje', $mensaje);
-                $stmt->execute();
+            if ($leida !== null) {
+                $filtro['leida'] = $leida;
             }
 
-            return true;
-
-        } catch (Exception $e) {
-            error_log("Error creando notificación de alerta: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // Método auxiliar para actualizar estado del reporte
-    private function actualizarEstadoReporte($idReporte, $nuevoEstado) {
-        $sql = "UPDATE reporte SET estado = :estado WHERE id_reporte = :id_reporte";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':estado', $nuevoEstado);
-        $stmt->bindValue(':id_reporte', $idReporte, PDO::PARAM_INT);
-        return $stmt->execute();
-    }
-
-    // Método para registrar en el historial de alertas
-    private function registrarAlertaEnHistorial($idReporte, $autoridad, $emailDestino, $estado) {
-        // Primero necesitamos crear la tabla historial_alertas si no existe
-        // Por ahora solo logueamos la acción
-        error_log("📝 Alerta simulada registrada - Reporte: {$idReporte}, Autoridad: {$autoridad['nombre']}, Estado: {$estado}");
-        return true;
-    }
-
-    // Obtener notificaciones no leídas del usuario actual
-    public function obtenerNotificacionesNoLeidas($idUsuario, $limite = 10) {
-        try {
-            $sql = "SELECT n.*, r.descripcion, ti.nombre as tipo_incidente,
-                           uo.correo as usuario_origen,
-                           CONCAT(po.nombres, ' ', po.apellidos) as nombre_origen,
-                           DATE(n.fecha) as fecha
-                    FROM notificacion n
-                    INNER JOIN reporte r ON n.id_reporte = r.id_reporte
-                    INNER JOIN tipo_incidente ti ON r.id_tipo_incidente = ti.id_tipo_incidente
-                    LEFT JOIN usuario uo ON n.id_usuario_origen = uo.id_usuario
-                    LEFT JOIN persona po ON uo.id_persona = po.id_persona
-                    WHERE n.id_usuario_destino = :id_usuario AND n.leida = FALSE
-                    ORDER BY n.fecha DESC
-                    LIMIT :limite";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
-            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
-            $stmt->execute();
-
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo notificaciones: " . $e->getMessage());
+            return iterator_to_array($this->db->notificaciones->find($filtro, [
+                'sort' => ['fecha' => -1],
+                'limit' => (int) $limite
+            ]), false);
+        } catch (Throwable $e) {
+            error_log('Error obteniendo notificaciones: ' . $e->getMessage());
             return [];
         }
     }
 
-    // Obtener todas las notificaciones del usuario
-    public function obtenerTodasNotificaciones($idUsuario, $limite = 20) {
+    public function marcarNotificacionLeida($idNotificacion, $idUsuario)
+    {
         try {
-            $sql = "SELECT n.*, r.descripcion, ti.nombre as tipo_incidente,
-                           uo.correo as usuario_origen,
-                           CONCAT(po.nombres, ' ', po.apellidos) as nombre_origen,
-                           DATE(n.fecha) as fecha
-                    FROM notificacion n
-                    INNER JOIN reporte r ON n.id_reporte = r.id_reporte
-                    INNER JOIN tipo_incidente ti ON r.id_tipo_incidente = ti.id_tipo_incidente
-                    LEFT JOIN usuario uo ON n.id_usuario_origen = uo.id_usuario
-                    LEFT JOIN persona po ON uo.id_persona = po.id_persona
-                    WHERE n.id_usuario_destino = :id_usuario
-                    ORDER BY n.fecha DESC
-                    LIMIT :limite";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
-            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
-            $stmt->execute();
-
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo notificaciones: " . $e->getMessage());
-            return [];
-        }
-    }
-
-    // Marcar notificación como leída
-    public function marcarNotificacionLeida($idNotificacion, $idUsuario) {
-        try {
-            $sql = "UPDATE notificacion SET leida = TRUE
-                    WHERE id_notificacion = :id_notificacion
-                    AND id_usuario_destino = :id_usuario";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':id_notificacion', $idNotificacion, PDO::PARAM_INT);
-            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
-            return $stmt->execute();
-
-        } catch (Exception $e) {
-            error_log("Error marcando notificación: " . $e->getMessage());
+            $this->db->notificaciones->updateOne(
+                ['_id' => $this->objectId($idNotificacion)],
+                ['$set' => ['leida' => true]]
+            );
+            return true;
+        } catch (Throwable $e) {
+            error_log('Error marcando notificacion: ' . $e->getMessage());
             return false;
         }
     }
 
-    // Marcar todas las notificaciones como leídas
-    public function marcarTodasLeidas($idUsuario) {
+    public function marcarTodasLeidas($idUsuario)
+    {
         try {
-            $sql = "UPDATE notificacion SET leida = TRUE
-                    WHERE id_usuario_destino = :id_usuario AND leida = FALSE";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
-            return $stmt->execute();
-
-        } catch (Exception $e) {
-            error_log("Error marcando todas las notificaciones: " . $e->getMessage());
+            $uid = $this->objectId($idUsuario);
+            $this->db->notificaciones->updateMany(
+                ['$or' => [['usuario_destino_id' => $uid], ['usuario_destino_id' => (string) $uid]]],
+                ['$set' => ['leida' => true]]
+            );
+            return true;
+        } catch (Throwable $e) {
+            error_log('Error marcando todas las notificaciones: ' . $e->getMessage());
             return false;
         }
     }
 
-    // Contar notificaciones no leídas del usuario
-    public function contarNotificacionesNoLeidas($idUsuario) {
+    public function contarNotificacionesNoLeidas($idUsuario)
+    {
         try {
-            $sql = "SELECT COUNT(*) as total
-                    FROM notificacion
-                    WHERE id_usuario_destino = :id_usuario AND leida = FALSE";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchColumn();
-
-        } catch (Exception $e) {
-            error_log("Error contando notificaciones: " . $e->getMessage());
+            $uid = $this->objectId($idUsuario);
+            return $this->db->notificaciones->countDocuments([
+                '$or' => [['usuario_destino_id' => $uid], ['usuario_destino_id' => (string) $uid]],
+                'leida' => false
+            ]);
+        } catch (Throwable $e) {
+            error_log('Error contando notificaciones: ' . $e->getMessage());
             return 0;
         }
     }
 }
-?>

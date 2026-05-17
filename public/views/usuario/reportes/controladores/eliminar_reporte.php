@@ -45,8 +45,7 @@ try {
 
     $db = conectarMongoDB();
 
-    $reportes = $db->reportes;
-    $likesReportes = $db->likes_reporte;
+    $reportes = $db->Reportes;
     $comentariosReporte = $db->comentarios_reporte;
     $likesComentarios = $db->likes_comentario;
 
@@ -76,9 +75,6 @@ try {
     }
 
     $reportes->deleteOne($filtro);
-    $likesReportes->deleteMany([
-        'reporte_id' => $reporteId
-    ]);
     $comentariosReporte->deleteMany([
         'reporte_id' => $reporteId
     ]);

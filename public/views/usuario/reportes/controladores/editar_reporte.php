@@ -144,7 +144,7 @@ try {
     }
 
     $db = conectarMongoDB();
-    $reportes = $db->reportes;
+    $reportes = $db->Reportes;
 
     $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
     $usuarioIdTexto = (string) $_SESSION['usuario_id'];

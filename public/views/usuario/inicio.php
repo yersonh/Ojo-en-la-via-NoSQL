@@ -19,7 +19,7 @@ if ($nombreMostrar === '') {
 try {
     $db = conectarMongoDB();
 
-    $reportes = $db->reportes;
+    $reportes = $db->Reportes;
     $usuarios = $db->usuario;
 
     if (!empty($_SESSION['usuario_id'])) {
@@ -87,8 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $imagenes[] = 'uploads/reportes/' . $nombreArchivo;
             }
 
+            $usuarioReporteId = new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
+            $fechaReporte = new \MongoDB\BSON\UTCDateTime();
+
             $documento = [
-                'usuario_id' => new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']),
+                'usuario_id' => $usuarioReporteId,
                 'tipo' => $tipo,
                 'descripcion' => $descripcion,
                 'ubicacion' => [
@@ -98,7 +101,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'direccion_texto' => '',
                 'imagenes' => $imagenes,
                 'estado' => 'pendiente',
-                'fecha_reporte' => new \MongoDB\BSON\UTCDateTime()
+                'fecha_reporte' => $fechaReporte,
+                'fecha_estado' => $fechaReporte,
+                'likes' => [],
+                'historial_estados' => [
+                    [
+                        'estado_anterior' => null,
+                        'estado_nuevo' => 'pendiente',
+                        'usuario_id' => $usuarioReporteId,
+                        'fecha_estado' => $fechaReporte
+                    ]
+                ]
             ];
 
             $resultado = $reportes->insertOne($documento);

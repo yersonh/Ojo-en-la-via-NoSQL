@@ -40,7 +40,7 @@ $primerLetra = strtoupper(substr($nombreCompleto, 0, 1));
 
 /* ========= ESTADÍSTICAS ========= */
 
-$totalReportes = $db->reportes->countDocuments([
+$totalReportes = $db->Reportes->countDocuments([
     '$or' => [
         ['usuario_id' => $usuarioId],
         ['usuario_id' => $usuarioObjectId],
@@ -58,12 +58,12 @@ $totalComentarios = $db->comentarios_reporte->countDocuments([
     ]
 ]);
 
-$totalLikesReportes = $db->likes_reporte->countDocuments([
+$totalLikesReportes = $db->Reportes->countDocuments([
     '$or' => [
-        ['usuario_id' => $usuarioId],
-        ['usuario_id' => $usuarioObjectId],
-        ['usuario_origen_id' => $usuarioId],
-        ['usuario_origen_id' => $usuarioObjectId],
+        ['likes.usuario_id' => $usuarioId],
+        ['likes.usuario_id' => $usuarioObjectId],
+        ['likes.usuario_origen_id' => $usuarioId],
+        ['likes.usuario_origen_id' => $usuarioObjectId],
     ]
 ]);
 

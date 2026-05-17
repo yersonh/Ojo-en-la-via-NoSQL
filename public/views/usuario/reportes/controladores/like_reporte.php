@@ -23,50 +23,74 @@ try {
     }
 
     $db = conectarMongoDB();
-    $likesReportes = $db->likes_reporte;
-    $reportes = $db->reportes;
-
-    $likesReportes->createIndex(
-        [
-            'reporte_id' => 1,
-            'usuario_id' => 1
-        ],
-        [
-            'unique' => true
-        ]
-    );
+    $reportes = $db->Reportes;
 
     $reporteId = new \MongoDB\BSON\ObjectId($reporteIdTexto);
-    $usuarioId = new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
+    $usuarioIdTexto = (string) $_SESSION['usuario_id'];
+    $usuarioId = new \MongoDB\BSON\ObjectId($usuarioIdTexto);
 
-    $likeExistente = $likesReportes->findOne([
-        'reporte_id' => $reporteId,
-        'usuario_id' => $usuarioId
+    $reporte = $reportes->findOne([
+        '_id' => $reporteId
+    ]);
+
+    if (!$reporte) {
+        throw new Exception('Reporte no encontrado.');
+    }
+
+    $likeExistente = $reportes->findOne([
+        '_id' => $reporteId,
+        '$or' => [
+            ['likes.usuario_id' => $usuarioId],
+            ['likes.usuario_id' => $usuarioIdTexto],
+            ['likes.usuario_origen_id' => $usuarioId],
+            ['likes.usuario_origen_id' => $usuarioIdTexto]
+        ]
     ]);
 
     if ($likeExistente) {
-        $likesReportes->deleteOne([
-            'reporte_id' => $reporteId,
-            'usuario_id' => $usuarioId
-        ]);
+        $reportes->updateOne(
+            ['_id' => $reporteId],
+            [
+                '$pull' => [
+                    'likes' => [
+                        '$or' => [
+                            ['usuario_id' => $usuarioId],
+                            ['usuario_id' => $usuarioIdTexto],
+                            ['usuario_origen_id' => $usuarioId],
+                            ['usuario_origen_id' => $usuarioIdTexto]
+                        ]
+                    ]
+                ]
+            ]
+        );
 
         $liked = false;
     } else {
-        $likesReportes->insertOne([
-            'reporte_id' => $reporteId,
-            'usuario_id' => $usuarioId,
-            'fecha_like' => new \MongoDB\BSON\UTCDateTime()
-        ]);
+        $resultadoLike = $reportes->updateOne(
+            [
+                '_id' => $reporteId,
+                '$nor' => [
+                    ['likes.usuario_id' => $usuarioId],
+                    ['likes.usuario_id' => $usuarioIdTexto],
+                    ['likes.usuario_origen_id' => $usuarioId],
+                    ['likes.usuario_origen_id' => $usuarioIdTexto]
+                ]
+            ],
+            [
+                '$push' => [
+                    'likes' => [
+                        'usuario_id' => $usuarioId,
+                        'fecha_like' => new \MongoDB\BSON\UTCDateTime()
+                    ]
+                ]
+            ]
+        );
 
         $liked = true;
 
-        $reporte = $reportes->findOne([
-            '_id' => $reporteId
-        ]);
-
         $usuarioDestino = $reporte['usuario_id'] ?? $reporte['usuario_creador_id'] ?? null;
 
-        if ($reporte && $usuarioDestino) {
+        if ($resultadoLike->getModifiedCount() > 0 && $usuarioDestino) {
             crearNotificacionUsuario(
                 $db,
                 $usuarioDestino,
@@ -79,9 +103,14 @@ try {
         }
     }
 
-    $totalLikes = $likesReportes->countDocuments([
-        'reporte_id' => $reporteId
-    ]);
+    $reporteActualizado = $reportes->findOne(['_id' => $reporteId]);
+    $likesActuales = $reporteActualizado['likes'] ?? [];
+
+    if ($likesActuales instanceof \MongoDB\Model\BSONArray) {
+        $likesActuales = $likesActuales->getArrayCopy();
+    }
+
+    $totalLikes = is_array($likesActuales) ? count($likesActuales) : 0;
 
     echo json_encode([
         'ok' => true,

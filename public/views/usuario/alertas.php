@@ -105,12 +105,33 @@ function reportePerteneceUsuario($reporte, \MongoDB\BSON\ObjectId $usuarioIdActu
     return false;
 }
 
+function normalizarArrayBson($valor): array
+{
+    if ($valor instanceof \MongoDB\Model\BSONArray) {
+        return $valor->getArrayCopy();
+    }
+
+    return is_array($valor) ? $valor : [];
+}
+
+function usuarioDioLikeReporte($likes, \MongoDB\BSON\ObjectId $usuarioIdActual): bool
+{
+    foreach (normalizarArrayBson($likes) as $like) {
+        $usuarioLike = $like['usuario_id'] ?? $like['usuario_origen_id'] ?? null;
+
+        if ($usuarioLike !== null && (string) $usuarioLike === (string) $usuarioIdActual) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 try {
     $db = conectarMongoDB();
 
-    $reportes = $db->reportes;
-    $likesReportes = $db->likes_reporte;
+    $reportes = $db->Reportes;
     $comentariosReporte = $db->comentarios_reporte;
 
     $comentariosAutoIdTexto = $_GET['comentarios'] ?? '';
@@ -240,14 +261,9 @@ $cursor = $reportes->aggregate($pipeline);
                     $reporteIdObj = $reporte['_id'];
                     $usuarioIdActual = new \MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
 
-                    $totalLikes = $likesReportes->countDocuments([
-                        'reporte_id' => $reporteIdObj
-                    ]);
-
-                    $yaDioLike = $likesReportes->countDocuments([
-                        'reporte_id' => $reporteIdObj,
-                        'usuario_id' => $usuarioIdActual
-                    ]) > 0;
+                    $likesReporte = normalizarArrayBson($reporte['likes'] ?? []);
+                    $totalLikes = count($likesReporte);
+                    $yaDioLike = usuarioDioLikeReporte($likesReporte, $usuarioIdActual);
 
                  $totalComentariosReporte = $comentariosReporte->countDocuments([
                     'reporte_id' => $reporteIdObj,

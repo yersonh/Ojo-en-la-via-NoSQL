@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Ojo en la Vía** is a citizen reporting platform for infrastructure issues (potholes, damaged signs, etc.) in Villavicencio, Colombia. Citizens report street problems via an interactive map; admins manage and update report statuses.
+**Ojo en la Via** is a citizen reporting platform for infrastructure issues in Villavicencio, Colombia. Citizens report street problems via an interactive map; admins manage and update report statuses.
 
 **Stack:** PHP 8.2+ · MongoDB (via `mongodb/mongodb` v2.2) · Vanilla JS · Leaflet.js maps · Docker · Railway.app deployment
 
@@ -28,40 +28,38 @@ There are no automated tests or linting tools configured in this project.
 
 ### Entry Points & Routing
 
-There is no router — URL paths map directly to PHP files:
+There is no router. URL paths map directly to PHP files:
 
-- `public/index.php` — Login/registration (redirects to role-based dashboard after auth)
-- `public/views/usuario/inicio.php` — Citizen home (map view with report creation)
-- `public/views/usuario/alertas.php` — Reports list with comments and likes
-- `public/views/usuario/perfil.php` — User profile and notification history
-- `public/views/admin/panel.php` — Admin dashboard (stats, map, report management)
+- `public/index.php` - Login/registration
+- `public/views/usuario/inicio.php` - Citizen home, map view, report creation
+- `public/views/usuario/alertas.php` - Reports list with comments and embedded report likes
+- `public/views/usuario/perfil.php` - User profile and notification history
+- `public/views/admin/panel.php` - Admin dashboard, stats, map, report management
 
 ### Database
 
-- **Connection:** `config/conexion.php` — returns a MongoDB `\MongoDB\Database` instance
-- All document IDs are MongoDB `ObjectId`; validate with `/^[a-f\d]{24}$/i` before querying
+- **Connection:** `config/conexion.php` returns a MongoDB `\MongoDB\Database` instance.
+- All document IDs are MongoDB `ObjectId`; validate with `/^[a-f\d]{24}$/i` before querying.
 
 **Collection schemas:**
 
 `usuario`: `_id`, `nombre_completo`, `telefono`, `email`, `password` (bcrypt), `estado` (bool), `fecha_creacion` (string), `foto_perfil` (string), `rol` ("ciudadano"|"admin")
 
-`reportes`: `_id`, `usuario_id` (ObjectId), `usuario_creador_id` (legacy alias), `estado` ("pendiente"|"en_revision"|"notificado"|"resuelto"), `fecha_estado` (UTCDateTime), `tipo_incidente`, `descripcion`, `latitud`, `longitud`, `foto` (path string)
+`Reportes`: `_id`, `usuario_id` (ObjectId), `usuario_creador_id` (legacy alias), `estado` ("pendiente"|"en_revision"|"notificado"|"resuelto"), `fecha_reporte` (UTCDateTime), `fecha_estado` (UTCDateTime), `tipo`/`tipo_incidente`, `descripcion`, `ubicacion`, `latitud`, `longitud`, `direccion_texto`, `imagenes` (array), `likes` (array of `{usuario_id, fecha_like}`), `historial_estados` (array)
 
 `comentarios_reporte`: `_id`, `reporte_id`, `usuario_id`, `comentario` (max 500 chars), `comentario_padre_id` (null = root, ObjectId = reply), `fecha_comentario` (UTCDateTime), `eliminado` (bool), `editado` (bool)
-
-`likes_reporte`: `_id`, `reporte_id`, `usuario_id`, `fecha_like` (UTCDateTime) — unique compound index on `{reporte_id, usuario_id}`
 
 `likes_comentario`: `_id`, `comentario_id`, `usuario_id`, `fecha_like` (UTCDateTime)
 
 `notificaciones`: `_id`, `usuario_destino_id`, `usuario_origen_id`, `tipo` ("comentario"|"respuesta_comentario"|"like_reporte"|"like_comentario"|"estado_reporte"), `titulo`, `mensaje`, `reporte_id`, `comentario_id` (nullable), `leida` (bool), `fecha` (UTCDateTime)
 
-`tipo_incidente`: `_id`, `nombre` (string) — reference collection, no CRUD endpoints
+`tipo_incidente`: `_id`, `nombre` (string) - reference collection, no CRUD endpoints
 
-**ID type inconsistency:** older documents stored `usuario_id` as plain string instead of `ObjectId`. All queries on owner fields must use `$or` to match both types — see `perfil.php` for the pattern.
+**ID type inconsistency:** older documents may store `usuario_id` as plain string instead of `ObjectId`. Queries on owner fields should use `$or` to match both types.
 
 ### API Endpoints
 
-All API files are PHP scripts returning JSON with appropriate HTTP status codes. There are two parallel directory structures — **use `reportes/controladores/` as the active one**:
+All API files are PHP scripts returning JSON with appropriate HTTP status codes. Use `reportes/controladores/` as the active user report API:
 
 | Action | Path |
 |--------|------|
@@ -69,11 +67,9 @@ All API files are PHP scripts returning JSON with appropriate HTTP status codes.
 | Comment CRUD + likes | `public/views/usuario/reportes/controladores/` |
 | Admin: update status | `public/views/admin/actualizar_estado_reporte.php` |
 
-The `public/views/usuario/alertas/api/` directory is an older duplicate — avoid editing it unless syncing intentionally.
-
 ### Authentication & Roles
 
-PHP sessions. Relevant session keys: `$_SESSION['usuario_id']` (string), `$_SESSION['usuario_rol']` ("ciudadano"|"admin"). Two roles: `ciudadano`, `admin`. All protected endpoints check session at the top of each file — there is no middleware.
+PHP sessions. Relevant session keys: `$_SESSION['usuario_id']` (string), `$_SESSION['usuario_rol']` ("ciudadano"|"admin"). Two roles: `ciudadano`, `admin`.
 
 ### Notifications System
 
@@ -86,13 +82,14 @@ Images go to `public/uploads/reportes/`. Validation checks extension (jpg/jpeg/p
 ### Frontend
 
 No build step or framework. JavaScript files are loaded directly in PHP views:
+
 - Map: Leaflet.js + OpenStreetMap tiles (`mapa-reportes.js`, `admin-map.js`)
 - Camera: MediaDevices API (`foto-camara.js`)
 - All API calls use vanilla `fetch()` with JSON
 
 ## Key Conventions
 
-- Dates are formatted in `America/Bogota` timezone
-- `htmlspecialchars()` is applied when rendering user-provided content in PHP
-- Error responses return JSON `{ "error": "..." }` with HTTP 4xx/5xx codes
-- Admin JS utilities are modular classes in `public/views/components/admin/utils/` (CameraManager, FormManager, ImageManager, UIManager)
+- Dates are formatted in `America/Bogota` timezone.
+- `htmlspecialchars()` is applied when rendering user-provided content in PHP.
+- Error responses return JSON with HTTP 4xx/5xx codes.
+- Admin JS utilities are modular classes in `public/views/components/admin/utils/`.

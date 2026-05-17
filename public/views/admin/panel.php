@@ -16,18 +16,19 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 use MongoDB\BSON\UTCDateTime;
 
 $db = conectarMongoDB();
+$reportes = $db->Reportes;
 
 // ── ESTADÍSTICAS GLOBALES ──────────────────────────────────────────────────
-$totalReportes  = $db->reportes->countDocuments([]);
+$totalReportes  = $reportes->countDocuments([]);
 $totalUsuarios  = $db->usuario->countDocuments([]);
-$pendientes     = $db->reportes->countDocuments(['estado' => 'pendiente']);
-$resueltos      = $db->reportes->countDocuments(['estado' => 'resuelto']);
-$enRevision     = $db->reportes->countDocuments(['estado' => 'en_revision']);
-$notificados    = $db->reportes->countDocuments(['estado' => 'notificado']);
+$pendientes     = $reportes->countDocuments(['estado' => 'pendiente']);
+$resueltos      = $reportes->countDocuments(['estado' => 'resuelto']);
+$enRevision     = $reportes->countDocuments(['estado' => 'en_revision']);
+$notificados    = $reportes->countDocuments(['estado' => 'notificado']);
 
 // ── TIPOS DE INCIDENTE (doughnut chart) ───────────────────────────────────
 $tiposData = [];
-foreach ($db->reportes->aggregate([
+foreach ($reportes->aggregate([
     ['$group' => ['_id' => '$tipo', 'total' => ['$sum' => 1]]],
     ['$sort'  => ['total' => -1]],
     ['$limit' => 7]
@@ -38,7 +39,7 @@ foreach ($db->reportes->aggregate([
 // ── REPORTES POR MES (últimos 6 meses – bar chart) ─────────────────────────
 $mesesNombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 $mesesData = [];
-foreach ($db->reportes->aggregate([
+foreach ($reportes->aggregate([
     ['$addFields' => ['ts' => ['$toDate' => '$_id']]],
     ['$group' => ['_id' => ['y' => ['$year' => '$ts'], 'm' => ['$month' => '$ts']], 'total' => ['$sum' => 1]]],
     ['$sort'  => ['_id.y' => -1, '_id.m' => -1]],
@@ -57,7 +58,7 @@ foreach ($db->usuario->find([], ['projection' => ['_id' => 1, 'nombre_completo' 
 }
 
 $reportesList = [];
-foreach ($db->reportes->find([], ['sort' => ['_id' => -1], 'limit' => 400]) as $r) {
+foreach ($reportes->find([], ['sort' => ['_id' => -1], 'limit' => 400]) as $r) {
     $uidStr = (string)($r['usuario_id'] ?? $r['usuario_creador_id'] ?? '');
     $autor  = $usuariosMap[$uidStr] ?? 'N/A';
     $fecha = 'N/A';
@@ -76,8 +77,13 @@ foreach ($db->reportes->find([], ['sort' => ['_id' => -1], 'limit' => 400]) as $
     $lng = (string)($ubicacion['lng']      ?? $ubicacion['longitud'] ?? $r['longitud'] ?? '');
     // Imagen: puede ser array imagenes[] o campo foto
     $foto = '';
-    if (!empty($r['imagenes']) && is_array($r['imagenes'])) {
-        $foto = (string)($r['imagenes'][0] ?? '');
+    $imagenes = $r['imagenes'] ?? [];
+    if ($imagenes instanceof \MongoDB\Model\BSONArray) {
+        $imagenes = $imagenes->getArrayCopy();
+    }
+
+    if (!empty($imagenes) && is_array($imagenes)) {
+        $foto = (string)($imagenes[0] ?? '');
     } elseif (!empty($r['foto'])) {
         $foto = (string)$r['foto'];
     }

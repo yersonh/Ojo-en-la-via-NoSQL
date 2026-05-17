@@ -40,7 +40,7 @@ try {
     }
 
     $db = conectarMongoDB();
-    $reportes = $db->reportes;
+    $reportes = $db->Reportes;
     $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
     $adminId = new MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);
 
@@ -55,12 +55,22 @@ try {
         ], 404);
     }
 
+    $fechaEstado = new MongoDB\BSON\UTCDateTime();
+
     $reportes->updateOne(
         ['_id' => $reporteId],
         [
             '$set' => [
                 'estado' => $estado,
-                'fecha_estado' => new MongoDB\BSON\UTCDateTime()
+                'fecha_estado' => $fechaEstado
+            ],
+            '$push' => [
+                'historial_estados' => [
+                    'estado_anterior' => $reporte['estado'] ?? null,
+                    'estado_nuevo' => $estado,
+                    'admin_id' => $adminId,
+                    'fecha_estado' => $fechaEstado
+                ]
             ]
         ]
     );

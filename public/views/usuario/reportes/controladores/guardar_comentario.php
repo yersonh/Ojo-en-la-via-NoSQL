@@ -63,7 +63,7 @@ try {
     $db = conectarMongoDB();
 
     $comentarios = $db->comentarios_reporte;
-    $reportes = $db->reportes;
+    $reportes = $db->Reportes;
 
     $reporteId = new MongoDB\BSON\ObjectId($reporteIdTexto);
     $usuarioId = new MongoDB\BSON\ObjectId((string) $_SESSION['usuario_id']);

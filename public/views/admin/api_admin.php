@@ -94,8 +94,7 @@ if ($accion === 'eliminar_reporte_admin') {
         if (isset($c['_id'])) $comentariosIds[] = $c['_id'];
     }
 
-    $db->reportes->deleteOne(['_id' => $rid]);
-    $db->likes_reporte->deleteMany(['reporte_id' => $rid]);
+    $db->Reportes->deleteOne(['_id' => $rid]);
     $db->comentarios_reporte->deleteMany(['reporte_id' => $rid]);
     $db->notificaciones->deleteMany(['reporte_id' => $rid]);
 
@@ -136,11 +135,24 @@ if ($accion === 'guardar_notificacion_entidad') {
     // Vincular reporte si se seleccionó
     if ($repIdTxt !== '' && preg_match('/^[a-f\d]{24}$/i', $repIdTxt)) {
         $doc['reporte_id'] = new ObjectId($repIdTxt);
+        $reporteVinculado = $db->Reportes->findOne(['_id' => $doc['reporte_id']]);
 
         // Actualizar estado del reporte a 'notificado'
-        $db->reportes->updateOne(
+        $fechaEstado = new UTCDateTime();
+
+        $db->Reportes->updateOne(
             ['_id' => $doc['reporte_id']],
-            ['$set' => ['estado' => 'notificado', 'fecha_estado' => new UTCDateTime()]]
+            [
+                '$set' => ['estado' => 'notificado', 'fecha_estado' => $fechaEstado],
+                '$push' => [
+                    'historial_estados' => [
+                        'estado_anterior' => $reporteVinculado['estado'] ?? null,
+                        'estado_nuevo' => 'notificado',
+                        'admin_id' => new ObjectId((string)$_SESSION['usuario_id']),
+                        'fecha_estado' => $fechaEstado
+                    ]
+                ]
+            ]
         );
     }
 

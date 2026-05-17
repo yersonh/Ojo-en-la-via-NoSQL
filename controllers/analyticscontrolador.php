@@ -1,319 +1,233 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
 
-class AnalyticsControlador {
+require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use MongoDB\BSON\UTCDateTime;
+
+class AnalyticsControlador
+{
     private $db;
 
-    public function __construct($database) {
-        $this->db = $database->conectar();
+    public function __construct($database = null)
+    {
+        $this->db = conectarMongoDB();
     }
 
-    // Obtener estadísticas generales
-    public function obtenerEstadisticasGenerales($dias = 30) {
+    private function fechaDesdeDias($dias): UTCDateTime
+    {
+        $fecha = new DateTime('now', new DateTimeZone('America/Bogota'));
+        $fecha->modify('-' . max(0, (int) $dias) . ' days');
+        return new UTCDateTime($fecha->getTimestamp() * 1000);
+    }
+
+    private function estadoNormalizado($estado): string
+    {
+        $estado = strtolower((string) $estado);
+
+        return match ($estado) {
+            'pendiente' => 'reportes_pendientes',
+            'en_revision', 'en revision', 'en proceso' => 'reportes_proceso',
+            'resuelto' => 'reportes_resueltos',
+            default => ''
+        };
+    }
+
+    public function obtenerEstadisticasGenerales($dias = 30)
+    {
         try {
             $estadisticas = [
-                'total_reportes' => 0,
+                'total_reportes' => $this->db->Reportes->countDocuments([]),
                 'reportes_pendientes' => 0,
                 'reportes_proceso' => 0,
                 'reportes_resueltos' => 0,
-                'total_usuarios' => 0,
-                'usuarios_activos' => 0
+                'total_usuarios' => $this->db->usuario->countDocuments([]),
+                'usuarios_activos' => $this->db->usuario->countDocuments(['estado' => true])
             ];
 
-            // Total reportes
-            $sql = "SELECT COUNT(*) as total FROM reporte";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute();
-            $estadisticas['total_reportes'] = (int)$stmt->fetchColumn();
-
-            // Reportes por estado
-            $sql = "SELECT estado, COUNT(*) as cantidad FROM reporte GROUP BY estado";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute();
-            $reportesEstado = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            foreach ($reportesEstado as $estado) {
-                switch ($estado['estado']) {
-                    case 'Pendiente':
-                        $estadisticas['reportes_pendientes'] = (int)$estado['cantidad'];
-                        break;
-                    case 'En Proceso':
-                        $estadisticas['reportes_proceso'] = (int)$estado['cantidad'];
-                        break;
-                    case 'Resuelto':
-                        $estadisticas['reportes_resueltos'] = (int)$estado['cantidad'];
-                        break;
+            foreach ($this->db->Reportes->aggregate([
+                ['$group' => ['_id' => '$estado', 'cantidad' => ['$sum' => 1]]]
+            ]) as $estado) {
+                $clave = $this->estadoNormalizado($estado['_id'] ?? '');
+                if ($clave !== '') {
+                    $estadisticas[$clave] = (int) $estado['cantidad'];
                 }
             }
 
-            // Total usuarios
-            $sql = "SELECT COUNT(*) as total FROM usuario";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute();
-            $estadisticas['total_usuarios'] = (int)$stmt->fetchColumn();
-
-            // Usuarios activos
-            $sql = "SELECT COUNT(*) as activos FROM usuario WHERE id_estado = 1";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute();
-            $estadisticas['usuarios_activos'] = (int)$stmt->fetchColumn();
-
             return $estadisticas;
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo estadísticas generales: " . $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('Error obteniendo estadisticas generales: ' . $e->getMessage());
             return [];
         }
     }
 
-    // Obtener reportes por tipo
-    public function obtenerReportesPorTipo($dias = 30) {
+    public function obtenerReportesPorTipo($dias = 30)
+    {
         try {
-            $fechaInicio = date('Y-m-d', strtotime("-$dias days"));
+            $pipeline = [
+                ['$match' => ['fecha_reporte' => ['$gte' => $this->fechaDesdeDias($dias)]]],
+                ['$group' => ['_id' => ['$ifNull' => ['$tipo', '$tipo_incidente']], 'cantidad' => ['$sum' => 1]]],
+                ['$sort' => ['cantidad' => -1]]
+            ];
 
-            $sql = "SELECT
-                        ti.nombre as tipo,
-                        COUNT(*) as cantidad
-                    FROM reporte r
-                    INNER JOIN tipo_incidente ti ON r.id_tipo_incidente = ti.id_tipo_incidente
-                    WHERE r.fecha_reporte >= :fecha_inicio OR :fecha_inicio IS NULL
-                    GROUP BY ti.nombre
-                    ORDER BY cantidad DESC";
+            $resultados = $this->normalizarGrupo($this->db->Reportes->aggregate($pipeline), 'tipo');
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':fecha_inicio', $fechaInicio);
-            $stmt->execute();
-
-            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Si no hay resultados con filtro de fecha, mostrar todos
             if (empty($resultados)) {
-                $sql = "SELECT
-                            ti.nombre as tipo,
-                            COUNT(*) as cantidad
-                        FROM reporte r
-                        INNER JOIN tipo_incidente ti ON r.id_tipo_incidente = ti.id_tipo_incidente
-                        GROUP BY ti.nombre
-                        ORDER BY cantidad DESC";
-
-                $stmt = $this->db->prepare($sql);
-                $stmt->execute();
-                $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $resultados = $this->normalizarGrupo($this->db->Reportes->aggregate([
+                    ['$group' => ['_id' => ['$ifNull' => ['$tipo', '$tipo_incidente']], 'cantidad' => ['$sum' => 1]]],
+                    ['$sort' => ['cantidad' => -1]]
+                ]), 'tipo');
             }
 
             return $resultados;
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo reportes por tipo: " . $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('Error obteniendo reportes por tipo: ' . $e->getMessage());
             return [];
         }
     }
 
-    // Obtener distribución por estado
-    public function obtenerDistribucionEstado($dias = 30) {
+    public function obtenerDistribucionEstado($dias = 30)
+    {
         try {
-            $fechaInicio = date('Y-m-d', strtotime("-$dias days"));
+            $pipeline = [
+                ['$match' => ['fecha_reporte' => ['$gte' => $this->fechaDesdeDias($dias)]]],
+                ['$group' => ['_id' => '$estado', 'cantidad' => ['$sum' => 1]]],
+                ['$sort' => ['cantidad' => -1]]
+            ];
 
-            $sql = "SELECT
-                        estado,
-                        COUNT(*) as cantidad
-                    FROM reporte
-                    WHERE fecha_reporte >= :fecha_inicio OR :fecha_inicio IS NULL
-                    GROUP BY estado
-                    ORDER BY cantidad DESC";
+            $resultados = $this->normalizarGrupo($this->db->Reportes->aggregate($pipeline), 'estado');
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':fecha_inicio', $fechaInicio);
-            $stmt->execute();
-
-            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Si no hay resultados con filtro de fecha, mostrar todos
             if (empty($resultados)) {
-                $sql = "SELECT
-                            estado,
-                            COUNT(*) as cantidad
-                        FROM reporte
-                        GROUP BY estado
-                        ORDER BY cantidad DESC";
-
-                $stmt = $this->db->prepare($sql);
-                $stmt->execute();
-                $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $resultados = $this->normalizarGrupo($this->db->Reportes->aggregate([
+                    ['$group' => ['_id' => '$estado', 'cantidad' => ['$sum' => 1]]],
+                    ['$sort' => ['cantidad' => -1]]
+                ]), 'estado');
             }
 
             return $resultados;
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo distribución por estado: " . $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('Error obteniendo distribucion por estado: ' . $e->getMessage());
             return [];
         }
     }
 
-    // Obtener evolución temporal
-    public function obtenerEvolucionTemporal($dias = 30, $agrupacion = 'weekly') {
+    public function obtenerEvolucionTemporal($dias = 30, $agrupacion = 'weekly')
+    {
         try {
-            $fechaInicio = date('Y-m-d', strtotime("-$dias days"));
+            $formato = match ($agrupacion) {
+                'daily' => '%Y-%m-%d',
+                'monthly' => '%Y-%m',
+                default => '%G-W%V'
+            };
 
-            switch ($agrupacion) {
-                case 'daily':
-                    $formatoFecha = "DATE(r.fecha_reporte)";
-                    break;
-                case 'weekly':
-                    $formatoFecha = "CONCAT('Sem ', WEEK(r.fecha_reporte))";
-                    break;
-                case 'monthly':
-                    $formatoFecha = "DATE_FORMAT(r.fecha_reporte, '%M')";
-                    break;
-                default:
-                    $formatoFecha = "CONCAT('Sem ', WEEK(r.fecha_reporte))";
-            }
-
-            $sql = "SELECT
-                        $formatoFecha as periodo,
-                        COUNT(*) as total,
-                        SUM(CASE WHEN estado = 'Resuelto' THEN 1 ELSE 0 END) as resueltos
-                    FROM reporte r
-                    WHERE r.fecha_reporte >= :fecha_inicio OR :fecha_inicio IS NULL
-                    GROUP BY periodo
-                    ORDER BY MIN(r.fecha_reporte)";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':fecha_inicio', $fechaInicio);
-            $stmt->execute();
-
-            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            return $resultados;
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo evolución temporal: " . $e->getMessage());
+            return iterator_to_array($this->db->Reportes->aggregate([
+                ['$match' => ['fecha_reporte' => ['$gte' => $this->fechaDesdeDias($dias)]]],
+                [
+                    '$group' => [
+                        '_id' => [
+                            '$dateToString' => [
+                                'format' => $formato,
+                                'date' => '$fecha_reporte',
+                                'timezone' => 'America/Bogota'
+                            ]
+                        ],
+                        'total' => ['$sum' => 1],
+                        'resueltos' => [
+                            '$sum' => [
+                                '$cond' => [['$eq' => ['$estado', 'resuelto']], 1, 0]
+                            ]
+                        ]
+                    ]
+                ],
+                ['$sort' => ['_id' => 1]],
+                ['$project' => ['_id' => 0, 'periodo' => '$_id', 'total' => 1, 'resueltos' => 1]]
+            ]), false);
+        } catch (Throwable $e) {
+            error_log('Error obteniendo evolucion temporal: ' . $e->getMessage());
             return [];
         }
     }
 
-    // Obtener usuarios más activos - VERSIÓN CORREGIDA
-    public function obtenerUsuariosActivos($dias = 30, $limite = 5) {
+    public function obtenerUsuariosActivos($dias = 30, $limite = 5)
+    {
         try {
-            // Primero intentamos con el filtro de fecha
-            $fechaInicio = date('Y-m-d', strtotime("-$dias days"));
-
-            $sql = "SELECT
-                        u.correo,
-                        CONCAT(p.nombres, ' ', p.apellidos) as nombre,
-                        COUNT(r.id_reporte) as total_reportes,
-                        COALESCE(MAX(r.fecha_reporte), u.id_usuario) as ultima_actividad,
-                        eu.nombre as estado
-                    FROM usuario u
-                    INNER JOIN persona p ON u.id_persona = p.id_persona
-                    INNER JOIN estado_usuario eu ON u.id_estado = eu.id_estado
-                    LEFT JOIN reporte r ON u.id_usuario = r.id_usuario
-                    WHERE (r.fecha_reporte >= :fecha_inicio OR r.fecha_reporte IS NULL)
-                    GROUP BY u.id_usuario, u.correo, p.nombres, p.apellidos, eu.nombre
-                    HAVING COUNT(r.id_reporte) > 0
-                    ORDER BY total_reportes DESC, ultima_actividad DESC
-                    LIMIT :limite";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':fecha_inicio', $fechaInicio);
-            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Si no hay resultados, obtener todos los usuarios con reportes sin filtrar por fecha
-            if (empty($resultados)) {
-                $sql = "SELECT
-                            u.correo,
-                            CONCAT(p.nombres, ' ', p.apellidos) as nombre,
-                            COUNT(r.id_reporte) as total_reportes,
-                            COALESCE(MAX(r.fecha_reporte), 'Nunca') as ultima_actividad,
-                            eu.nombre as estado
-                        FROM usuario u
-                        INNER JOIN persona p ON u.id_persona = p.id_persona
-                        INNER JOIN estado_usuario eu ON u.id_estado = eu.id_estado
-                        LEFT JOIN reporte r ON u.id_usuario = r.id_usuario
-                        GROUP BY u.id_usuario, u.correo, p.nombres, p.apellidos, eu.nombre
-                        HAVING COUNT(r.id_reporte) > 0
-                        ORDER BY total_reportes DESC, ultima_actividad DESC
-                        LIMIT :limite";
-
-                $stmt = $this->db->prepare($sql);
-                $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
-                $stmt->execute();
-
-                $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            }
-
-            // Si aún no hay resultados, mostrar al menos los usuarios existentes
-            if (empty($resultados)) {
-                $sql = "SELECT
-                            u.correo,
-                            CONCAT(p.nombres, ' ', p.apellidos) as nombre,
-                            0 as total_reportes,
-                            'Nunca' as ultima_actividad,
-                            eu.nombre as estado
-                        FROM usuario u
-                        INNER JOIN persona p ON u.id_persona = p.id_persona
-                        INNER JOIN estado_usuario eu ON u.id_estado = eu.id_estado
-                        WHERE u.id_estado = 1
-                        ORDER BY u.id_usuario DESC
-                        LIMIT :limite";
-
-                $stmt = $this->db->prepare($sql);
-                $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
-                $stmt->execute();
-
-                $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            }
-
-            return $resultados;
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo usuarios activos: " . $e->getMessage());
+            return iterator_to_array($this->db->Reportes->aggregate([
+                ['$match' => ['fecha_reporte' => ['$gte' => $this->fechaDesdeDias($dias)]]],
+                [
+                    '$group' => [
+                        '_id' => '$usuario_id',
+                        'total_reportes' => ['$sum' => 1],
+                        'ultima_actividad' => ['$max' => '$fecha_reporte']
+                    ]
+                ],
+                ['$sort' => ['total_reportes' => -1, 'ultima_actividad' => -1]],
+                ['$limit' => (int) $limite],
+                ['$lookup' => ['from' => 'usuario', 'localField' => '_id', 'foreignField' => '_id', 'as' => 'usuario']],
+                [
+                    '$project' => [
+                        '_id' => 0,
+                        'correo' => ['$ifNull' => [['$arrayElemAt' => ['$usuario.email', 0]], '']],
+                        'nombre' => ['$ifNull' => [['$arrayElemAt' => ['$usuario.nombre_completo', 0]], 'Usuario']],
+                        'total_reportes' => 1,
+                        'ultima_actividad' => 1,
+                        'estado' => ['$ifNull' => [['$arrayElemAt' => ['$usuario.estado', 0]], true]]
+                    ]
+                ]
+            ]), false);
+        } catch (Throwable $e) {
+            error_log('Error obteniendo usuarios activos: ' . $e->getMessage());
             return [];
         }
     }
 
-    // Obtener tendencias
-    public function obtenerTendencias($dias = 30) {
+    public function obtenerTendencias($dias = 30)
+    {
         try {
-            $periodoActualInicio = date('Y-m-d', strtotime("-$dias days"));
-            $periodoAnteriorInicio = date('Y-m-d', strtotime("-" . ($dias * 2) . " days"));
-            $periodoAnteriorFin = date('Y-m-d', strtotime("-$dias days"));
+            $dias = max(1, (int) $dias);
+            $actualInicio = $this->fechaDesdeDias($dias);
+            $anteriorInicio = $this->fechaDesdeDias($dias * 2);
 
-            $tendencias = [];
+            $actual = $this->db->Reportes->countDocuments(['fecha_reporte' => ['$gte' => $actualInicio]]);
+            $anterior = $this->db->Reportes->countDocuments([
+                'fecha_reporte' => [
+                    '$gte' => $anteriorInicio,
+                    '$lt' => $actualInicio
+                ]
+            ]);
 
-            // Total reportes - tendencia
-            $sql = "SELECT
-                        (SELECT COUNT(*) FROM reporte WHERE fecha_reporte >= :actual_inicio) as actual,
-                        (SELECT COUNT(*) FROM reporte WHERE fecha_reporte >= :anterior_inicio AND fecha_reporte < :anterior_fin) as anterior";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':actual_inicio', $periodoActualInicio);
-            $stmt->bindValue(':anterior_inicio', $periodoAnteriorInicio);
-            $stmt->bindValue(':anterior_fin', $periodoAnteriorFin);
-            $stmt->execute();
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            $tendencias['total_reportes'] = $this->calcularTendencia($result['actual'], $result['anterior']);
-
-            return $tendencias;
-
-        } catch (Exception $e) {
-            error_log("Error obteniendo tendencias: " . $e->getMessage());
+            return ['total_reportes' => $this->calcularTendencia($actual, $anterior)];
+        } catch (Throwable $e) {
+            error_log('Error obteniendo tendencias: ' . $e->getMessage());
             return [];
         }
     }
 
-    private function calcularTendencia($actual, $anterior) {
-        if ($anterior == 0) {
-            return $actual > 0 ? ['direccion' => 'up', 'porcentaje' => 100, 'diferencia' => $actual] :
-                                ['direccion' => 'neutral', 'porcentaje' => 0, 'diferencia' => 0];
+    private function normalizarGrupo($cursor, string $campo): array
+    {
+        $resultados = [];
+
+        foreach ($cursor as $item) {
+            $resultados[] = [
+                $campo => (string) ($item['_id'] ?? 'Sin dato'),
+                'cantidad' => (int) $item['cantidad']
+            ];
         }
 
-        $diferencia = $actual - $anterior;
-        $porcentaje = ($diferencia / $anterior) * 100;
+        return $resultados;
+    }
+
+    private function calcularTendencia($actual, $anterior)
+    {
+        if ((int) $anterior === 0) {
+            return [
+                'direccion' => $actual > 0 ? 'up' : 'neutral',
+                'porcentaje' => $actual > 0 ? 100 : 0,
+                'diferencia' => (int) $actual
+            ];
+        }
+
+        $diferencia = (int) $actual - (int) $anterior;
+        $porcentaje = ($diferencia / (int) $anterior) * 100;
 
         return [
             'direccion' => $diferencia > 0 ? 'up' : ($diferencia < 0 ? 'down' : 'neutral'),
@@ -323,52 +237,43 @@ class AnalyticsControlador {
     }
 }
 
-// Manejar solicitudes AJAX
 if (isset($_GET['action'])) {
-    $database = new Database();
-    $analyticsControlador = new AnalyticsControlador($database);
+    $analyticsControlador = new AnalyticsControlador();
 
     header('Content-Type: application/json');
 
     try {
-        $dias = isset($_GET['dias']) ? intval($_GET['dias']) : 30;
-        $agrupacion = isset($_GET['agrupacion']) ? $_GET['agrupacion'] : 'weekly';
+        $dias = isset($_GET['dias']) ? (int) $_GET['dias'] : 30;
+        $agrupacion = $_GET['agrupacion'] ?? 'weekly';
 
         switch ($_GET['action']) {
             case 'estadisticas_generales':
-                $data = [
+                echo json_encode([
                     'stats' => $analyticsControlador->obtenerEstadisticasGenerales($dias),
                     'tendencias' => $analyticsControlador->obtenerTendencias($dias)
-                ];
-                echo json_encode($data);
+                ]);
                 break;
 
             case 'reportes_por_tipo':
-                $data = $analyticsControlador->obtenerReportesPorTipo($dias);
-                echo json_encode($data);
+                echo json_encode($analyticsControlador->obtenerReportesPorTipo($dias));
                 break;
 
             case 'distribucion_estado':
-                $data = $analyticsControlador->obtenerDistribucionEstado($dias);
-                echo json_encode($data);
+                echo json_encode($analyticsControlador->obtenerDistribucionEstado($dias));
                 break;
 
             case 'evolucion_temporal':
-                $data = $analyticsControlador->obtenerEvolucionTemporal($dias, $agrupacion);
-                echo json_encode($data);
+                echo json_encode($analyticsControlador->obtenerEvolucionTemporal($dias, $agrupacion));
                 break;
 
             case 'usuarios_activos':
-                $data = $analyticsControlador->obtenerUsuariosActivos($dias);
-                echo json_encode($data);
+                echo json_encode($analyticsControlador->obtenerUsuariosActivos($dias));
                 break;
 
             default:
-                echo json_encode(['error' => 'Acción no válida']);
+                echo json_encode(['error' => 'Accion no valida']);
         }
-
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         echo json_encode(['error' => $e->getMessage()]);
     }
 }
-?>
