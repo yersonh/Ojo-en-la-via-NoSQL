@@ -21,22 +21,37 @@ function verificar_autenticacion(string $redirect = '/index.php'): void
     require_once __DIR__ . '/../vendor/autoload.php';
 
     try {
-        $db       = conectarMongoDB();
-        $tokenDoc = $db->tokens_sesion->findOne(['token' => $token]);
+        $db = conectarMongoDB();
+        $usuario = $db->usuario->findOne(['tokens.token' => $token]);
+        $tokenDoc = null;
 
-        if (!$tokenDoc || $tokenDoc['expira']->toDateTime() < new DateTime()) {
-            if ($tokenDoc) {
-                $db->tokens_sesion->deleteOne(['token' => $token]);
+        if ($usuario && isset($usuario['tokens'])) {
+            foreach ($usuario['tokens'] as $tokenUsuario) {
+                if (($tokenUsuario['token'] ?? '') === $token) {
+                    $tokenDoc = $tokenUsuario;
+                    break;
+                }
             }
+        }
+
+        if (!$usuario || !$tokenDoc || $tokenDoc['expira']->toDateTime() < new DateTime()) {
+            if ($usuario) {
+                $db->usuario->updateOne(
+                    ['_id' => $usuario['_id']],
+                    ['$pull' => ['tokens' => ['token' => $token]]]
+                );
+            }
+
             _limpiar_cookie_token();
             header('Location: ' . $redirect);
             exit;
         }
 
-        $usuario = $db->usuario->findOne(['_id' => $tokenDoc['usuario_id']]);
-
         if (!$usuario || !($usuario['estado'] ?? false)) {
-            $db->tokens_sesion->deleteOne(['token' => $token]);
+            $db->usuario->updateOne(
+                ['_id' => $usuario['_id']],
+                ['$pull' => ['tokens' => ['token' => $token]]]
+            );
             _limpiar_cookie_token();
             header('Location: ' . $redirect);
             exit;
@@ -62,12 +77,31 @@ function guardar_token_recordar(\MongoDB\Database $db, string $usuario_id): void
     $token  = bin2hex(random_bytes(32));
     $expira = new DateTime('+30 days');
 
-    $db->tokens_sesion->insertOne([
-        'usuario_id' => new ObjectId($usuario_id),
-        'token'      => $token,
-        'expira'     => new UTCDateTime($expira->getTimestamp() * 1000),
-        'creado'     => new UTCDateTime(),
-    ]);
+    $db->usuario->updateOne(
+        ['_id' => new ObjectId($usuario_id)],
+        [
+            '$pull' => [
+                'tokens' => [
+                    'expira' => [
+                        '$lt' => new UTCDateTime()
+                    ]
+                ]
+            ]
+        ]
+    );
+
+    $db->usuario->updateOne(
+        ['_id' => new ObjectId($usuario_id)],
+        [
+            '$push' => [
+                'tokens' => [
+                    'token' => $token,
+                    'expira' => new UTCDateTime($expira->getTimestamp() * 1000),
+                    'creado' => new UTCDateTime(),
+                ]
+            ]
+        ]
+    );
 
     setcookie('remember_token', $token, [
         'expires'  => $expira->getTimestamp(),
@@ -85,7 +119,10 @@ function eliminar_token_recordar(\MongoDB\Database $db): void
     $token = $_COOKIE['remember_token'] ?? '';
     if ($token) {
         try {
-            $db->tokens_sesion->deleteOne(['token' => $token]);
+            $db->usuario->updateOne(
+                ['tokens.token' => $token],
+                ['$pull' => ['tokens' => ['token' => $token]]]
+            );
         } catch (Throwable $e) {
         }
         _limpiar_cookie_token();

@@ -19,15 +19,15 @@ if ($token === '') {
 }
 
 $usuario = $usuarios->findOne([
-    'reset_token' => $token
+    'reset_password.token' => $token
 ]);
 
 if (!$usuario) {
     die('Token inválido o usuario no encontrado.');
 }
 
-if (isset($usuario['reset_token_expira'])) {
-    $vence = $usuario['reset_token_expira']->toDateTime()->getTimestamp();
+if (isset($usuario['reset_password']['expira'])) {
+    $vence = $usuario['reset_password']['expira']->toDateTime()->getTimestamp();
 
     if ($vence < time()) {
         die('El enlace ya venció.');
@@ -52,8 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [
                 '$set' => ['password' => $hash],
                 '$unset' => [
-                    'reset_token' => '',
-                    'reset_token_expira' => ''
+                    'reset_password' => ''
                 ]
             ]
         );

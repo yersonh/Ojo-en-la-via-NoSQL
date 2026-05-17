@@ -43,7 +43,7 @@ There is no router. URL paths map directly to PHP files:
 
 **Collection schemas:**
 
-`usuario`: `_id`, `nombre_completo`, `telefono`, `email`, `password` (bcrypt), `estado` (bool), `fecha_creacion` (string), `foto_perfil` (string), `rol` ("ciudadano"|"admin")
+`usuario`: `_id`, `nombre_completo`, `telefono`, `email`, `password` (bcrypt), `estado` (bool), `fecha_creacion`, `foto_perfil` (string), `rol` ("ciudadano"|"admin"), `tokens` (array of remember-session tokens), `reset_password` (nullable password reset token document)
 
 `Reportes`: `_id`, `usuario_id` (ObjectId), `usuario_creador_id` (legacy alias), `estado` ("pendiente"|"en_revision"|"notificado"|"resuelto"), `fecha_reporte` (UTCDateTime), `fecha_estado` (UTCDateTime), `tipo`/`tipo_incidente`, `descripcion`, `ubicacion`, `latitud`, `longitud`, `direccion_texto`, `imagenes` (array), `likes` (array of `{usuario_id, fecha_like}`), `comentarios` (array of `{_id, usuario_id, comentario, comentario_padre_id, fecha_comentario, likes, eliminado, editado}`), `historial_estados` (array)
 

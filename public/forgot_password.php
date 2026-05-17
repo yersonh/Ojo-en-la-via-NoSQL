@@ -4,6 +4,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use MongoDB\BSON\UTCDateTime;
 
 
 $mensaje = '';
@@ -27,13 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($usuario) {
             $token = bin2hex(random_bytes(32));
-            $expira = time() + 3600;
+            $expira = new DateTime('+1 hour');
 
             $usuarios->updateOne(
                 ['email' => $email],
                 ['$set' => [
-                    'reset_token' => $token,
-                    'reset_token_expira' => $expira
+                    'reset_password' => [
+                        'token' => $token,
+                        'expira' => new UTCDateTime($expira->getTimestamp() * 1000),
+                        'creado' => new UTCDateTime()
+                    ]
                 ]]
             );
 

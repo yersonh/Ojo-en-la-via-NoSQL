@@ -39,9 +39,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $_cookieToken = $_COOKIE['remember_token'] ?? '';
     if ($_cookieToken && preg_match('/^[a-f0-9]{64}$/', $_cookieToken)) {
     try {
-        $tokenDoc = $db->tokens_sesion->findOne(['token' => $_cookieToken]);
-        if ($tokenDoc && $tokenDoc['expira']->toDateTime() >= new DateTime()) {
-            $usuarioToken = $db->usuario->findOne(['_id' => $tokenDoc['usuario_id']]);
+        $usuarioToken = $db->usuario->findOne(['tokens.token' => $_cookieToken]);
+        $tokenDoc = null;
+
+        if ($usuarioToken && isset($usuarioToken['tokens'])) {
+            foreach ($usuarioToken['tokens'] as $tokenUsuario) {
+                if (($tokenUsuario['token'] ?? '') === $_cookieToken) {
+                    $tokenDoc = $tokenUsuario;
+                    break;
+                }
+            }
+        }
+        if ($usuarioToken && $tokenDoc && $tokenDoc['expira']->toDateTime() >= new DateTime()) {
             if ($usuarioToken && ($usuarioToken['estado'] ?? false)) {
                 $_SESSION['usuario_id']     = (string) $usuarioToken['_id'];
                 $_SESSION['usuario_nombre'] = trim($usuarioToken['nombre_completo'] ?? '') ?: ($usuarioToken['email'] ?? 'Usuario');
@@ -54,6 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 header('Location: ' . $destino);
                 exit;
             }
+        }
+        if ($usuarioToken) {
+            $db->usuario->updateOne(
+                ['_id' => $usuarioToken['_id']],
+                ['$pull' => ['tokens' => ['token' => $_cookieToken]]]
+            );
+            _limpiar_cookie_token();
         }
     } catch (Throwable $e) {
         // token inválido, continuar a login normal
@@ -94,7 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'estado' => true,
                     'fecha_creacion' => date('Y-m-d H:i:s'),
                     'foto_perfil' => '',
-                    'rol' => 'ciudadano'
+                    'rol' => 'ciudadano',
+                    'tokens' => []
                 ]);
 
                 if ($resultado->getInsertedCount() > 0) {
