@@ -30,6 +30,8 @@ function dispararNotificacionEntidad(\MongoDB\Database $db, array $reporte, Obje
     $asunto  = str_replace($vars, $valores, (string) ($regla['asunto']  ?? 'Nuevo reporte: {tipo}'));
     $mensaje = str_replace($vars, $valores, (string) ($regla['mensaje'] ?? 'Se reportó {tipo} en {direccion}.'));
 
+    $fechaNotif = new UTCDateTime();
+
     $db->notificaciones_entidades->insertOne([
         'reporte_id'   => $reporteId,
         'entidad'      => (string) ($regla['entidad']   ?? ''),
@@ -39,8 +41,24 @@ function dispararNotificacionEntidad(\MongoDB\Database $db, array $reporte, Obje
         'estado_notif' => 'enviada',
         'admin_id'     => null,
         'admin_nombre' => 'Sistema automático',
-        'fecha'        => new UTCDateTime(),
+        'fecha'        => $fechaNotif,
     ]);
+
+    // Actualizar estado del reporte a 'notificado' con historial
+    $db->Reportes->updateOne(
+        ['_id' => $reporteId],
+        [
+            '$set'  => ['estado' => 'notificado', 'fecha_estado' => $fechaNotif],
+            '$push' => [
+                'historial_estados' => [
+                    'estado_anterior' => 'pendiente',
+                    'estado_nuevo'    => 'notificado',
+                    'usuario_id'      => null,
+                    'fecha_estado'    => $fechaNotif,
+                ]
+            ]
+        ]
+    );
 
     $cuerpo = "
         <div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;'>

@@ -7,8 +7,19 @@ const map = crearMapa('map');
 let marcador = null;
 const marcadoresReportes = new Map();
 
+/* ── Construye dirección corta desde respuesta de Nominatim ── */
+function construirDireccion(address) {
+    const via    = address.road || address.pedestrian || address.path || '';
+    const numero = address.house_number || '';
+    const barrio = address.neighbourhood || address.suburb || address.quarter || '';
+    const ciudad = address.city || address.town || address.village || 'Villavicencio';
+
+    const partes = [via, numero, barrio, ciudad].filter(Boolean);
+    return partes.join(', ');
+}
+
 /* ── Click en el mapa para crear reporte ── */
-map.on('click', function (e) {
+map.on('click', async function (e) {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
 
@@ -18,12 +29,13 @@ map.on('click', function (e) {
         icon: crearIconoReporte('📍', 'pendiente')
     }).addTo(map);
 
-    const panelRegistro = document.getElementById('panelRegistro');
-    const infoUbicacion = document.getElementById('infoUbicacion');
-    const latSpan  = document.getElementById('latitud');
-    const lngSpan  = document.getElementById('longitud');
-    const latInput = document.getElementById('latitudInput');
-    const lngInput = document.getElementById('longitudInput');
+    const panelRegistro  = document.getElementById('panelRegistro');
+    const infoUbicacion  = document.getElementById('infoUbicacion');
+    const latSpan        = document.getElementById('latitud');
+    const lngSpan        = document.getElementById('longitud');
+    const latInput       = document.getElementById('latitudInput');
+    const lngInput       = document.getElementById('longitudInput');
+    const direccionInput = document.getElementById('direccionInput');
 
     if (panelRegistro) panelRegistro.classList.remove('oculto');
     if (infoUbicacion) infoUbicacion.classList.remove('oculto');
@@ -31,6 +43,17 @@ map.on('click', function (e) {
     if (lngSpan)  lngSpan.textContent  = lng.toFixed(6);
     if (latInput) latInput.value = lat;
     if (lngInput) lngInput.value = lng;
+
+    // Geocodificación inversa en segundo plano
+    if (direccionInput) {
+        direccionInput.value = '';
+        try {
+            const url  = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=es`;
+            const resp = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+            const data = await resp.json();
+            direccionInput.value = data.address ? construirDireccion(data.address) : (data.display_name || '');
+        } catch (_) {}
+    }
 });
 
 /* ── Pintar reportes existentes ── */
