@@ -23,4 +23,4 @@ RUN mkdir -p storage/framework/cache \
              storage/framework/views \
              storage/logs
 
-CMD php -S 0.0.0.0:$PORT -t public
+CMD php -S 0.0.0.0:$PORT -t public /app/router.php

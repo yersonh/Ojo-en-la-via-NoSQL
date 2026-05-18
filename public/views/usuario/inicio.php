@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../../config/conexion.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../config/auth_helper.php';
 require_once __DIR__ . '/../../../config/notificacion_entidad_auto.php';
+require_once __DIR__ . '/../../../config/upload_helper.php';
 
 verificar_autenticacion('../../index.php');
 
@@ -62,11 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $imagenes = [];
 
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-                $directorioSubidas = __DIR__ . '/../../uploads/reportes/';
-
-                if (!is_dir($directorioSubidas)) {
-                    mkdir($directorioSubidas, 0777, true);
-                }
+                $directorioSubidas = getUploadDir();
 
                 $nombreOriginal = $_FILES['foto']['name'];
                 $tmp = $_FILES['foto']['tmp_name'];
