@@ -238,6 +238,9 @@ function renderZona(data) {
 
     const wrap = document.getElementById('zona-wrap');
 
+    // Destruir antes de reemplazar el canvas para evitar error de Chart.js
+    if (chartZonaInst) { chartZonaInst.destroy(); chartZonaInst = null; }
+
     if (!sorted.length) {
         wrap.innerHTML = `<div class="empty-state" style="margin-top:40px;">
             <i class="fas fa-map-pin"></i>
@@ -248,8 +251,6 @@ function renderZona(data) {
 
     wrap.innerHTML = '<canvas id="chartZona"></canvas>';
     wrap.style.height = Math.max(220, sorted.length * 38) + 'px';
-
-    if (chartZonaInst) { chartZonaInst.destroy(); chartZonaInst = null; }
 
     chartZonaInst = new Chart(document.getElementById('chartZona'), {
         type: 'bar',
@@ -279,8 +280,17 @@ function renderZona(data) {
     });
 }
 
+function updateBadges(n) {
+    const txt = n + ' reporte' + (n !== 1 ? 's' : '');
+    ['badge-tendencia', 'badge-tasa', 'badge-heatmap', 'badge-zona'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = txt;
+    });
+}
+
 function renderAnalytics() {
     const data = analyticsFiltered();
+    updateBadges(data.length);
     renderTendencia(data);
     renderTasa(data);
     renderHeatmap(data);

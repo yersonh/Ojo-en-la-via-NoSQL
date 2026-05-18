@@ -48,12 +48,14 @@
         <div class="section-card">
             <div class="section-card-header">
                 <h4><i class="fas fa-chart-line"></i> Tendencia <span id="tendencia-label">últimos 7 días</span></h4>
+                <span id="badge-tendencia" style="background:#eaf3fb;color:#2471a3;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;"></span>
             </div>
             <div style="height:230px;"><canvas id="chartTendencia"></canvas></div>
         </div>
         <div class="section-card">
             <div class="section-card-header">
                 <h4><i class="fas fa-check-double"></i> Tasa de resolución</h4>
+                <span id="badge-tasa" style="background:#eaf3fb;color:#2471a3;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;"></span>
             </div>
             <div id="tasa-container" style="padding:4px 0;"></div>
         </div>
@@ -63,7 +65,10 @@
     <div class="section-card" style="margin-bottom:18px;">
         <div class="section-card-header">
             <h4><i class="fas fa-th"></i> Actividad por día y hora</h4>
-            <span style="font-size:.78rem;color:#94a3b8;">Hora Colombia (Bogotá)</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span id="badge-heatmap" style="background:#eaf3fb;color:#2471a3;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;"></span>
+                <span style="font-size:.78rem;color:#94a3b8;">Hora Colombia (Bogotá)</span>
+            </div>
         </div>
         <div id="heatmap-container" style="overflow-x:auto;padding:8px 0;"></div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:12px;justify-content:flex-end;">
@@ -78,7 +83,7 @@
     <!-- Fila 3: Zona/barrio -->
     <div class="section-card">
         <div class="section-card-header">
-            <h4><i class="fas fa-map-pin"></i> Reportes por zona</h4>
+            <h4><i class="fas fa-map-pin"></i> Reportes por zona <span id="badge-zona" style="background:#eaf3fb;color:#2471a3;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;margin-left:4px;"></span></h4>
             <select id="zona-topn" class="form-control" style="width:140px;" onchange="renderAnalytics()">
                 <option value="5">Top 5 zonas</option>
                 <option value="10" selected>Top 10 zonas</option>
