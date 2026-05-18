@@ -676,7 +676,9 @@ textarea.form-control{resize:vertical;min-height:100px;}
                         </div>
                     <?php else: ?>
                     <?php foreach ($reglasList as $reg): ?>
-                        <div class="regla-item" id="regla-<?= $reg['id'] ?>" style="border:1px solid #e8ecef;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:<?= $reg['activa'] ? '#fff' : '#f8f9fa' ?>;">
+                        <div class="regla-item" id="regla-<?= $reg['id'] ?>"
+                            data-reg="<?= htmlspecialchars(json_encode($reg), ENT_QUOTES) ?>"
+                            style="border:1px solid #e8ecef;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:<?= $reg['activa'] ? '#fff' : '#f8f9fa' ?>;">
                             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
                                 <div style="flex:1;">
                                     <div style="font-weight:600;font-size:.9rem;margin-bottom:2px;">
@@ -689,17 +691,11 @@ textarea.form-control{resize:vertical;min-height:100px;}
                                     <div style="font-size:.82rem;color:#7f8c8d;">→ <?= htmlspecialchars($reg['entidad']) ?></div>
                                 </div>
                                 <div style="display:flex;gap:6px;flex-shrink:0;">
-                                    <button class="btn btn-secondary btn-sm" onclick="editarRegla(<?= htmlspecialchars(json_encode($reg)) ?>)" title="Editar">
-                                        <i class="fas fa-pen"></i>
-                                    </button>
-                                    <button class="btn btn-sm" style="background:<?= $reg['activa'] ? '#f39c12' : '#27ae60' ?>;color:#fff;"
-                                        onclick="toggleRegla('<?= $reg['id'] ?>', <?= $reg['activa'] ? 'false' : 'true' ?>)"
-                                        title="<?= $reg['activa'] ? 'Desactivar' : 'Activar' ?>">
+                                    <button class="btn btn-secondary btn-sm btn-editar-regla" title="Editar"><i class="fas fa-pen"></i></button>
+                                    <button class="btn btn-sm btn-toggle-regla" style="background:<?= $reg['activa'] ? '#f39c12' : '#27ae60' ?>;color:#fff;" title="<?= $reg['activa'] ? 'Desactivar' : 'Activar' ?>">
                                         <i class="fas fa-<?= $reg['activa'] ? 'pause' : 'play' ?>"></i>
                                     </button>
-                                    <button class="btn btn-sm" style="background:#e74c3c;color:#fff;" onclick="eliminarRegla('<?= $reg['id'] ?>')" title="Eliminar">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <button class="btn btn-sm btn-eliminar-regla" style="background:#e74c3c;color:#fff;" title="Eliminar"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -882,10 +878,41 @@ function showTab(name) {
 /* ════════════════════════════════════════════════════════
    CHARTS (Chart.js)
 ════════════════════════════════════════════════════════ */
-const PALETTE = ['#3498db','#27ae60','#e74c3c','#f39c12','#9b59b6','#1abc9c','#e67e22','#2980b9'];
+const PALETTE = ['#4f6ef7','#0ea5e9','#10b981','#f59e0b','#8b5cf6','#f43f5e','#f97316','#06b6d4'];
+
+// Plugin: total en el centro del doughnut
+Chart.register({
+    id: 'centerText',
+    afterDraw(chart) {
+        if (chart.config.type !== 'doughnut') return;
+        const { ctx, chartArea: { top, bottom, left, right } } = chart;
+        const cx    = (left + right) / 2;
+        const cy    = (top  + bottom) / 2;
+        const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        ctx.save();
+        ctx.font         = 'bold 26px system-ui, sans-serif';
+        ctx.fillStyle    = '#1e293b';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(total, cx, cy - 9);
+        ctx.font      = '11px system-ui, sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('total', cx, cy + 13);
+        ctx.restore();
+    }
+});
+
+const tooltipBase = {
+    backgroundColor: '#1e293b',
+    padding: 10,
+    cornerRadius: 8,
+    titleFont: { size: 12 },
+    bodyFont:  { size: 12 },
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Doughnut – tipos de incidente
+
+    // ── Doughnut: tipos de incidente ──────────────────────────
     new Chart(document.getElementById('chartTipos'), {
         type: 'doughnut',
         data: {
@@ -893,38 +920,94 @@ document.addEventListener('DOMContentLoaded', () => {
             datasets: [{
                 data: CHART_TIPOS.map(t => t.total),
                 backgroundColor: PALETTE,
-                borderWidth: 2,
-                borderColor: '#fff'
+                borderWidth: 3,
+                borderColor: '#ffffff',
+                hoverOffset: 12,
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 14 } } }
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            animation: { duration: 900, easing: 'easeInOutQuart', animateScale: true },
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        font: { size: 11, family: 'system-ui' },
+                        boxWidth: 12, boxHeight: 12,
+                        padding: 14, color: '#475569',
+                    }
+                },
+                tooltip: {
+                    ...tooltipBase,
+                    callbacks: {
+                        label(ctx) {
+                            const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = sum ? ((ctx.parsed / sum) * 100).toFixed(1) : 0;
+                            return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                        }
+                    }
+                }
+            }
         }
     });
 
-    // Bar – reportes por mes
-    new Chart(document.getElementById('chartMeses'), {
+    // ── Bar: reportes por mes ─────────────────────────────────
+    const ctxMeses = document.getElementById('chartMeses').getContext('2d');
+    const grad = ctxMeses.createLinearGradient(0, 0, 0, 260);
+    grad.addColorStop(0, 'rgba(79,110,247,0.85)');
+    grad.addColorStop(1, 'rgba(79,110,247,0.08)');
+
+    new Chart(ctxMeses, {
         type: 'bar',
         data: {
             labels: CHART_MESES.map(m => m.mes),
             datasets: [{
                 label: 'Reportes',
                 data: CHART_MESES.map(m => m.total),
-                backgroundColor: 'rgba(52,152,219,.75)',
-                borderColor: '#3498db',
+                backgroundColor: grad,
+                borderColor: '#4f6ef7',
                 borderWidth: 2,
-                borderRadius: 6
+                borderRadius: 8,
+                borderSkipped: false,
+                hoverBackgroundColor: 'rgba(79,110,247,0.95)',
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 900,
+                easing: 'easeInOutQuart',
+                delay: ctx => ctx.dataIndex * 60,
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    ...tooltipBase,
+                    callbacks: {
+                        label: item => ` ${item.parsed.y} reporte${item.parsed.y !== 1 ? 's' : ''}`,
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { color: '#64748b', font: { size: 11 } },
+                },
+                y: {
+                    beginAtZero: true,
+                    border: { display: false },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { precision: 0, color: '#64748b', font: { size: 11 } },
+                }
+            }
         }
     });
 
-    // Horizontal bar – estados
+    // ── Horizontal bar: estados ───────────────────────────────
     new Chart(document.getElementById('chartEstados'), {
         type: 'bar',
         data: {
@@ -932,16 +1015,53 @@ document.addEventListener('DOMContentLoaded', () => {
             datasets: [{
                 label: 'Cantidad',
                 data: [ESTADOS_DATA.pendiente, ESTADOS_DATA.en_revision, ESTADOS_DATA.notificado, ESTADOS_DATA.resuelto],
-                backgroundColor: ['#f39c12','#3498db','#9b59b6','#27ae60'],
-                borderRadius: 6,
-                borderWidth: 0
+                backgroundColor: [
+                    'rgba(245,158,11,0.75)',
+                    'rgba(14,165,233,0.75)',
+                    'rgba(139,92,246,0.75)',
+                    'rgba(16,185,129,0.75)',
+                ],
+                hoverBackgroundColor: [
+                    'rgba(245,158,11,1)',
+                    'rgba(14,165,233,1)',
+                    'rgba(139,92,246,1)',
+                    'rgba(16,185,129,1)',
+                ],
+                borderRadius: 8,
+                borderWidth: 0,
             }]
         },
         options: {
             indexAxis: 'y',
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 900,
+                easing: 'easeInOutQuart',
+                delay: ctx => ctx.dataIndex * 80,
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    ...tooltipBase,
+                    callbacks: {
+                        label: item => ` ${item.parsed.x} reporte${item.parsed.x !== 1 ? 's' : ''}`,
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    border: { display: false },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { precision: 0, color: '#64748b', font: { size: 11 } },
+                },
+                y: {
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { color: '#475569', font: { size: 12, weight: '500' } },
+                }
+            }
         }
     });
 });
@@ -1141,15 +1261,51 @@ document.querySelectorAll('.cambiar-rol').forEach(btn => {
 /* ════════════════════════════════════════════════════════
    REGLAS DE NOTIFICACIÓN AUTOMÁTICA
 ════════════════════════════════════════════════════════ */
+function reglaHTML(reg) {
+    const bg          = reg.activa ? '#fff' : '#f8f9fa';
+    const prioBadge   = `<span class="badge badge-${reg.prioridad}" style="margin-left:6px;">${reg.prioridad.charAt(0).toUpperCase()+reg.prioridad.slice(1)}</span>`;
+    const inactivaBadge = reg.activa ? '' : `<span class="badge" style="background:#95a5a6;color:#fff;margin-left:4px;">Inactiva</span>`;
+    const toggleColor = reg.activa ? '#f39c12' : '#27ae60';
+    const toggleIcon  = reg.activa ? 'pause' : 'play';
+    const toggleTitle = reg.activa ? 'Desactivar' : 'Activar';
+    const toggleNext  = reg.activa ? 'false' : 'true';
+
+    const div = document.createElement('div');
+    div.className = 'regla-item';
+    div.id = 'regla-' + reg.id;
+    div.style.cssText = `border:1px solid #e8ecef;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:${bg};`;
+    div.dataset.reg = JSON.stringify(reg);
+    div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="flex:1;">
+                <div style="font-weight:600;font-size:.9rem;margin-bottom:2px;">
+                    ${reg.tipo_incidente}${prioBadge}${inactivaBadge}
+                </div>
+                <div style="font-size:.82rem;color:#7f8c8d;">→ ${reg.entidad}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn btn-secondary btn-sm btn-editar-regla" title="Editar"><i class="fas fa-pen"></i></button>
+                <button class="btn btn-sm btn-toggle-regla" style="background:${toggleColor};color:#fff;" title="${toggleTitle}"><i class="fas fa-${toggleIcon}"></i></button>
+                <button class="btn btn-sm btn-eliminar-regla" style="background:#e74c3c;color:#fff;" title="Eliminar"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`;
+
+    div.querySelector('.btn-editar-regla').addEventListener('click', () => editarRegla(reg));
+    div.querySelector('.btn-toggle-regla').addEventListener('click', () => toggleRegla(reg.id, !reg.activa));
+    div.querySelector('.btn-eliminar-regla').addEventListener('click', () => eliminarRegla(reg.id));
+
+    return div;
+}
+
 function abrirModalRegla() {
     document.getElementById('modal-regla-titulo').textContent = 'Nueva regla';
-    document.getElementById('regla-edit-id').value  = '';
-    document.getElementById('regla-tipo').value     = '';
-    document.getElementById('regla-tipo').disabled  = false;
-    document.getElementById('regla-entidad').value  = '';
+    document.getElementById('regla-edit-id').value   = '';
+    document.getElementById('regla-tipo').value      = '';
+    document.getElementById('regla-tipo').disabled   = false;
+    document.getElementById('regla-entidad').value   = '';
     document.getElementById('regla-prioridad').value = 'media';
-    document.getElementById('regla-asunto').value   = '';
-    document.getElementById('regla-mensaje').value  = '';
+    document.getElementById('regla-asunto').value    = '';
+    document.getElementById('regla-mensaje').value   = '';
     document.getElementById('modal-regla').style.display = 'flex';
 }
 
@@ -1189,23 +1345,33 @@ async function guardarRegla() {
     fd.append('mensaje',   mensaje);
 
     if (id) {
-        fd.append('accion',    'actualizar_regla');
-        fd.append('regla_id',  id);
+        fd.append('accion',   'actualizar_regla');
+        fd.append('regla_id', id);
     } else {
-        fd.append('accion',        'crear_regla');
+        fd.append('accion',         'crear_regla');
         fd.append('tipo_incidente', tipo);
     }
 
     try {
         const res  = await fetch('api_admin.php', { method: 'POST', body: fd });
         const data = await res.json();
-        if (data.ok) {
-            showToast(id ? 'Regla actualizada' : 'Regla creada', 'success');
-            cerrarModalRegla();
-            setTimeout(() => location.reload(), 800);
+        if (!data.ok) { showToast(data.mensaje || 'Error al guardar', 'error'); return; }
+
+        const reg = { id: id || data.id, tipo_incidente: tipo, entidad, asunto, mensaje, prioridad: prio, activa: true };
+
+        const nuevoEl = reglaHTML(reg);
+        if (id) {
+            const existing = document.getElementById('regla-' + id);
+            if (existing) existing.replaceWith(nuevoEl);
         } else {
-            showToast(data.mensaje || 'Error al guardar', 'error');
+            const lista = document.getElementById('reglas-lista');
+            const empty = lista.querySelector('#reglas-empty');
+            if (empty) empty.remove();
+            lista.prepend(nuevoEl);
         }
+
+        showToast(id ? 'Regla actualizada' : 'Regla creada', 'success');
+        cerrarModalRegla();
     } catch {
         showToast('Error de conexión', 'error');
     }
@@ -1220,12 +1386,15 @@ async function toggleRegla(id, activar) {
     try {
         const res  = await fetch('api_admin.php', { method: 'POST', body: fd });
         const data = await res.json();
-        if (data.ok) {
-            showToast(activar ? 'Regla activada' : 'Regla desactivada', 'success');
-            setTimeout(() => location.reload(), 600);
-        } else {
-            showToast(data.mensaje || 'Error', 'error');
+        if (!data.ok) { showToast(data.mensaje || 'Error', 'error'); return; }
+
+        const item = document.getElementById('regla-' + id);
+        if (item) {
+            const reg = JSON.parse(item.dataset.reg);
+            reg.activa = activar;
+            item.replaceWith(reglaHTML(reg));
         }
+        showToast(activar ? 'Regla activada' : 'Regla desactivada', 'success');
     } catch {
         showToast('Error de conexión', 'error');
     }
@@ -1254,6 +1423,14 @@ async function eliminarRegla(id) {
 
 document.getElementById('modal-regla')?.addEventListener('click', function(e) {
     if (e.target === this) cerrarModalRegla();
+});
+
+// Conectar botones de los cards renderizados por PHP
+document.querySelectorAll('.regla-item').forEach(item => {
+    const reg = JSON.parse(item.dataset.reg);
+    item.querySelector('.btn-editar-regla')?.addEventListener('click', () => editarRegla(reg));
+    item.querySelector('.btn-toggle-regla')?.addEventListener('click', () => toggleRegla(reg.id, !reg.activa));
+    item.querySelector('.btn-eliminar-regla')?.addEventListener('click', () => eliminarRegla(reg.id));
 });
 
 /* ════════════════════════════════════════════════════════
