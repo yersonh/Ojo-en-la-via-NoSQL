@@ -104,5 +104,5 @@ function dispararNotificacionEntidad(\MongoDB\Database $db, array $reporte, Obje
         </div>
     ";
 
-    enviarCorreoBackground('laurenoviedo68@gmail.com', $asunto, $cuerpo);
+    enviarCorreoBackground('solanoalfonsoy@gmail.com', $asunto, $cuerpo);
 }
