@@ -12,6 +12,11 @@ verificar_autenticacion('../../index.php');
 $mensaje = '';
 $tipoMensaje = '';
 
+if (($_GET['reporte'] ?? '') === 'ok') {
+    $mensaje = 'Reporte guardado correctamente.';
+    $tipoMensaje = 'success';
+}
+
 $nombreMostrar = trim($_SESSION['usuario_nombre'] ?? '');
 
 if ($nombreMostrar === '') {
@@ -119,8 +124,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($resultado->getInsertedCount() > 0) {
                 dispararNotificacionEntidad($db, $documento, $resultado->getInsertedId());
-                $mensaje = 'Reporte guardado correctamente.';
-                $tipoMensaje = 'success';
+                header('Location: inicio.php?reporte=ok');
+                exit;
             } else {
                 $mensaje = 'No se pudo guardar el reporte.';
                 $tipoMensaje = 'error';
