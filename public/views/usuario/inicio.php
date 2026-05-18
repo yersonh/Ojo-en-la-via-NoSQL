@@ -151,7 +151,9 @@ try {
                         'en_revision',
                         'En revisión',
                         'notificado',
-                        'Notificado'
+                        'Notificado',
+                        'resuelto',
+                        'Resuelto'
                     ]
                 ]
             ]
