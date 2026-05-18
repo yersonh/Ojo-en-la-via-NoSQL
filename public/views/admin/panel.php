@@ -203,6 +203,7 @@ $adminInicial = strtoupper(substr(strip_tags($adminNombre), 0, 1));
 <title>Panel Administrativo – Ojo en la Vía</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="/views/compartido/css/popup-reporte.css">
 <link rel="stylesheet" href="css/panel.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/views/compartido/js/popup-reporte.js"></script>

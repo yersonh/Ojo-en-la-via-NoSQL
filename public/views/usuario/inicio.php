@@ -262,6 +262,7 @@ try {
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="/views/compartido/css/popup-reporte.css">
     <link rel="stylesheet" href="/views/usuario/inicio/css/inicio-mapa.css">
 </head>
 
