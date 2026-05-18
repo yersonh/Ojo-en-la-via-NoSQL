@@ -5,6 +5,9 @@
             <h4><i class="fas fa-users"></i> Gestión de Usuarios
                 <span style="background:#eaf3fb;color:#2471a3;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600;margin-left:8px;" id="count-usuarios"><?= count($usuariosList) ?></span>
             </h4>
+            <a href="exportar.php?tipo=usuarios" class="btn btn-sm" style="background:#1e88e5;color:#fff;font-weight:600;border-radius:8px;padding:7px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+                <i class="fas fa-download"></i> Exportar CSV
+            </a>
             <div class="section-filters">
                 <div class="search-box">
                     <i class="fas fa-search"></i>

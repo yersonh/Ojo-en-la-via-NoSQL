@@ -478,17 +478,28 @@ $cursor = $reportes->aggregate($pipeline);
 <script src="/views/usuario/reportes/js/comentarios-reportes.js"></script>
 
 <!-- Lightbox -->
-<div id="lightbox-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.92);align-items:center;justify-content:center;cursor:zoom-out;" onclick="this.style.display='none'">
+<div id="lightbox-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.92);align-items:center;justify-content:center;">
+    <button onclick="document.getElementById('lightbox-overlay').style.display='none'"
+        style="position:fixed;top:18px;right:22px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;"
+        aria-label="Cerrar">&times;</button>
     <img id="lightbox-img" src="" alt="" style="max-width:94vw;max-height:92vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.6);object-fit:contain;">
 </div>
 <script>
-document.querySelectorAll('.img-lightbox').forEach(img => {
-    img.addEventListener('click', () => {
-        const lb = document.getElementById('lightbox-overlay');
-        document.getElementById('lightbox-img').src = img.src;
-        lb.style.display = 'flex';
+(function() {
+    const lb = document.getElementById('lightbox-overlay');
+    const cerrar = () => lb.style.display = 'none';
+
+    document.querySelectorAll('.img-lightbox').forEach(img => {
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', () => {
+            document.getElementById('lightbox-img').src = img.src;
+            lb.style.display = 'flex';
+        });
     });
-});
+
+    lb.addEventListener('click', e => { if (e.target === lb) cerrar(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+})();
 </script>
 
 </body>

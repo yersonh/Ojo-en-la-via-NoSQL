@@ -9,8 +9,14 @@
     if (document.getElementById('popup-lightbox')) return;
     const lb = document.createElement('div');
     lb.id = 'popup-lightbox';
-    lb.innerHTML = '<img id="popup-lightbox-img" src="" alt="">';
-    lb.addEventListener('click', () => lb.classList.remove('open'));
+    lb.innerHTML = `
+        <button id="popup-lightbox-close" aria-label="Cerrar">&times;</button>
+        <img id="popup-lightbox-img" src="" alt="">
+    `;
+    const cerrar = () => lb.classList.remove('open');
+    lb.addEventListener('click', e => { if (e.target === lb) cerrar(); });
+    lb.querySelector('#popup-lightbox-close').addEventListener('click', cerrar);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
     document.body.appendChild(lb);
 })();
 
@@ -102,7 +108,7 @@ function abrirLightbox(src) {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            cursor: zoom-in;
+            cursor: pointer;
             transition: opacity .15s;
         }
         .popup-image:hover { opacity: .88; }
@@ -116,7 +122,6 @@ function abrirLightbox(src) {
             background: rgba(0,0,0,.92);
             align-items: center;
             justify-content: center;
-            cursor: zoom-out;
         }
         #popup-lightbox.open { display: flex; }
         #popup-lightbox img {
@@ -126,6 +131,25 @@ function abrirLightbox(src) {
             box-shadow: 0 8px 40px rgba(0,0,0,.6);
             object-fit: contain;
         }
+        #popup-lightbox-close {
+            position: fixed;
+            top: 18px;
+            right: 22px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.15);
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: background .15s;
+        }
+        #popup-lightbox-close:hover { background: rgba(255,255,255,.3); }
         .popup-image-empty {
             color: #9ca3af;
             font-size: 13px;

@@ -8,6 +8,13 @@
                 <i class="fas fa-filter" style="margin-right:6px;color:#94a3b8;"></i>Filtros
             </span>
 
+            <a href="exportar.php?tipo=analiticas" class="btn btn-sm" style="background:#1e88e5;color:#fff;font-weight:600;border-radius:8px;padding:7px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+                <i class="fas fa-download"></i> Exportar CSV
+            </a>
+
+            <!-- Separador -->
+            <div style="width:1px;height:28px;background:#e2e8f0;flex-shrink:0;"></div>
+
             <!-- Tipo -->
             <select id="analytics-tipo" class="form-control" style="width:200px;" onchange="renderAnalytics()">
                 <option value="">Todos los tipos</option>
