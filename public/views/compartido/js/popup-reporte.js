@@ -4,6 +4,22 @@
  * Inyecta automáticamente el CSS necesario.
  */
 
+/* Lightbox para imágenes del mapa */
+(function crearLightboxMapa() {
+    if (document.getElementById('popup-lightbox')) return;
+    const lb = document.createElement('div');
+    lb.id = 'popup-lightbox';
+    lb.innerHTML = '<img id="popup-lightbox-img" src="" alt="">';
+    lb.addEventListener('click', () => lb.classList.remove('open'));
+    document.body.appendChild(lb);
+})();
+
+function abrirLightbox(src) {
+    const lb = document.getElementById('popup-lightbox');
+    document.getElementById('popup-lightbox-img').src = src;
+    lb.classList.add('open');
+}
+
 (function inyectarEstilosPopup() {
     if (document.getElementById('popup-reporte-styles')) return;
     const s = document.createElement('style');
@@ -86,6 +102,29 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            cursor: zoom-in;
+            transition: opacity .15s;
+        }
+        .popup-image:hover { opacity: .88; }
+
+        /* Lightbox compartido */
+        #popup-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: rgba(0,0,0,.92);
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+        }
+        #popup-lightbox.open { display: flex; }
+        #popup-lightbox img {
+            max-width: 94vw;
+            max-height: 92vh;
+            border-radius: 10px;
+            box-shadow: 0 8px 40px rgba(0,0,0,.6);
+            object-fit: contain;
         }
         .popup-image-empty {
             color: #9ca3af;
@@ -281,7 +320,7 @@ function crearPopupReporte(reporte, opciones) {
                     </div>
                     <div class="popup-image-box">
                         ${imagen
-                            ? `<img src="/${imagen.replace(/^\/+/, '')}" alt="Imagen del reporte" class="popup-image">`
+                            ? `<img src="/${imagen.replace(/^\/+/, '')}" alt="Imagen del reporte" class="popup-image" onclick="abrirLightbox(this.src)">`
                             : `<div class="popup-image-empty">Sin imagen disponible</div>`}
                     </div>
                 </div>

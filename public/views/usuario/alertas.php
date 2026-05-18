@@ -241,6 +241,8 @@ $cursor = $reportes->aggregate($pipeline);
                 }
                     $estado = normalizarEstado($reporte['estado'] ?? 'pendiente');
 
+                    $direccion = trim((string)($reporte['direccion_texto'] ?? ''));
+
                     $latitud = $reporte['latitud']
                         ?? $reporte['ubicacion']['lat']
                         ?? $reporte['ubicacion']['latitud']
@@ -297,10 +299,10 @@ $cursor = $reportes->aggregate($pipeline);
                             </div>
 
                             <div class="alerta-meta">
-                                <span>📍 Ubicación en mapa</span>
+                                <span><i class="fas fa-map-marker-alt"></i> Ubicación en mapa</span>
 
                                 <?php if (!empty($tiempo)): ?>
-                                    <span>⏱ <?php echo htmlspecialchars($tiempo); ?></span>
+                                    <span><i class="fas fa-clock"></i> <?php echo htmlspecialchars($tiempo); ?></span>
                                 <?php endif; ?>
 
                                 <span class="chip-tipo alerta-tipo-texto">
@@ -334,25 +336,23 @@ $cursor = $reportes->aggregate($pipeline);
 
            
               <?php if (!empty($fotoReporte)): ?>
-                <img 
-                    src="/<?php echo htmlspecialchars(ltrim($fotoReporte, '/')); ?>" 
+                <img
+                    src="/<?php echo htmlspecialchars(ltrim($fotoReporte, '/')); ?>"
                     alt="Foto del reporte"
-                    class="alerta-foto-reporte"
+                    class="alerta-foto-reporte img-lightbox"
+                    style="cursor:zoom-in;"
                 >
             <?php endif; ?>
 
                     <div class="alerta-detalles">
-                        <?php if ($latitud !== null && $longitud !== null): ?>
-                            <div class="alerta-coordenadas">
-                                🛣️ Coordenadas:
-                                <span class="alerta-latitud"><?php echo htmlspecialchars($latitud); ?></span>,
-                                <span class="alerta-longitud"><?php echo htmlspecialchars($longitud); ?></span>
-                            </div>
-                        <?php else: ?>
-                            <div>🛣️ Coordenadas no disponibles</div>
-                        <?php endif; ?>
-
-                        <div>🗓️ <?php echo htmlspecialchars($fechaFormateada); ?></div>
+                        <div>
+                            <i class="fas fa-map-marker-alt" style="margin-right:5px;color:#7f8c8d;"></i>
+                            <?php echo htmlspecialchars($direccion !== '' ? $direccion : 'Ubicación no disponible'); ?>
+                        </div>
+                        <div>
+                            <i class="fas fa-calendar" style="margin-right:5px;color:#7f8c8d;"></i>
+                            <?php echo htmlspecialchars($fechaFormateada); ?>
+                        </div>
                     </div>
                     
                     <div class="alerta-acciones">
@@ -472,10 +472,24 @@ $cursor = $reportes->aggregate($pipeline);
     </div>
 </div>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
- <script src="/views/usuario/compartido/js/menu-inferior.js"></script>
+<script src="/views/usuario/compartido/js/menu-inferior.js"></script>
 <script src="/views/usuario/reportes/js/likes-reportes.js"></script>
 <script src="/views/usuario/reportes/js/alertas-reportes.js"></script>
 <script src="/views/usuario/reportes/js/comentarios-reportes.js"></script>
+
+<!-- Lightbox -->
+<div id="lightbox-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.92);align-items:center;justify-content:center;cursor:zoom-out;" onclick="this.style.display='none'">
+    <img id="lightbox-img" src="" alt="" style="max-width:94vw;max-height:92vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.6);object-fit:contain;">
+</div>
+<script>
+document.querySelectorAll('.img-lightbox').forEach(img => {
+    img.addEventListener('click', () => {
+        const lb = document.getElementById('lightbox-overlay');
+        document.getElementById('lightbox-img').src = img.src;
+        lb.style.display = 'flex';
+    });
+});
+</script>
 
 </body>
 </html>
