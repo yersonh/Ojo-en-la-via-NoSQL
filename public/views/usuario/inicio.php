@@ -270,17 +270,17 @@ try {
 
     <nav class="bottom-nav" id="bottomNav">
         <a href="alertas.php">
-            <span class="icon">🔔</span>
+            <span class="icon"><i class="fas fa-bell"></i></span>
             <span>Alertas</span>
         </a>
 
         <a href="inicio.php" class="active">
-            <span class="icon">🗺️</span>
+            <span class="icon"><i class="fas fa-map"></i></span>
             <span>Mapa</span>
         </a>
 
         <a href="perfil.php">
-            <span class="icon">👤</span>
+            <span class="icon"><i class="fas fa-user"></i></span>
             <span>Perfil</span>
         </a>
     </nav>

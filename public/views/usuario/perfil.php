@@ -102,12 +102,12 @@ $totalNoLeidas = $db->notificaciones->countDocuments([
 function obtenerIconoNotificacion($tipo)
 {
     return match ($tipo) {
-        'comentario' => '💬',
-        'respuesta_comentario' => '↩️',
-        'like_reporte' => '❤️',
-        'like_comentario' => '👍',
-        'estado_reporte' => '📌',
-        default => '🔔'
+        'comentario'          => '<i class="fas fa-comment"></i>',
+        'respuesta_comentario'=> '<i class="fas fa-reply"></i>',
+        'like_reporte'        => '<i class="fas fa-heart"></i>',
+        'like_comentario'     => '<i class="fas fa-thumbs-up"></i>',
+        'estado_reporte'      => '<i class="fas fa-tag"></i>',
+        default               => '<i class="fas fa-bell"></i>'
     };
 }
 
@@ -133,6 +133,7 @@ function formatearFechaNotificacion($fecha)
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/imagenes/fiveicon.png">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/views/usuario/perfil/css/perfil.css">
 </head>
 
@@ -163,10 +164,10 @@ function formatearFechaNotificacion($fecha)
         <section class="perfil-layout">
             <div class="perfil-main">
                 <article class="perfil-card">
-                    <h3>👤 Información Personal</h3>
+                    <h3><i class="fas fa-user"></i> Información Personal</h3>
 
                     <div class="info-item">
-                        <div class="info-icon">👤</div>
+                        <div class="info-icon"><i class="fas fa-user"></i></div>
                         <div>
                             <span class="info-label">Nombre completo</span>
                             <span class="info-value">
@@ -176,7 +177,7 @@ function formatearFechaNotificacion($fecha)
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">✉️</div>
+                        <div class="info-icon"><i class="fas fa-envelope"></i></div>
                         <div>
                             <span class="info-label">Correo electrónico</span>
                             <span class="info-value">
@@ -186,7 +187,7 @@ function formatearFechaNotificacion($fecha)
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon">📞</div>
+                        <div class="info-icon"><i class="fas fa-phone"></i></div>
                         <div>
                             <span class="info-label">Teléfono</span>
                             <span class="info-value">
@@ -198,7 +199,7 @@ function formatearFechaNotificacion($fecha)
 
                 <article class="perfil-card notificaciones-card">
                     <div class="perfil-card-title-row">
-                        <h3>🔔 Notificaciones</h3>
+                        <h3><i class="fas fa-bell"></i> Notificaciones</h3>
 
                         <?php if ($totalNoLeidas > 0): ?>
                             <span class="notificaciones-count" id="contadorNotificaciones">
@@ -268,11 +269,11 @@ function formatearFechaNotificacion($fecha)
 
             <aside class="perfil-side">
                 <article class="perfil-card">
-                    <h3>📊 Estadísticas</h3>
+                    <h3><i class="fas fa-chart-bar"></i> Estadísticas</h3>
 
                     <div class="estadisticas-grid">
                         <div class="estadistica-box">
-                            <div class="estadistica-icon">🚩</div>
+                            <div class="estadistica-icon"><i class="fas fa-flag"></i></div>
                             <span class="estadistica-numero" id="totalReportesPerfil">
                                 <?php echo (int) $totalReportes; ?>
                             </span>
@@ -280,7 +281,7 @@ function formatearFechaNotificacion($fecha)
                         </div>
 
                         <div class="estadistica-box">
-                            <div class="estadistica-icon">❤️</div>
+                            <div class="estadistica-icon"><i class="fas fa-heart"></i></div>
                             <span class="estadistica-numero">
                                 <?php echo (int) $totalLikesReportes; ?>
                             </span>
@@ -288,7 +289,7 @@ function formatearFechaNotificacion($fecha)
                         </div>
 
                         <div class="estadistica-box">
-                            <div class="estadistica-icon">💬</div>
+                            <div class="estadistica-icon"><i class="fas fa-comments"></i></div>
                             <span class="estadistica-numero">
                                 <?php echo (int) $totalComentarios; ?>
                             </span>
@@ -296,7 +297,7 @@ function formatearFechaNotificacion($fecha)
                         </div>
 
                         <div class="estadistica-box">
-                            <div class="estadistica-icon">🔔</div>
+                            <div class="estadistica-icon"><i class="fas fa-bell"></i></div>
                             <span class="estadistica-numero" id="numeroNoLeidas">
                                 <?php echo (int) $totalNoLeidas; ?>
                             </span>
@@ -307,7 +308,7 @@ function formatearFechaNotificacion($fecha)
 
                 <article class="perfil-card">
                     <a href="editar_perfil.php" class="perfil-btn">
-                        <span class="perfil-btn-icon">✏️</span>
+                        <span class="perfil-btn-icon"><i class="fas fa-pen"></i></span>
 
                         <span>
                             Editar Perfil
@@ -316,7 +317,7 @@ function formatearFechaNotificacion($fecha)
                     </a>
 
                     <button type="button" class="perfil-btn logout" onclick="abrirModalLogout()">
-                        <span class="perfil-btn-icon">🚪</span>
+                        <span class="perfil-btn-icon"><i class="fas fa-sign-out-alt"></i></span>
                         <span>
                             Cerrar Sesión
                             <small>Salir de tu cuenta</small>
@@ -330,17 +331,17 @@ function formatearFechaNotificacion($fecha)
 
 <nav class="bottom-nav" id="bottomNav">
     <a href="alertas.php">
-        <span class="icon">🔔</span>
+        <span class="icon"><i class="fas fa-bell"></i></span>
         <span>Alertas</span>
     </a>
 
     <a href="inicio.php">
-        <span class="icon">🗺️</span>
+        <span class="icon"><i class="fas fa-map"></i></span>
         <span>Mapa</span>
     </a>
 
     <a href="perfil.php" class="active">
-        <span class="icon">👤</span>
+        <span class="icon"><i class="fas fa-user"></i></span>
         <span>Perfil</span>
     </a>
 </nav>

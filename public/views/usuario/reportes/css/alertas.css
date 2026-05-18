@@ -274,6 +274,7 @@ body.body-alertas {
     justify-content: center;
     gap: 4px;
     white-space: nowrap;
+    transition: color .2s, background .2s, border-color .2s;
 }
 
 .alerta-acciones button:hover,
@@ -360,7 +361,7 @@ body.body-alertas {
     z-index: 9000;
     background: rgba(0, 0, 0, 0.55);
     display: none;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
 }
 

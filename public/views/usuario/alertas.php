@@ -179,6 +179,7 @@ $cursor = $reportes->aggregate($pipeline);
     <link rel="icon" type="image/png" href="/imagenes/fiveicon.png">
     <title>Alertas</title>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="/views/usuario/reportes/css/alertas.css">
     <link rel="stylesheet" href="/views/usuario/reportes/css/comentarios-reportes.css">
@@ -189,17 +190,17 @@ $cursor = $reportes->aggregate($pipeline);
 
     <nav class="bottom-nav" id="bottomNav">
         <a href="alertas.php" class="active">
-            <span class="icon">🔔</span>
+            <span class="icon"><i class="fas fa-bell"></i></span>
             <span>Alertas</span>
         </a>
 
         <a href="inicio.php">
-            <span class="icon">🗺️</span>
+            <span class="icon"><i class="fas fa-map"></i></span>
             <span>Mapa</span>
         </a>
 
         <a href="perfil.php">
-            <span class="icon">👤</span>
+            <span class="icon"><i class="fas fa-user"></i></span>
             <span>Perfil</span>
         </a>
     </nav>
@@ -360,7 +361,7 @@ $cursor = $reportes->aggregate($pipeline);
                             class="btn-like-reporte <?php echo $yaDioLike ? 'liked' : ''; ?>"
                             data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
                         >
-                            ❤️ <span class="like-count"><?php echo $totalLikes; ?></span>
+                            <i class="fas fa-heart"></i> <span class="like-count"><?php echo $totalLikes; ?></span>
                         </button>
 
                         <button 
@@ -368,15 +369,15 @@ $cursor = $reportes->aggregate($pipeline);
                         class="btn-abrir-comentarios"
                         data-reporte-id="<?php echo htmlspecialchars((string) $reporte['_id']); ?>"
                     >
-                       💬 Comentarios (<span class="comment-count"><?php echo $totalComentariosReporte; ?></span>)
+                       <i class="fas fa-comments"></i> Comentarios (<span class="comment-count"><?php echo $totalComentariosReporte; ?></span>)
                     </button>
 
                         <?php if ($latitud !== null && $longitud !== null): ?>
                             <a class="alerta-link-mapa" href="inicio.php?reporte=<?php echo urlencode((string) $reporte['_id']); ?>&lat=<?php echo urlencode($latitud); ?>&lng=<?php echo urlencode($longitud); ?>">
-                                📍 Ver en Mapa
+                                <i class="fas fa-map-marker-alt"></i> Ver en Mapa
                             </a>
                         <?php else: ?>
-                            <a class="alerta-link-mapa" href="inicio.php">📍 Ver en Mapa</a>
+                            <a class="alerta-link-mapa" href="inicio.php"><i class="fas fa-map-marker-alt"></i> Ver en Mapa</a>
                         <?php endif; ?>
                     </div>
                 </article>
