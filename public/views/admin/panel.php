@@ -163,24 +163,31 @@ foreach ($db->reglas_notificacion->find([], ['sort' => ['fecha_creacion' => -1]]
     ];
 }
 
-// ── HISTORIAL DE NOTIFICACIONES A ENTIDADES ────────────────────────────────
+// ── HISTORIAL DE NOTIFICACIONES A ENTIDADES (embebidas en Reportes) ────────
 $notifEntList = [];
-foreach ($db->notificaciones_entidades->find([], ['sort' => ['fecha' => -1], 'limit' => 100]) as $n) {
+foreach ($db->Reportes->aggregate([
+    ['$match'   => ['notificaciones_entidades.0' => ['$exists' => true]]],
+    ['$unwind'  => '$notificaciones_entidades'],
+    ['$sort'    => ['notificaciones_entidades.fecha' => -1]],
+    ['$limit'   => 100],
+    ['$project' => ['reporte_id' => '$_id', 'ne' => '$notificaciones_entidades']],
+]) as $r) {
+    $ne    = $r['ne'];
     $fecha = 'N/A';
-    if (isset($n['fecha']) && $n['fecha'] instanceof UTCDateTime) {
-        $fecha = $n['fecha']->toDateTime()
+    if (isset($ne['fecha']) && $ne['fecha'] instanceof UTCDateTime) {
+        $fecha = $ne['fecha']->toDateTime()
             ->setTimezone(new DateTimeZone('America/Bogota'))
             ->format('d/m/Y H:i');
     }
     $notifEntList[] = [
-        'id'        => (string)$n['_id'],
-        'entidad'   => (string)($n['entidad']      ?? ''),
-        'prioridad' => (string)($n['prioridad']    ?? 'media'),
-        'asunto'    => (string)($n['asunto']       ?? ''),
-        'mensaje'   => (string)($n['mensaje']      ?? ''),
-        'reporte_id'=> isset($n['reporte_id']) ? (string)$n['reporte_id'] : null,
+        'id'        => isset($ne['_id'])    ? (string) $ne['_id']       : '',
+        'entidad'   => (string)($ne['entidad']      ?? ''),
+        'prioridad' => (string)($ne['prioridad']    ?? 'media'),
+        'asunto'    => (string)($ne['asunto']       ?? ''),
+        'mensaje'   => (string)($ne['mensaje']      ?? ''),
+        'reporte_id'=> isset($r['reporte_id']) ? (string) $r['reporte_id'] : null,
         'fecha'     => $fecha,
-        'origen'    => (string)($n['admin_nombre'] ?? 'Sistema automático'),
+        'origen'    => (string)($ne['admin_nombre'] ?? 'Sistema automático'),
     ];
 }
 

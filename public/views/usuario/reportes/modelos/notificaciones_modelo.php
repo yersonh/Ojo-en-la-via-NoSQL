@@ -35,7 +35,14 @@ function crearNotificacionUsuario($db, $usuarioDestinoId, $usuarioOrigenId, $tip
         $documento['comentario_id'] = $comentarioId instanceof ObjectId ? $comentarioId : new ObjectId((string) $comentarioId);
     }
 
-    $db->notificaciones->insertOne($documento);
+    $usuarioDestinoObjectId = $documento['usuario_destino_id'];
+    unset($documento['usuario_destino_id']); // ya no necesario: es implícito por el array embebido
+    $documento['_id'] = new ObjectId();
+
+    $db->usuario->updateOne(
+        ['_id' => $usuarioDestinoObjectId],
+        ['$push' => ['notificaciones' => $documento]]
+    );
 }
 
 function obtenerNombreNotificador()

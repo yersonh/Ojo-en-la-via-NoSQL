@@ -62,7 +62,6 @@ try {
     }
 
     $reportes->deleteOne($filtro);
-    $db->notificaciones->deleteMany(['reporte_id' => $reporteId]);
 
     responderJson([
         'ok' => true,

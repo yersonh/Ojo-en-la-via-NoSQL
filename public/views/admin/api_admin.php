@@ -89,7 +89,6 @@ if ($accion === 'eliminar_reporte_admin') {
     $rid = validarId($_POST['reporte_id'] ?? '');
 
     $db->Reportes->deleteOne(['_id' => $rid]);
-    $db->notificaciones->deleteMany(['reporte_id' => $rid]);
 
     ok(['mensaje' => 'Reporte eliminado.']);
 }

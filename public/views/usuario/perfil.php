@@ -76,28 +76,24 @@ $totalLikesReportes = $db->Reportes->countDocuments([
     ]
 ]);
 
-/* ========= NOTIFICACIONES ========= */
+/* ========= NOTIFICACIONES (embebidas en usuario) ========= */
 
-$notificaciones = $db->notificaciones->find(
-    [
-        '$or' => [
-            ['usuario_destino_id' => $usuarioObjectId],
-            ['usuario_destino_id' => $usuarioId],
-        ]
-    ],
-    [
-        'sort' => ['fecha' => -1],
-        'limit' => 20
-    ]
-);
+$todasNotifs = [];
+if (!empty($usuario['notificaciones'])) {
+    $raw = $usuario['notificaciones'];
+    $todasNotifs = $raw instanceof \MongoDB\Model\BSONArray ? $raw->getArrayCopy() : (array) $raw;
+}
 
-$totalNoLeidas = $db->notificaciones->countDocuments([
-    '$or' => [
-        ['usuario_destino_id' => $usuarioObjectId],
-        ['usuario_destino_id' => $usuarioId],
-    ],
-    'leida' => false
-]);
+usort($todasNotifs, function ($a, $b) {
+    $ta = isset($a['fecha']) && $a['fecha'] instanceof \MongoDB\BSON\UTCDateTime
+        ? $a['fecha']->toDateTime()->getTimestamp() : 0;
+    $tb = isset($b['fecha']) && $b['fecha'] instanceof \MongoDB\BSON\UTCDateTime
+        ? $b['fecha']->toDateTime()->getTimestamp() : 0;
+    return $tb - $ta;
+});
+
+$notificaciones  = array_slice($todasNotifs, 0, 20);
+$totalNoLeidas   = count(array_filter($todasNotifs, fn($n) => !($n['leida'] ?? false)));
 
 function obtenerIconoNotificacion($tipo)
 {

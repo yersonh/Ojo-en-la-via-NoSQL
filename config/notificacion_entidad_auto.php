@@ -38,17 +38,19 @@ function dispararNotificacionEntidad(\MongoDB\Database $db, array $reporte, Obje
     $baseUrl = rtrim(getenv('APP_URL') ?: 'https://ojo-en-la-via-nosql-production.up.railway.app', '/');
     $linkActualizar = $baseUrl . '/entidad/actualizar.php?token=' . $token;
 
-    $db->notificaciones_entidades->insertOne([
-        'reporte_id'   => $reporteId,
-        'entidad'      => (string) ($regla['entidad']   ?? ''),
-        'prioridad'    => (string) ($regla['prioridad'] ?? 'media'),
-        'asunto'       => $asunto,
-        'mensaje'      => $mensaje,
-        'estado_notif' => 'enviada',
-        'admin_id'     => null,
-        'admin_nombre' => 'Sistema automático',
-        'fecha'        => $fechaNotif,
-    ]);
+    $db->Reportes->updateOne(
+        ['_id' => $reporteId],
+        ['$push' => ['notificaciones_entidades' => [
+            '_id'          => new ObjectId(),
+            'entidad'      => (string) ($regla['entidad']   ?? ''),
+            'prioridad'    => (string) ($regla['prioridad'] ?? 'media'),
+            'asunto'       => $asunto,
+            'mensaje'      => $mensaje,
+            'estado_notif' => 'enviada',
+            'admin_nombre' => 'Sistema automático',
+            'fecha'        => $fechaNotif,
+        ]]]
+    );
 
     // Actualizar estado del reporte a 'notificado' con historial
     $db->Reportes->updateOne(

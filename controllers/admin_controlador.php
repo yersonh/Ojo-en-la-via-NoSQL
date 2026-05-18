@@ -194,7 +194,6 @@ class AdminControlador
         try {
             $rid = $this->objectId($idReporte);
             $this->db->Reportes->deleteOne(['_id' => $rid]);
-            $this->db->notificaciones->deleteMany(['reporte_id' => $rid]);
 
             $_SESSION['mensaje'] = 'Reporte eliminado correctamente';
             return true;
@@ -218,22 +217,28 @@ class AdminControlador
     private function obtenerNotificaciones($idUsuario, $limite, $leida)
     {
         try {
-            $uid = $this->objectId($idUsuario);
-            $filtro = [
-                '$or' => [
-                    ['usuario_destino_id' => $uid],
-                    ['usuario_destino_id' => (string) $uid]
-                ]
-            ];
+            $uid  = $this->objectId($idUsuario);
+            $user = $this->db->usuario->findOne(['_id' => $uid], ['projection' => ['notificaciones' => 1]]);
+
+            if (!$user || empty($user['notificaciones'])) return [];
+
+            $all = $user['notificaciones'] instanceof \MongoDB\Model\BSONArray
+                ? $user['notificaciones']->getArrayCopy()
+                : (array) $user['notificaciones'];
 
             if ($leida !== null) {
-                $filtro['leida'] = $leida;
+                $all = array_values(array_filter($all, fn($n) => ($n['leida'] ?? false) === $leida));
             }
 
-            return iterator_to_array($this->db->notificaciones->find($filtro, [
-                'sort' => ['fecha' => -1],
-                'limit' => (int) $limite
-            ]), false);
+            usort($all, function ($a, $b) {
+                $ta = isset($a['fecha']) && $a['fecha'] instanceof \MongoDB\BSON\UTCDateTime
+                    ? $a['fecha']->toDateTime()->getTimestamp() : 0;
+                $tb = isset($b['fecha']) && $b['fecha'] instanceof \MongoDB\BSON\UTCDateTime
+                    ? $b['fecha']->toDateTime()->getTimestamp() : 0;
+                return $tb - $ta;
+            });
+
+            return array_slice($all, 0, (int) $limite);
         } catch (Throwable $e) {
             error_log('Error obteniendo notificaciones: ' . $e->getMessage());
             return [];
@@ -243,9 +248,11 @@ class AdminControlador
     public function marcarNotificacionLeida($idNotificacion, $idUsuario)
     {
         try {
-            $this->db->notificaciones->updateOne(
-                ['_id' => $this->objectId($idNotificacion)],
-                ['$set' => ['leida' => true]]
+            $uid = $this->objectId($idUsuario);
+            $nid = $this->objectId($idNotificacion);
+            $this->db->usuario->updateOne(
+                ['_id' => $uid, 'notificaciones._id' => $nid],
+                ['$set' => ['notificaciones.$.leida' => true]]
             );
             return true;
         } catch (Throwable $e) {
@@ -258,9 +265,10 @@ class AdminControlador
     {
         try {
             $uid = $this->objectId($idUsuario);
-            $this->db->notificaciones->updateMany(
-                ['$or' => [['usuario_destino_id' => $uid], ['usuario_destino_id' => (string) $uid]]],
-                ['$set' => ['leida' => true]]
+            $this->db->usuario->updateOne(
+                ['_id' => $uid],
+                ['$set' => ['notificaciones.$[elem].leida' => true]],
+                ['arrayFilters' => [['elem.leida' => false]]]
             );
             return true;
         } catch (Throwable $e) {
@@ -272,11 +280,15 @@ class AdminControlador
     public function contarNotificacionesNoLeidas($idUsuario)
     {
         try {
-            $uid = $this->objectId($idUsuario);
-            return $this->db->notificaciones->countDocuments([
-                '$or' => [['usuario_destino_id' => $uid], ['usuario_destino_id' => (string) $uid]],
-                'leida' => false
-            ]);
+            $uid    = $this->objectId($idUsuario);
+            $result = iterator_to_array($this->db->usuario->aggregate([
+                ['$match' => ['_id' => $uid]],
+                ['$project' => ['cnt' => ['$size' => ['$filter' => [
+                    'input' => ['$ifNull' => ['$notificaciones', []]],
+                    'cond'  => ['$eq'     => ['$$this.leida', false]]
+                ]]]]]
+            ]), false);
+            return (int) ($result[0]['cnt'] ?? 0);
         } catch (Throwable $e) {
             error_log('Error contando notificaciones: ' . $e->getMessage());
             return 0;
