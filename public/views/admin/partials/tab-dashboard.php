@@ -1,5 +1,5 @@
 <!-- ════════════════ TAB: DASHBOARD ════════════════ -->
-<div id="tab-dashboard" class="tab-content active">
+<div id="tab-dashboard" class="tab-content">
 
     <!-- STAT CARDS -->
     <div class="cards-grid">

@@ -11,6 +11,8 @@ const tabTitles = {
 };
 
 function showTab(name) {
+    if (!tabTitles[name]) name = 'dashboard';
+
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
 
@@ -18,9 +20,17 @@ function showTab(name) {
     document.querySelectorAll('.sidebar-menu a')[Object.keys(tabTitles).indexOf(name)].classList.add('active');
     document.getElementById('topbar-title').textContent = tabTitles[name];
 
+    history.replaceState(null, '', '#' + name);
+
     if (name === 'mapa')      initMapa();
     if (name === 'analytics') renderAnalytics();
 }
+
+// Al cargar la página, restaurar el tab desde el hash
+document.addEventListener('DOMContentLoaded', () => {
+    const hash = location.hash.replace('#', '');
+    showTab(tabTitles[hash] ? hash : 'dashboard');
+});
 
 /* ════════════════════════════════════════════════════════
    PALETA Y TOOLTIP BASE (usados por charts y analytics)
