@@ -5,14 +5,17 @@
 let chartTendenciaInst = null;
 let chartZonaInst      = null;
 
-/* ── Helpers de fecha ── */
+/* ── Helpers de fecha (siempre en America/Bogota para coincidir con los datos) ── */
+function isoDate(d) {
+    return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+}
 function isoToday() {
-    return new Date().toISOString().split('T')[0];
+    return isoDate(new Date());
 }
 function isoOffsetDays(n) {
     const d = new Date();
     d.setDate(d.getDate() - n + 1);
-    return d.toISOString().split('T')[0];
+    return isoDate(d);
 }
 
 /* ── Preset buttons ── */
