@@ -979,7 +979,8 @@ function showTab(name) {
     document.querySelectorAll('.sidebar-menu a')[Object.keys(tabTitles).indexOf(name)].classList.add('active');
     document.getElementById('topbar-title').textContent = tabTitles[name];
 
-    if (name === 'mapa') initMapa();
+    if (name === 'mapa')      initMapa();
+    if (name === 'analytics') renderAnalytics();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1739,12 +1740,6 @@ function renderAnalytics() {
     renderZona(data);
 }
 
-// Cargar analíticas al abrir el tab
-const _showTabOrig = showTab;
-function showTab(name) {
-    _showTabOrig(name);
-    if (name === 'analytics') renderAnalytics();
-}
 
 /* ════════════════════════════════════════════════════════
    MAPA ADMIN — usa el componente compartido popup-reporte.js
