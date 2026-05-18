@@ -69,38 +69,46 @@ function dispararNotificacionEntidad(\MongoDB\Database $db, array $reporte, Obje
     $cuerpo = "
         <div style='font-family:Arial,sans-serif;max-width:600px;margin:auto;'>
             <h2 style='color:#2c3e50;border-bottom:2px solid #27ae60;padding-bottom:8px;'>
-                Nueva notificación — Ojo en la Vía
+                Nueva notificación — Ojo en la Via
             </h2>
-            <table style='width:100%;border-collapse:collapse;margin-bottom:16px;'>
+
+            <table style='width:100%;border-collapse:collapse;margin-bottom:20px;'>
                 <tr><td style='padding:6px 0;color:#7f8c8d;width:140px;'>Entidad</td>
                     <td style='padding:6px 0;font-weight:600;'>" . htmlspecialchars((string)($regla['entidad'] ?? '')) . "</td></tr>
-                <tr><td style='padding:6px 0;color:#7f8c8d;'>Tipo de incidente</td>
+                <tr><td style='padding:6px 0;color:#7f8c8d;'>Tipo</td>
                     <td style='padding:6px 0;font-weight:600;'>" . htmlspecialchars($tipo) . "</td></tr>
-                <tr><td style='padding:6px 0;color:#7f8c8d;'>Ubicación</td>
+                <tr><td style='padding:6px 0;color:#7f8c8d;'>Ubicacion</td>
                     <td style='padding:6px 0;'>" . htmlspecialchars($direccion) . "</td></tr>
                 <tr><td style='padding:6px 0;color:#7f8c8d;'>Prioridad</td>
                     <td style='padding:6px 0;'>" . htmlspecialchars((string)($regla['prioridad'] ?? 'media')) . "</td></tr>
                 <tr><td style='padding:6px 0;color:#7f8c8d;'>ID reporte</td>
                     <td style='padding:6px 0;font-size:.85em;color:#888;'>" . htmlspecialchars((string)$reporteId) . "</td></tr>
             </table>
-            <div style='background:#f8f9fa;border-left:4px solid #27ae60;padding:12px 16px;margin-bottom:20px;'>
+
+            <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom:20px;'>
+                <tr>
+                    <td align='center' style='background:#1a2332;border-radius:8px;padding:20px 24px;'>
+                        <p style='color:rgba(255,255,255,.7);font-size:.88rem;margin:0 0 14px;'>
+                            Use el siguiente enlace para actualizar el estado del reporte.<br>
+                            <strong style='color:#fff;'>El enlace es valido por 7 dias.</strong>
+                        </p>
+                        <a href='" . htmlspecialchars($linkActualizar) . "'
+                           style='display:inline-block;background:#27ae60;color:#ffffff;text-decoration:none;
+                                  padding:13px 32px;border-radius:6px;font-weight:700;font-size:1rem;
+                                  letter-spacing:.3px;'>
+                            Actualizar estado del reporte
+                        </a>
+                        <p style='color:rgba(255,255,255,.4);font-size:.75rem;margin:12px 0 0;'>
+                            Enlace de un solo uso
+                        </p>
+                    </td>
+                </tr>
+            </table>
+
+            <div style='background:#f8f9fa;border-left:4px solid #27ae60;padding:12px 16px;'>
                 <strong>Mensaje:</strong> " . htmlspecialchars($asunto) . "<br><br>
                 " . nl2br(htmlspecialchars($mensaje)) . "
             </div>
-            <div style='background:#eaf3fb;border-radius:8px;padding:16px 20px;margin-bottom:20px;text-align:center;'>
-                <p style='margin:0 0 12px;color:#2c3e50;font-size:.95rem;'>
-                    Use el siguiente enlace para actualizar el estado del reporte.<br>
-                    <strong>El enlace es válido por 7 días.</strong>
-                </p>
-                <a href='" . htmlspecialchars($linkActualizar) . "'
-                   style='display:inline-block;background:#27ae60;color:#fff;text-decoration:none;
-                          padding:12px 28px;border-radius:6px;font-weight:700;font-size:1rem;'>
-                    Actualizar estado del reporte
-                </a>
-            </div>
-            <p style='color:#bdc3c7;font-size:.8em;text-align:center;'>
-                Generado automáticamente por Ojo en la Vía · Enlace de un solo uso.
-            </p>
         </div>
     ";
 
