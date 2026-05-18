@@ -18,20 +18,38 @@ function isoOffsetDays(n) {
     return isoDate(d);
 }
 
+/* ── Estado del filtro activo (fuente de verdad única) ── */
+const _filtro = { tipo: '', desde: '', hasta: '' };
+
+function leerFiltro() {
+    _filtro.tipo  = document.getElementById('analytics-tipo')?.value  || '';
+    _filtro.desde = document.getElementById('analytics-fecha-desde')?.value || '';
+    _filtro.hasta = document.getElementById('analytics-fecha-hasta')?.value || '';
+}
+
+function analyticsFiltered() {
+    leerFiltro();
+    let data = ANALYTICS_RAW;
+    if (_filtro.tipo)  data = data.filter(r => r.tipo  === _filtro.tipo);
+    if (_filtro.desde) data = data.filter(r => r.fecha >= _filtro.desde);
+    if (_filtro.hasta) data = data.filter(r => r.fecha <= _filtro.hasta);
+    return data;
+}
+
 /* ── Preset buttons ── */
 function initPresets() {
     document.querySelectorAll('.analytics-preset').forEach(btn => {
         btn.addEventListener('click', () => {
             const days = parseInt(btn.dataset.days);
-            const desde = document.getElementById('analytics-fecha-desde');
-            const hasta = document.getElementById('analytics-fecha-hasta');
+            const elDesde = document.getElementById('analytics-fecha-desde');
+            const elHasta = document.getElementById('analytics-fecha-hasta');
 
             if (days === 0) {
-                desde.value = '';
-                hasta.value = '';
+                elDesde.value = '';
+                elHasta.value = '';
             } else {
-                desde.value = isoOffsetDays(days);
-                hasta.value = isoToday();
+                elDesde.value = isoOffsetDays(days);
+                elHasta.value = isoToday();
             }
 
             highlightPreset(btn);
@@ -56,37 +74,31 @@ function onFechaChange() {
     renderAnalytics();
 }
 
-/* ── Filtrado combinado (tipo + fechas) ── */
-function analyticsFiltered() {
-    const tipo  = document.getElementById('analytics-tipo')?.value  || '';
-    const desde = document.getElementById('analytics-fecha-desde')?.value || '';
-    const hasta = document.getElementById('analytics-fecha-hasta')?.value || '';
-
-    let data = ANALYTICS_RAW;
-    if (tipo)  data = data.filter(r => r.tipo  === tipo);
-    if (desde) data = data.filter(r => r.fecha >= desde);
-    if (hasta) data = data.filter(r => r.fecha <= hasta);
-
-    const el = document.getElementById('analytics-count');
-    if (el) el.textContent = data.length + ' reporte' + (data.length !== 1 ? 's' : '');
-
-    return data;
+/* ── Badge de conteo en cada sección ── */
+function updateBadges(n) {
+    const txt = n + ' reporte' + (n !== 1 ? 's' : '');
+    ['badge-tendencia', 'badge-tasa', 'badge-heatmap', 'badge-zona',
+     'analytics-count'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = txt;
+    });
 }
 
-/* ── Tendencia: adapta el rango según el filtro de fechas ── */
+/* ════════════════════════════════════════════════════════
+   TENDENCIA
+════════════════════════════════════════════════════════ */
 function renderTendencia(data) {
-    const desde = document.getElementById('analytics-fecha-desde')?.value || '';
-    const hasta = document.getElementById('analytics-fecha-hasta')?.value || '';
+    const { desde, hasta } = _filtro;
 
-    // Construir serie de días según rango activo
     const days = [];
     if (desde && hasta) {
-        let cur = new Date(desde + 'T00:00:00');
-        const end = new Date(hasta + 'T00:00:00');
+        let cur = new Date(desde + 'T12:00:00');   // mediodía evita saltos de timezone
+        const end = new Date(hasta + 'T12:00:00');
         while (cur <= end && days.length < 60) {
+            const key = isoDate(cur);
             days.push({
-                key:   cur.toISOString().split('T')[0],
-                label: cur.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })
+                key,
+                label: cur.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', month: 'short', day: 'numeric' })
             });
             cur.setDate(cur.getDate() + 1);
         }
@@ -96,9 +108,10 @@ function renderTendencia(data) {
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
+            const key = isoDate(d);
             days.push({
-                key:   d.toISOString().split('T')[0],
-                label: d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' })
+                key,
+                label: d.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', weekday: 'short', day: 'numeric' })
             });
         }
         const label = document.getElementById('tendencia-label');
@@ -107,7 +120,7 @@ function renderTendencia(data) {
 
     const counts = days.map(d => data.filter(r => r.fecha === d.key).length);
 
-    if (chartTendenciaInst) chartTendenciaInst.destroy();
+    if (chartTendenciaInst) { chartTendenciaInst.destroy(); chartTendenciaInst = null; }
 
     const ctx  = document.getElementById('chartTendencia').getContext('2d');
     const grad = ctx.createLinearGradient(0, 0, 0, 210);
@@ -146,11 +159,7 @@ function renderTendencia(data) {
                 x: {
                     grid: { display: false },
                     border: { display: false },
-                    ticks: {
-                        color: '#64748b', font: { size: 11 },
-                        maxTicksLimit: 14,
-                        maxRotation: days.length > 14 ? 45 : 0,
-                    }
+                    ticks: { color: '#64748b', font: { size: 11 }, maxTicksLimit: 14, maxRotation: days.length > 14 ? 45 : 0 }
                 },
                 y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { precision: 0, color: '#64748b', font: { size: 11 } } }
             }
@@ -158,9 +167,12 @@ function renderTendencia(data) {
     });
 }
 
+/* ════════════════════════════════════════════════════════
+   TASA DE RESOLUCIÓN
+════════════════════════════════════════════════════════ */
 function renderTasa(data) {
-    const total  = data.length;
-    const est    = { pendiente: 0, en_revision: 0, notificado: 0, resuelto: 0 };
+    const total = data.length;
+    const est   = { pendiente: 0, en_revision: 0, notificado: 0, resuelto: 0 };
     data.forEach(r => { if (est[r.estado] !== undefined) est[r.estado]++; });
     const pct = total ? Math.round(est.resuelto / total * 100) : 0;
 
@@ -175,7 +187,7 @@ function renderTasa(data) {
         <div style="text-align:center;margin-bottom:18px;">
             <div style="font-size:3.2rem;font-weight:700;color:#10b981;line-height:1;">${pct}%</div>
             <div style="font-size:.8rem;color:#94a3b8;margin-top:4px;">tasa de resolución</div>
-            <div style="font-size:.78rem;color:#64748b;margin-top:2px;">${total} reportes totales</div>
+            <div style="font-size:.78rem;color:#64748b;margin-top:2px;">${total} reportes en el período</div>
         </div>
         ${items.map(it => {
             const p = total ? (it.count / total * 100).toFixed(1) : 0;
@@ -191,9 +203,12 @@ function renderTasa(data) {
         }).join('')}`;
 }
 
+/* ════════════════════════════════════════════════════════
+   MAPA DE CALOR
+════════════════════════════════════════════════════════ */
 function renderHeatmap(data) {
-    const dias   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    const bloqs  = ['0–3','4–7','8–11','12–15','16–19','20–23'];
+    const dias  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const bloqs = ['0–3','4–7','8–11','12–15','16–19','20–23'];
 
     const grid = Array.from({ length: 7 }, () => Array(6).fill(0));
     data.forEach(r => {
@@ -230,6 +245,9 @@ function renderHeatmap(data) {
     document.getElementById('heatmap-container').innerHTML = html;
 }
 
+/* ════════════════════════════════════════════════════════
+   ZONA / BARRIO
+════════════════════════════════════════════════════════ */
 function renderZona(data) {
     const topN   = parseInt(document.getElementById('zona-topn')?.value || '10');
     const counts = {};
@@ -238,13 +256,13 @@ function renderZona(data) {
 
     const wrap = document.getElementById('zona-wrap');
 
-    // Destruir antes de reemplazar el canvas para evitar error de Chart.js
+    // Destruir chart ANTES de reemplazar el canvas
     if (chartZonaInst) { chartZonaInst.destroy(); chartZonaInst = null; }
 
     if (!sorted.length) {
         wrap.innerHTML = `<div class="empty-state" style="margin-top:40px;">
             <i class="fas fa-map-pin"></i>
-            <p>Sin datos de zona. Los reportes necesitan dirección capturada para mostrar esta gráfica.</p>
+            <p>Sin datos de zona en el período seleccionado.</p>
         </div>`;
         return;
     }
@@ -280,24 +298,22 @@ function renderZona(data) {
     });
 }
 
-function updateBadges(n) {
-    const txt = n + ' reporte' + (n !== 1 ? 's' : '');
-    ['badge-tendencia', 'badge-tasa', 'badge-heatmap', 'badge-zona'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = txt;
-    });
-}
-
+/* ════════════════════════════════════════════════════════
+   RENDER PRINCIPAL
+════════════════════════════════════════════════════════ */
 function renderAnalytics() {
+    // Leer filtro una sola vez → almacenar en _filtro
     const data = analyticsFiltered();
     updateBadges(data.length);
-    renderTendencia(data);
-    renderTasa(data);
-    renderHeatmap(data);
-    renderZona(data);
+
+    // Cada función usa _filtro directamente (no depende del parámetro)
+    try { renderTendencia(data); } catch(e) { console.error('Tendencia:', e); }
+    try { renderTasa(data);      } catch(e) { console.error('Tasa:', e); }
+    try { renderHeatmap(data);   } catch(e) { console.error('Heatmap:', e); }
+    try { renderZona(data);      } catch(e) { console.error('Zona:', e); }
 }
 
-// Inicializar preset "7 días" activo por defecto al cargar
+/* ── Init: preset "7 días" activo por defecto ── */
 document.addEventListener('DOMContentLoaded', () => {
     initPresets();
     const preset7 = document.querySelector('.analytics-preset[data-days="7"]');
