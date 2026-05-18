@@ -5,24 +5,103 @@
 let chartTendenciaInst = null;
 let chartZonaInst      = null;
 
+/* ── Helpers de fecha ── */
+function isoToday() {
+    return new Date().toISOString().split('T')[0];
+}
+function isoOffsetDays(n) {
+    const d = new Date();
+    d.setDate(d.getDate() - n + 1);
+    return d.toISOString().split('T')[0];
+}
+
+/* ── Preset buttons ── */
+function initPresets() {
+    document.querySelectorAll('.analytics-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const days = parseInt(btn.dataset.days);
+            const desde = document.getElementById('analytics-fecha-desde');
+            const hasta = document.getElementById('analytics-fecha-hasta');
+
+            if (days === 0) {
+                desde.value = '';
+                hasta.value = '';
+            } else {
+                desde.value = isoOffsetDays(days);
+                hasta.value = isoToday();
+            }
+
+            highlightPreset(btn);
+            renderAnalytics();
+        });
+    });
+}
+
+function highlightPreset(active) {
+    document.querySelectorAll('.analytics-preset').forEach(b => {
+        b.style.background = '#f1f5f9';
+        b.style.color      = '#475569';
+    });
+    if (active) {
+        active.style.background = '#eaf3fb';
+        active.style.color      = '#2471a3';
+    }
+}
+
+function onFechaChange() {
+    highlightPreset(null);
+    renderAnalytics();
+}
+
+/* ── Filtrado combinado (tipo + fechas) ── */
 function analyticsFiltered() {
-    const tipo = document.getElementById('analytics-tipo')?.value || '';
-    const data = tipo ? ANALYTICS_RAW.filter(r => r.tipo === tipo) : ANALYTICS_RAW;
-    const el   = document.getElementById('analytics-count');
+    const tipo  = document.getElementById('analytics-tipo')?.value  || '';
+    const desde = document.getElementById('analytics-fecha-desde')?.value || '';
+    const hasta = document.getElementById('analytics-fecha-hasta')?.value || '';
+
+    let data = ANALYTICS_RAW;
+    if (tipo)  data = data.filter(r => r.tipo  === tipo);
+    if (desde) data = data.filter(r => r.fecha >= desde);
+    if (hasta) data = data.filter(r => r.fecha <= hasta);
+
+    const el = document.getElementById('analytics-count');
     if (el) el.textContent = data.length + ' reporte' + (data.length !== 1 ? 's' : '');
+
     return data;
 }
 
+/* ── Tendencia: adapta el rango según el filtro de fechas ── */
 function renderTendencia(data) {
+    const desde = document.getElementById('analytics-fecha-desde')?.value || '';
+    const hasta = document.getElementById('analytics-fecha-hasta')?.value || '';
+
+    // Construir serie de días según rango activo
     const days = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        days.push({
-            key:   d.toISOString().split('T')[0],
-            label: d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' })
-        });
+    if (desde && hasta) {
+        let cur = new Date(desde + 'T00:00:00');
+        const end = new Date(hasta + 'T00:00:00');
+        while (cur <= end && days.length < 60) {
+            days.push({
+                key:   cur.toISOString().split('T')[0],
+                label: cur.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })
+            });
+            cur.setDate(cur.getDate() + 1);
+        }
+        const label = document.getElementById('tendencia-label');
+        if (label) label.textContent = `${desde} → ${hasta}`;
+    } else {
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push({
+                key:   d.toISOString().split('T')[0],
+                label: d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' })
+            });
+        }
+        const label = document.getElementById('tendencia-label');
+        if (label) label.textContent = 'últimos 7 días';
     }
+
     const counts = days.map(d => data.filter(r => r.fecha === d.key).length);
 
     if (chartTendenciaInst) chartTendenciaInst.destroy();
@@ -44,7 +123,7 @@ function renderTendencia(data) {
                 pointBackgroundColor: '#10b981',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
-                pointRadius: 5,
+                pointRadius: days.length > 20 ? 2 : 5,
                 pointHoverRadius: 8,
                 fill: true,
                 tension: 0.4,
@@ -61,7 +140,15 @@ function renderTendencia(data) {
                 }
             },
             scales: {
-                x: { grid: { display: false }, border: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
+                x: {
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: {
+                        color: '#64748b', font: { size: 11 },
+                        maxTicksLimit: 14,
+                        maxRotation: days.length > 14 ? 45 : 0,
+                    }
+                },
                 y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { precision: 0, color: '#64748b', font: { size: 11 } } }
             }
         }
@@ -196,3 +283,14 @@ function renderAnalytics() {
     renderHeatmap(data);
     renderZona(data);
 }
+
+// Inicializar preset "7 días" activo por defecto al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    initPresets();
+    const preset7 = document.querySelector('.analytics-preset[data-days="7"]');
+    if (preset7) {
+        document.getElementById('analytics-fecha-desde').value = isoOffsetDays(7);
+        document.getElementById('analytics-fecha-hasta').value = isoToday();
+        highlightPreset(preset7);
+    }
+});
