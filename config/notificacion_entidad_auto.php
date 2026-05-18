@@ -35,9 +35,7 @@ function dispararNotificacionEntidad(\MongoDB\Database $db, array $reporte, Obje
 
     // Generar magic link para que la entidad actualice el estado
     $token   = generarTokenEntidad($db, $reporteId, (string)($regla['entidad'] ?? ''));
-    $baseUrl = (getenv('RAILWAY_ENVIRONMENT') !== false)
-        ? rtrim(getenv('APP_URL') ?: 'https://ojo-en-la-via.up.railway.app', '/')
-        : 'http://localhost:8000';
+    $baseUrl = rtrim(getenv('APP_URL') ?: 'https://ojo-en-la-via-nosql-production.up.railway.app', '/');
     $linkActualizar = $baseUrl . '/entidad/actualizar.php?token=' . $token;
 
     $db->notificaciones_entidades->insertOne([
