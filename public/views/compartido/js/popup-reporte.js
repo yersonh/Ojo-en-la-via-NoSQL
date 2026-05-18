@@ -195,36 +195,37 @@ function capitalizarEstado(estado) {
 ══════════════════════════════════════════════ */
 function obtenerColorPorEstado(estado) {
     const e = normalizarEstado(estado);
-    if (e === 'pendiente')                           return '#e53935';
-    if (e === 'en_revision' || e === 'revision')     return '#f39c12';
+    if (e === 'pendiente')                           return '#f39c12';
+    if (e === 'en_revision' || e === 'revision')     return '#3498db';
     if (e === 'notificado'  || e === 'informado')    return '#9b59b6';
-    if (e === 'resuelto'    || e === 'solucionado')  return '#2ecc71';
-    return '#e53935';
+    if (e === 'resuelto'    || e === 'solucionado')  return '#27ae60';
+    return '#f39c12';
 }
 
-function obtenerEmojiPorTipo(tipo) {
+function obtenerIconoPorTipo(tipo) {
     const t = String(tipo || '').toLowerCase().trim()
         .normalize('NFD').replace(/[̀-ͯ]/g, '');
-    if (t === 'accidente')                    return '🚨';
-    if (t === 'hueco')                        return '🕳️';
-    if (t === 'trafico' || t === 'tráfico')   return '🚗';
-    if (t === 'obstruccion' || t === 'obstrucción') return '🚧';
-    if (t === 'inundacion' || t === 'inundación')   return '🌊';
-    if (t === 'semaforo' || t === 'semáforo') return '🚦';
-    if (t === 'alumbrado')                    return '💡';
-    if (t === 'basura')                       return '🗑️';
-    return '📍';
+    if (t === 'accidente')                          return 'fa-car-crash';
+    if (t === 'hueco')                              return 'fa-circle-notch';
+    if (t === 'trafico' || t === 'tráfico')         return 'fa-traffic-light';
+    if (t === 'obstruccion' || t === 'obstrucción') return 'fa-road-barrier';
+    if (t === 'inundacion' || t === 'inundación')   return 'fa-water';
+    if (t === 'semaforo' || t === 'semáforo')       return 'fa-traffic-light';
+    if (t === 'alumbrado')                          return 'fa-lightbulb';
+    if (t === 'basura')                             return 'fa-trash';
+    return 'fa-map-marker-alt';
 }
 
 /* ══════════════════════════════════════════════
    ICONO DEL MARCADOR
 ══════════════════════════════════════════════ */
-function crearIconoReporte(emoji, estado) {
+function crearIconoReporte(tipo, estado) {
     const color = obtenerColorPorEstado(estado || 'pendiente');
+    const icono = obtenerIconoPorTipo(tipo);
     return L.divIcon({
         className: 'icono-reporte-personalizado',
         html: `<div class="marker-circle" style="background:${color};">
-                   <span class="marker-emoji">${emoji || '📍'}</span>
+                   <i class="fas ${icono}" style="font-size:15px;color:#fff;"></i>
                </div>`,
         iconSize:    [42, 42],
         iconAnchor:  [21, 21],
@@ -249,17 +250,15 @@ function crearPopupReporte(reporte, opciones) {
     const id          = escaparHtml(reporte.id || reporte._id || '');
     const tipo        = escaparHtml(reporte.tipo || 'Incidente');
     const descripcion = escaparHtml(reporte.descripcion || 'Sin descripción');
-    // acepta usuario_nombre (mapa usuario) o usuario (mapa admin)
     const autor       = escaparHtml(reporte.usuario_nombre || reporte.usuario || 'No disponible');
     const fecha       = escaparHtml(reporte.fecha || 'No disponible');
     const estadoOrig  = reporte.estado || 'pendiente';
     const estadoLabel = escaparHtml(capitalizarEstado(estadoOrig));
     const colorEstado = obtenerColorPorEstado(estadoOrig);
     const imagen      = escaparHtml(obtenerImagenReporte(reporte));
-    const emoji       = obtenerEmojiPorTipo(tipo);
+    const icono       = obtenerIconoPorTipo(tipo);
 
-    // Botón configurable: texto y href
-    const btnTexto = opciones.btnTexto || '💬 Ver Comentarios';
+    const btnTexto = opciones.btnTexto || '<i class="fas fa-comments"></i> Ver Comentarios';
     const btnHref  = opciones.btnHref
         ? escaparHtml(opciones.btnHref)
         : `/views/usuario/alertas.php?comentarios=${id}`;
@@ -271,13 +270,13 @@ function crearPopupReporte(reporte, opciones) {
     return `
         <div class="popup-reporte">
             <div class="popup-header">
-                <span class="popup-icon">${emoji}</span>
+                <span class="popup-icon"><i class="fas ${icono}"></i></span>
                 <span class="popup-title">${tipo}</span>
             </div>
             <div class="popup-body">
                 <div class="popup-section">
                     <div class="popup-section-title">
-                        <span>📷 Imagen</span>
+                        <span><i class="fas fa-image" style="margin-right:5px;color:#6b7280;"></i>Imagen</span>
                         <span class="popup-badge">${imagen ? '1 imagen' : 'Sin imagen'}</span>
                     </div>
                     <div class="popup-image-box">
@@ -290,15 +289,15 @@ function crearPopupReporte(reporte, opciones) {
                 <div class="popup-description">${descripcion}</div>
 
                 <div class="popup-info-card">
-                    <div class="popup-info-label">👤 Reportado por</div>
+                    <div class="popup-info-label"><i class="fas fa-user" style="margin-right:5px;color:#6b7280;"></i>Reportado por</div>
                     <div class="popup-info-value">${autor}</div>
                 </div>
                 <div class="popup-info-card">
-                    <div class="popup-info-label">📅 Fecha</div>
+                    <div class="popup-info-label"><i class="fas fa-calendar" style="margin-right:5px;color:#6b7280;"></i>Fecha</div>
                     <div class="popup-info-value">${fecha}</div>
                 </div>
                 <div class="popup-info-card">
-                    <div class="popup-info-label">📌 Estado</div>
+                    <div class="popup-info-label"><i class="fas fa-tag" style="margin-right:5px;color:#6b7280;"></i>Estado</div>
                     <div class="popup-info-value">
                         <span class="popup-status" style="background:${colorEstado};">${estadoLabel}</span>
                     </div>

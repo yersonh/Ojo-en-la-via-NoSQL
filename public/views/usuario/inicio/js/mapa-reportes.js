@@ -26,7 +26,7 @@ map.on('click', async function (e) {
     if (marcador) map.removeLayer(marcador);
 
     marcador = L.marker([lat, lng], {
-        icon: crearIconoReporte('📍', 'pendiente')
+        icon: crearIconoReporte('', 'pendiente')
     }).addTo(map);
 
     const panelRegistro  = document.getElementById('panelRegistro');
@@ -61,9 +61,8 @@ if (Array.isArray(window.reportesDB)) {
     window.reportesDB.forEach(reporte => {
         if (typeof reporte.latitud !== 'number' || typeof reporte.longitud !== 'number') return;
 
-        const emoji  = obtenerEmojiPorTipo(reporte.tipo);
         const marker = L.marker([reporte.latitud, reporte.longitud], {
-            icon: crearIconoReporte(emoji, reporte.estado)
+            icon: crearIconoReporte(reporte.tipo, reporte.estado)
         })
             .addTo(map)
             .bindPopup(crearPopupReporte(reporte), {

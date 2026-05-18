@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════
    MAPA ADMIN
    Depende de: REPORTES_DATA (data inline), showToast (panel-ui.js)
-               obtenerEmojiPorTipo, crearIconoReporte, crearPopupReporte (popup-reporte.js)
+               crearIconoReporte, crearPopupReporte (popup-reporte.js)
 ════════════════════════════════════════════════════════ */
 let mapaInst    = null;
 let mapaMarkers = [];
@@ -35,11 +35,9 @@ function cargarMarcadores(data) {
         !isNaN(parseFloat(r.lat)) && !isNaN(parseFloat(r.lng)) &&
         (filtro === '' || r.estado === filtro)
     ).forEach(r => {
-        const emoji  = obtenerEmojiPorTipo(r.tipo);
-        const icon   = crearIconoReporte(emoji, r.estado);
+        const icon   = crearIconoReporte(r.tipo, r.estado);
         const popup  = crearPopupReporte(r, {
-            btnTexto: '💬 Ver Comentarios',
-            btnHref:  `/views/usuario/alertas.php?comentarios=${r.id}`
+            btnHref: `/views/usuario/alertas.php?comentarios=${r.id}`
         });
 
         const m = L.marker([parseFloat(r.lat), parseFloat(r.lng)], { icon })
