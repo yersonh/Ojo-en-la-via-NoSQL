@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/email_helper.php';
+require_once __DIR__ . '/token_entidad_helper.php';
 
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
@@ -31,6 +32,13 @@ function dispararNotificacionEntidad(\MongoDB\Database $db, array $reporte, Obje
     $mensaje = str_replace($vars, $valores, (string) ($regla['mensaje'] ?? 'Se reportó {tipo} en {direccion}.'));
 
     $fechaNotif = new UTCDateTime();
+
+    // Generar magic link para que la entidad actualice el estado
+    $token   = generarTokenEntidad($db, $reporteId, (string)($regla['entidad'] ?? ''));
+    $baseUrl = (getenv('RAILWAY_ENVIRONMENT') !== false)
+        ? rtrim(getenv('APP_URL') ?: 'https://ojo-en-la-via.up.railway.app', '/')
+        : 'http://localhost:8000';
+    $linkActualizar = $baseUrl . '/entidad/actualizar.php?token=' . $token;
 
     $db->notificaciones_entidades->insertOne([
         'reporte_id'   => $reporteId,
@@ -77,11 +85,24 @@ function dispararNotificacionEntidad(\MongoDB\Database $db, array $reporte, Obje
                 <tr><td style='padding:6px 0;color:#7f8c8d;'>ID reporte</td>
                     <td style='padding:6px 0;font-size:.85em;color:#888;'>" . htmlspecialchars((string)$reporteId) . "</td></tr>
             </table>
-            <div style='background:#f8f9fa;border-left:4px solid #27ae60;padding:12px 16px;margin-bottom:16px;'>
-                <strong>Asunto:</strong> " . htmlspecialchars($asunto) . "<br><br>
+            <div style='background:#f8f9fa;border-left:4px solid #27ae60;padding:12px 16px;margin-bottom:20px;'>
+                <strong>Mensaje:</strong> " . htmlspecialchars($asunto) . "<br><br>
                 " . nl2br(htmlspecialchars($mensaje)) . "
             </div>
-            <p style='color:#bdc3c7;font-size:.8em;'>Generado automáticamente por Ojo en la Vía.</p>
+            <div style='background:#eaf3fb;border-radius:8px;padding:16px 20px;margin-bottom:20px;text-align:center;'>
+                <p style='margin:0 0 12px;color:#2c3e50;font-size:.95rem;'>
+                    Use el siguiente enlace para actualizar el estado del reporte.<br>
+                    <strong>El enlace es válido por 7 días.</strong>
+                </p>
+                <a href='" . htmlspecialchars($linkActualizar) . "'
+                   style='display:inline-block;background:#27ae60;color:#fff;text-decoration:none;
+                          padding:12px 28px;border-radius:6px;font-weight:700;font-size:1rem;'>
+                    Actualizar estado del reporte
+                </a>
+            </div>
+            <p style='color:#bdc3c7;font-size:.8em;text-align:center;'>
+                Generado automáticamente por Ojo en la Vía · Enlace de un solo uso.
+            </p>
         </div>
     ";
 

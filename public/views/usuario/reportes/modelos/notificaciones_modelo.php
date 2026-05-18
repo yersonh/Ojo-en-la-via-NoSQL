@@ -5,23 +5,27 @@ use MongoDB\BSON\UTCDateTime;
 
 function crearNotificacionUsuario($db, $usuarioDestinoId, $usuarioOrigenId, $tipo, $titulo, $mensaje, $reporteId = null, $comentarioId = null)
 {
-    if (!$usuarioDestinoId || !$usuarioOrigenId) {
+    if (!$usuarioDestinoId) {
         return;
     }
 
-    if ((string) $usuarioDestinoId === (string) $usuarioOrigenId) {
+    // Suprimir auto-notificaciones solo cuando hay un origen real
+    if ($usuarioOrigenId && (string) $usuarioDestinoId === (string) $usuarioOrigenId) {
         return;
     }
 
     $documento = [
         'usuario_destino_id' => $usuarioDestinoId instanceof ObjectId ? $usuarioDestinoId : new ObjectId((string) $usuarioDestinoId),
-        'usuario_origen_id' => $usuarioOrigenId instanceof ObjectId ? $usuarioOrigenId : new ObjectId((string) $usuarioOrigenId),
         'tipo' => $tipo,
         'titulo' => $titulo,
         'mensaje' => $mensaje,
         'leida' => false,
         'fecha' => new UTCDateTime()
     ];
+
+    if ($usuarioOrigenId) {
+        $documento['usuario_origen_id'] = $usuarioOrigenId instanceof ObjectId ? $usuarioOrigenId : new ObjectId((string) $usuarioOrigenId);
+    }
 
     if ($reporteId !== null) {
         $documento['reporte_id'] = $reporteId instanceof ObjectId ? $reporteId : new ObjectId((string) $reporteId);
