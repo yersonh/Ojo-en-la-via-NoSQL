@@ -1,14 +1,18 @@
 FROM php:8.2-cli
 
 RUN apt-get update && apt-get install -y \
+    $PHPIZE_DEPS \
     curl \
+    libcurl4-openssl-dev \
+    libsasl2-dev \
     libssl-dev \
     pkg-config \
     unzip \
+    zlib1g-dev \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+RUN MAKEFLAGS="-j1" pecl install mongodb-2.2.3 && docker-php-ext-enable mongodb
 
 RUN docker-php-ext-install opcache
 
