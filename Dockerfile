@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN MAKEFLAGS="-j1" pecl install mongodb-2.2.3 && docker-php-ext-enable mongodb
+RUN MAKEFLAGS="-j1" pecl install channel://pecl.php.net/mongodb-2.3.2 && docker-php-ext-enable mongodb
 
 RUN docker-php-ext-install opcache
 
