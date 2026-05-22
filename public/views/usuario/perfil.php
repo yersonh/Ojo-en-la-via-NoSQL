@@ -198,9 +198,15 @@ function formatearFechaNotificacion($fecha)
                         <h3><i class="fas fa-bell"></i> Notificaciones</h3>
 
                         <?php if ($totalNoLeidas > 0): ?>
-                            <span class="notificaciones-count" id="contadorNotificaciones">
-                                <?php echo (int) $totalNoLeidas; ?> sin leer
-                            </span>
+                            <div class="notificaciones-actions">
+                                <span class="notificaciones-count" id="contadorNotificaciones">
+                                    <?php echo (int) $totalNoLeidas; ?> sin leer
+                                </span>
+
+                                <button type="button" class="btn-marcar-notificaciones" id="marcarTodasPerfil">
+                                    Marcar leidas
+                                </button>
+                            </div>
                         <?php endif; ?>
                     </div>
 

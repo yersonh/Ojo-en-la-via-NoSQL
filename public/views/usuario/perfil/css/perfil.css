@@ -119,6 +119,14 @@ body {
     margin: 0;
 }
 
+.notificaciones-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .notificaciones-count {
     background: #0878e8;
     color: #ffffff;
@@ -127,6 +135,22 @@ body {
     padding: 5px 10px;
     border-radius: 999px;
     white-space: nowrap;
+}
+
+.btn-marcar-notificaciones {
+    border: 1px solid rgba(47, 155, 255, 0.45);
+    border-radius: 999px;
+    background: rgba(47, 155, 255, 0.12);
+    color: #dff0ff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    min-height: 30px;
+    padding: 0 10px;
+}
+
+.btn-marcar-notificaciones:hover {
+    background: rgba(47, 155, 255, 0.22);
 }
 
 /* ========= INFORMACIÓN PERSONAL ========= */
