@@ -223,6 +223,20 @@ $cursor = $reportes->aggregate($pipeline);
                         $nombreUsuario = $usuarioReporte['nombre_usuario'];
                     }
 
+                    $fotoPerfilUsuario = '';
+
+                    if ($usuarioReporte && !empty($usuarioReporte['foto_perfil'])) {
+                        $fotoPerfilUsuario = (string) $usuarioReporte['foto_perfil'];
+                    } elseif ($usuarioReporte && !empty($usuarioReporte['foto'])) {
+                        $fotoPerfilUsuario = (string) $usuarioReporte['foto'];
+                    } elseif ($usuarioReporte && !empty($usuarioReporte['avatar'])) {
+                        $fotoPerfilUsuario = (string) $usuarioReporte['avatar'];
+                    }
+
+                    if ($fotoPerfilUsuario !== '' && !preg_match('/^https?:\/\//i', $fotoPerfilUsuario)) {
+                        $fotoPerfilUsuario = '/' . ltrim($fotoPerfilUsuario, '/');
+                    }
+
                     $tipo = $reporte['tipo']
                         ?? $reporte['tipo_incidente']
                         ?? 'Incidente';
@@ -290,7 +304,11 @@ $cursor = $reportes->aggregate($pipeline);
                 >
                     <div class="alerta-header">
                         <div class="alerta-avatar">
-                            <?php echo htmlspecialchars($inicial); ?>
+                            <?php if ($fotoPerfilUsuario !== ''): ?>
+                                <img src="<?php echo htmlspecialchars($fotoPerfilUsuario); ?>" alt="Foto de perfil">
+                            <?php else: ?>
+                                <?php echo htmlspecialchars($inicial); ?>
+                            <?php endif; ?>
                         </div>
 
                         <div class="alerta-info">

@@ -76,16 +76,18 @@ function obtenerFotoUsuario($usuario)
         return '';
     }
 
-    if (!empty($usuario['foto_perfil'])) {
-        return (string) $usuario['foto_perfil'];
-    }
+    foreach (['foto_perfil', 'foto', 'avatar'] as $campo) {
+        if (empty($usuario[$campo])) {
+            continue;
+        }
 
-    if (!empty($usuario['foto'])) {
-        return (string) $usuario['foto'];
-    }
+        $foto = (string) $usuario[$campo];
 
-    if (!empty($usuario['avatar'])) {
-        return (string) $usuario['avatar'];
+        if (preg_match('/^https?:\/\//i', $foto)) {
+            return $foto;
+        }
+
+        return '/' . ltrim($foto, '/');
     }
 
     return '';

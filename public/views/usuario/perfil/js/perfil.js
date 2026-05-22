@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     inicializarNotificacionesPerfil();
+    inicializarPreviewFotoPerfil();
 });
 
 function inicializarNotificacionesPerfil() {
@@ -42,4 +43,30 @@ function actualizarContadorNotificaciones() {
             contadorTexto.remove();
         }
     }
+}
+
+function inicializarPreviewFotoPerfil() {
+    const inputFoto = document.getElementById('foto_perfil');
+    const avatar = document.querySelector('.editar-foto-preview .perfil-avatar');
+
+    if (!inputFoto || !avatar) {
+        return;
+    }
+
+    inputFoto.addEventListener('change', function () {
+        const archivo = inputFoto.files && inputFoto.files[0];
+
+        if (!archivo) {
+            return;
+        }
+
+        if (!archivo.type.startsWith('image/')) {
+            alert('Selecciona una imagen valida.');
+            inputFoto.value = '';
+            return;
+        }
+
+        const urlPreview = URL.createObjectURL(archivo);
+        avatar.innerHTML = `<img src="${urlPreview}" alt="Foto de perfil">`;
+    });
 }

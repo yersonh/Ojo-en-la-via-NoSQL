@@ -4,6 +4,7 @@ session_start();
 require_once __DIR__ . '/../../../../../config/conexion.php';
 require_once __DIR__ . '/../../../../../vendor/autoload.php';
 require_once __DIR__ . '/../modelos/notificaciones_modelo.php';
+require_once __DIR__ . '/../../../../../config/comentario_filtro.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -57,6 +58,13 @@ try {
         responderJson([
             'ok' => false,
             'mensaje' => 'El comentario no puede superar 500 caracteres.'
+        ], 400);
+    }
+
+    if (comentarioContieneGroseria($comentarioTexto)) {
+        responderJson([
+            'ok' => false,
+            'mensaje' => 'Tu comentario contiene palabras no permitidas.'
         ], 400);
     }
 

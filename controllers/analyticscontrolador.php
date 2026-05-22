@@ -45,6 +45,7 @@ class AnalyticsControlador
                 'usuarios_activos' => $this->db->usuario->countDocuments(['estado' => true])
             ];
 
+            // Pipeline MongoDB: agrupa todos los reportes por estado para contar cuantos hay en cada uno.
             foreach ($this->db->Reportes->aggregate([
                 ['$group' => ['_id' => '$estado', 'cantidad' => ['$sum' => 1]]]
             ]) as $estado) {
@@ -64,6 +65,7 @@ class AnalyticsControlador
     public function obtenerReportesPorTipo($dias = 30)
     {
         try {
+            // Pipeline MongoDB: filtra reportes recientes, los agrupa por tipo de incidente y ordena por cantidad.
             $pipeline = [
                 ['$match' => ['fecha_reporte' => ['$gte' => $this->fechaDesdeDias($dias)]]],
                 ['$group' => ['_id' => ['$ifNull' => ['$tipo', '$tipo_incidente']], 'cantidad' => ['$sum' => 1]]],
@@ -73,6 +75,7 @@ class AnalyticsControlador
             $resultados = $this->normalizarGrupo($this->db->Reportes->aggregate($pipeline), 'tipo');
 
             if (empty($resultados)) {
+                // Pipeline MongoDB alternativo: agrupa por tipo sin filtrar por fecha cuando no hay datos recientes.
                 $resultados = $this->normalizarGrupo($this->db->Reportes->aggregate([
                     ['$group' => ['_id' => ['$ifNull' => ['$tipo', '$tipo_incidente']], 'cantidad' => ['$sum' => 1]]],
                     ['$sort' => ['cantidad' => -1]]
@@ -89,6 +92,7 @@ class AnalyticsControlador
     public function obtenerDistribucionEstado($dias = 30)
     {
         try {
+            // Pipeline MongoDB: filtra reportes recientes, los agrupa por estado y ordena por cantidad.
             $pipeline = [
                 ['$match' => ['fecha_reporte' => ['$gte' => $this->fechaDesdeDias($dias)]]],
                 ['$group' => ['_id' => '$estado', 'cantidad' => ['$sum' => 1]]],
@@ -98,6 +102,7 @@ class AnalyticsControlador
             $resultados = $this->normalizarGrupo($this->db->Reportes->aggregate($pipeline), 'estado');
 
             if (empty($resultados)) {
+                // Pipeline MongoDB alternativo: agrupa por estado sin filtrar por fecha cuando no hay datos recientes.
                 $resultados = $this->normalizarGrupo($this->db->Reportes->aggregate([
                     ['$group' => ['_id' => '$estado', 'cantidad' => ['$sum' => 1]]],
                     ['$sort' => ['cantidad' => -1]]
@@ -120,6 +125,7 @@ class AnalyticsControlador
                 default => '%G-W%V'
             };
 
+            // Pipeline MongoDB: crea la evolucion temporal de reportes y cuenta cuantos fueron resueltos por periodo.
             return iterator_to_array($this->db->Reportes->aggregate([
                 ['$match' => ['fecha_reporte' => ['$gte' => $this->fechaDesdeDias($dias)]]],
                 [
@@ -151,6 +157,7 @@ class AnalyticsControlador
     public function obtenerUsuariosActivos($dias = 30, $limite = 5)
     {
         try {
+            // Pipeline MongoDB: obtiene los usuarios con mas reportes recientes y cruza sus datos con la coleccion usuario.
             return iterator_to_array($this->db->Reportes->aggregate([
                 ['$match' => ['fecha_reporte' => ['$gte' => $this->fechaDesdeDias($dias)]]],
                 [
