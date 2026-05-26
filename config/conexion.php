@@ -8,12 +8,14 @@ use MongoDB\Database;
 function conectarMongoDB(): Database
 {
     try {
-        $uri = "mongodb://mongo:FgYclOQSoaqkbHkLcTXwaODbNefKSqdK@zephyr.proxy.rlwy.net:32810/ojoenlavia?authSource=admin";
+        $uri = getenv('MONGODB_URI') ?: "mongodb://mongo:FgYclOQSoaqkbHkLcTXwaODbNefKSqdK@zephyr.proxy.rlwy.net:32810/ojoenlavia?authSource=admin";
 
+        // Extraer el nombre de la base de datos de la URI
         $dbName = ltrim(parse_url($uri, PHP_URL_PATH) ?? '', '/');
 
         if (!$dbName) {
-            die("Error: no se pudo obtener el nombre de la base desde la URI.");
+            // Fallback si no está en la URI (común en algunas configuraciones)
+            $dbName = 'ojoenlavia';
         }
 
         $client = new Client($uri);

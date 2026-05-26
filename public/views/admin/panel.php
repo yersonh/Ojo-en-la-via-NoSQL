@@ -18,6 +18,17 @@ use MongoDB\BSON\UTCDateTime;
 $db = conectarMongoDB();
 $reportes = $db->Reportes;
 
+// ── UTILERÍA PARA SEGURIDAD DE DATOS ───────────────────────────────────────
+$safeString = function($val, $default = '') {
+    if ($val === null) return $default;
+    if (is_scalar($val)) return (string)$val;
+    if (is_object($val) && method_exists($val, '__toString')) return (string)$val;
+    if ($val instanceof \MongoDB\BSON\UTCDateTime) {
+        return $val->toDateTime()->setTimezone(new DateTimeZone('America/Bogota'))->format('d/m/Y H:i');
+    }
+    return $default;
+};
+
 // ── ESTADÍSTICAS GLOBALES ──────────────────────────────────────────────────
 $totalReportes  = $reportes->countDocuments([]);
 $totalUsuarios  = $db->usuario->countDocuments([]);
@@ -33,7 +44,7 @@ foreach ($reportes->aggregate([
     ['$sort'  => ['total' => -1]],
     ['$limit' => 7]
 ]) as $t) {
-    $tiposData[] = ['tipo' => (string)($t['_id'] ?? 'Sin tipo'), 'total' => (int)$t['total']];
+    $tiposData[] = ['tipo' => $safeString($t['_id'] ?? 'Sin tipo'), 'total' => (int)$t['total']];
 }
 
 // ── REPORTES POR MES (últimos 6 meses – bar chart) ─────────────────────────
@@ -70,18 +81,18 @@ foreach ($reportes->aggregate([
         ]]]],
     ]],
 ]) as $r) {
-    $barrio = trim((string)($r['barrio'] ?? ''));
+    $barrio = trim($safeString($r['barrio'] ?? ''));
     if ($barrio !== '' && !preg_match('/^\d/', $barrio)) {
         $barrioFinal = $barrio;
     } else {
         $barrioFinal = '';
     }
     $analyticsRaw[] = [
-        'tipo'  => (string)($r['tipo']    ?? 'Sin tipo'),
-        'estado'=> (string)($r['estado']  ?? 'pendiente'),
+        'tipo'  => $safeString($r['tipo']    ?? 'Sin tipo'),
+        'estado'=> $safeString($r['estado']  ?? 'pendiente'),
         'hora'  => (int)($r['hora']       ?? 0),
         'dia'   => (int)($r['diaSem']     ?? 1),
-        'fecha' => (string)($r['fechaStr']?? ''),
+        'fecha' => $safeString($r['fechaStr']?? ''),
         'barrio'=> $barrioFinal,
     ];
 }
@@ -89,7 +100,7 @@ foreach ($reportes->aggregate([
 // ── LISTA DE REPORTES (tabla) ──────────────────────────────────────────────
 $usuariosMap = [];
 foreach ($db->usuario->find([], ['projection' => ['_id' => 1, 'nombre_completo' => 1, 'email' => 1]]) as $u) {
-    $usuariosMap[(string)$u['_id']] = (string)($u['nombre_completo'] ?? $u['email'] ?? 'N/A');
+    $usuariosMap[(string)$u['_id']] = $safeString($u['nombre_completo'] ?? $u['email'] ?? 'N/A');
 }
 
 $reportesList = [];
@@ -122,9 +133,9 @@ foreach ($reportes->find([], ['sort' => ['_id' => -1], 'limit' => 400]) as $r) {
 
     $reportesList[] = [
         'id'            => (string)$r['_id'],
-        'tipo'          => (string)($r['tipo'] ?? $r['tipo_incidente'] ?? 'Sin tipo'),
-        'descripcion'   => (string)($r['descripcion'] ?? ''),
-        'estado'        => (string)($r['estado'] ?? 'pendiente'),
+        'tipo'          => $safeString($r['tipo'] ?? $r['tipo_incidente'] ?? 'Sin tipo'),
+        'descripcion'   => $safeString($r['descripcion'] ?? ''),
+        'estado'        => $safeString($r['estado'] ?? 'pendiente'),
         'fecha'         => $fecha,
         'usuario'       => $autor,
         'usuario_nombre'=> $autor,
@@ -140,12 +151,12 @@ $usuariosList = [];
 foreach ($db->usuario->find([], ['sort' => ['_id' => -1], 'limit' => 300]) as $u) {
     $usuariosList[] = [
         'id'       => (string)$u['_id'],
-        'nombre'   => (string)($u['nombre_completo'] ?? 'N/A'),
-        'email'    => (string)($u['email'] ?? 'N/A'),
-        'telefono' => (string)($u['telefono'] ?? 'N/A'),
-        'rol'      => (string)($u['rol'] ?? 'ciudadano'),
+        'nombre'   => $safeString($u['nombre_completo'] ?? 'N/A'),
+        'email'    => $safeString($u['email'] ?? 'N/A'),
+        'telefono' => $safeString($u['telefono'] ?? 'N/A'),
+        'rol'      => $safeString($u['rol'] ?? 'ciudadano'),
         'estado'   => (bool)($u['estado'] ?? true),
-        'fecha'    => (string)($u['fecha_creacion'] ?? 'N/A'),
+        'fecha'    => $safeString($u['fecha_creacion'] ?? 'N/A'),
     ];
 }
 
@@ -154,11 +165,11 @@ $reglasList = [];
 foreach ($db->reglas_notificacion->find([], ['sort' => ['fecha_creacion' => -1]]) as $r) {
     $reglasList[] = [
         'id'             => (string)$r['_id'],
-        'tipo_incidente' => (string)($r['tipo_incidente'] ?? ''),
-        'entidad'        => (string)($r['entidad']        ?? ''),
-        'asunto'         => (string)($r['asunto']         ?? ''),
-        'mensaje'        => (string)($r['mensaje']        ?? ''),
-        'prioridad'      => (string)($r['prioridad']      ?? 'media'),
+        'tipo_incidente' => $safeString($r['tipo_incidente'] ?? ''),
+        'entidad'        => $safeString($r['entidad']        ?? ''),
+        'asunto'         => $safeString($r['asunto']         ?? ''),
+        'mensaje'        => $safeString($r['mensaje']        ?? ''),
+        'prioridad'      => $safeString($r['prioridad']      ?? 'media'),
         'activa'         => (bool)($r['activa']           ?? true),
     ];
 }
@@ -181,13 +192,13 @@ foreach ($db->Reportes->aggregate([
     }
     $notifEntList[] = [
         'id'        => isset($ne['_id'])    ? (string) $ne['_id']       : '',
-        'entidad'   => (string)($ne['entidad']      ?? ''),
-        'prioridad' => (string)($ne['prioridad']    ?? 'media'),
-        'asunto'    => (string)($ne['asunto']       ?? ''),
-        'mensaje'   => (string)($ne['mensaje']      ?? ''),
+        'entidad'   => $safeString($ne['entidad']      ?? ''),
+        'prioridad' => $safeString($ne['prioridad']    ?? 'media'),
+        'asunto'    => $safeString($ne['asunto']       ?? ''),
+        'mensaje'   => $safeString($ne['mensaje']      ?? ''),
         'reporte_id'=> isset($r['reporte_id']) ? (string) $r['reporte_id'] : null,
         'fecha'     => $fecha,
-        'origen'    => (string)($ne['admin_nombre'] ?? 'Sistema automático'),
+        'origen'    => $safeString($ne['admin_nombre'] ?? 'Sistema automático'),
     ];
 }
 
