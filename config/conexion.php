@@ -8,7 +8,7 @@ use MongoDB\Database;
 function conectarMongoDB(): Database
 {
     try {
-        $uri = "mongodb://mongo:FgYclOQSoaqkbHkLcTXwaODbNefKSqdK@zephyr.proxy.rlwy.net:32810";
+        $uri = "mongodb://mongo:FgYclOQSoaqkbHkLcTXwaODbNefKSqdK@zephyr.proxy.rlwy.net:32810/ojoenlavia?authSource=admin";
 
         $dbName = ltrim(parse_url($uri, PHP_URL_PATH) ?? '', '/');
 
